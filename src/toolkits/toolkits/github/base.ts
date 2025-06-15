@@ -6,6 +6,9 @@ import {
   repoInfoTool,
   searchCodeTool,
   searchUsersTool,
+  userRepoDataTool,
+  userDataTool,
+  orgDataTool,
 } from "./tools";
 
 export const githubParameters = z.object({});
@@ -19,6 +22,9 @@ export const baseGithubToolkitConfig: ToolkitConfig<
     [GithubTools.RepoInfo]: repoInfoTool,
     [GithubTools.SearchCode]: searchCodeTool,
     [GithubTools.SearchUsers]: searchUsersTool,
+    [GithubTools.UserRepoData]: userRepoDataTool,
+    [GithubTools.UserData]: userDataTool,
+    [GithubTools.OrgData]: orgDataTool,
   },
   parameters: githubParameters,
 };

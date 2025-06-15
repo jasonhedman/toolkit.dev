@@ -6,6 +6,9 @@ import {
   githubRepoInfoToolConfigClient,
   githubSearchCodeToolConfigClient,
   githubSearchUsersToolConfigClient,
+  githubUserRepoDataToolConfigClient,
+  githubUserDataToolConfigClient,
+  githubOrgDataToolConfigClient,
 } from "./tools/client";
 import { SiGithub } from "@icons-pack/react-simple-icons";
 import { api } from "@/trpc/react";
@@ -58,5 +61,8 @@ export const githubClientToolkit = createClientToolkit(
     [GithubTools.RepoInfo]: githubRepoInfoToolConfigClient,
     [GithubTools.SearchCode]: githubSearchCodeToolConfigClient,
     [GithubTools.SearchUsers]: githubSearchUsersToolConfigClient,
+    [GithubTools.UserRepoData]: githubUserRepoDataToolConfigClient,
+    [GithubTools.UserData]: githubUserDataToolConfigClient,
+    [GithubTools.OrgData]: githubOrgDataToolConfigClient,
   },
 );

@@ -5,6 +5,9 @@ import {
   githubSearchCodeToolConfigServer,
   githubSearchUsersToolConfigServer,
   githubRepoInfoToolConfigServer,
+  githubUserRepoDataToolConfigServer,
+  githubUserDataToolConfigServer,
+  githubOrgDataToolConfigServer,
 } from "./tools/server";
 import { GithubTools } from "./tools";
 import { api } from "@/trpc/server";
@@ -24,11 +27,13 @@ export const githubToolkitServer = createServerToolkit(
     });
 
     return {
-      [GithubTools.SearchRepos]:
-        githubSearchRepositoriesToolConfigServer(octokit),
+      [GithubTools.SearchRepos]: githubSearchRepositoriesToolConfigServer(octokit),
       [GithubTools.SearchCode]: githubSearchCodeToolConfigServer(octokit),
       [GithubTools.SearchUsers]: githubSearchUsersToolConfigServer(octokit),
       [GithubTools.RepoInfo]: githubRepoInfoToolConfigServer(octokit),
+      [GithubTools.UserRepoData]: githubUserRepoDataToolConfigServer(octokit),
+      [GithubTools.UserData]: githubUserDataToolConfigServer(octokit),
+      [GithubTools.OrgData]: githubOrgDataToolConfigServer(octokit),
     };
   },
 );
