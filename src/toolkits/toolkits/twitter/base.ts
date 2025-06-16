@@ -15,10 +15,7 @@ import {
 
 export const twitterParameters = z.object({});
 
-export const baseTwitterToolkitConfig: ToolkitConfig<
-  TwitterTools,
-  typeof twitterParameters.shape
-> = {
+export const baseTwitterToolkitConfig: ToolkitConfig<TwitterTools> = {
   tools: {
     [TwitterTools.SearchTweets]: searchTweetsTool,
     [TwitterTools.GetTweet]: getTweetTool,

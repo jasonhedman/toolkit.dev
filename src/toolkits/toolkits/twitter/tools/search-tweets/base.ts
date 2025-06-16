@@ -19,7 +19,9 @@ export const searchTweetsTool = createBaseTool({
     sort_order: z
       .enum(["recency", "relevancy"])
       .default("recency")
-      .describe("Sort order: 'recency' for newest first, 'relevancy' for most relevant"),
+      .describe(
+        "Sort order: 'recency' for newest first, 'relevancy' for most relevant",
+      ),
   }),
   outputSchema: z.object({
     tweets: z.array(
@@ -40,36 +42,5 @@ export const searchTweetsTool = createBaseTool({
       }),
     ),
     next_token: z.string().optional(),
-  }),
-});
-
-export const getTweetTool = createBaseTool({
-  description:
-    "Get detailed information about a specific tweet by its ID. Returns tweet content, author information, and engagement metrics.",
-  inputSchema: z.object({
-    tweet_id: z
-      .string()
-      .describe("The unique identifier of the tweet (e.g., '1234567890123456789')"),
-  }),
-  outputSchema: z.object({
-    tweet: z.object({
-      id: z.string(),
-      text: z.string(),
-      author_username: z.string(),
-      author_name: z.string(),
-      author_verified: z.boolean().optional(),
-      created_at: z.string(),
-      public_metrics: z.object({
-        retweet_count: z.number(),
-        like_count: z.number(),
-        reply_count: z.number(),
-        quote_count: z.number(),
-      }),
-      possibly_sensitive: z.boolean().optional(),
-      conversation_id: z.string().optional(),
-      in_reply_to_user_id: z.string().optional(),
-      lang: z.string().optional(),
-      source: z.string().optional(),
-    }),
   }),
 });

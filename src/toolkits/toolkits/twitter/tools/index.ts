@@ -10,6 +10,12 @@ export enum TwitterTools {
   GetTweetRetweetedBy = "get-tweet-retweeted-by",
 }
 
-export { searchTweetsTool, getTweetTool } from "./tweet/base";
-export { getUserTool, searchUsersTool, getUserTimelineTool, getUserFollowersTool, getUserFollowingTool } from "./user/base";
-export { getTweetLikedByTool, getTweetRetweetedByTool } from "./interaction/base";
+export { searchTweetsTool } from "./search-tweets/base";
+export { getTweetTool } from "./get-tweet/base";
+export { getUserTool } from "./get-user/base";
+export { searchUsersTool } from "./search-users/base";
+export { getUserTimelineTool } from "./get-user-timeline/base";
+export { getUserFollowersTool } from "./get-user-followers/base";
+export { getUserFollowingTool } from "./get-user-following/base";
+export { getTweetLikedByTool } from "./get-tweet-liked-by/base";
+export { getTweetRetweetedByTool } from "./get-tweet-retweeted-by/base";
