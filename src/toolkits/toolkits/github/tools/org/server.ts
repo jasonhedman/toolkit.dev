@@ -1,6 +1,8 @@
 import { type orgDataTool } from "./base";
 import { type Octokit } from "octokit";
 import type { ServerToolConfig } from "@/toolkits/types";
+import { getTotalPrs } from "../../lib/prs";
+import { getTotalCommits, getTotalCommitsSearch } from "../../lib/commits";
 
 export const githubOrgDataToolConfigServer = (
   octokit: Octokit,
@@ -10,20 +12,32 @@ export const githubOrgDataToolConfigServer = (
 > => {
   return {
     callback: async ({ org }) => {
-      const [{ data: organization }, { data: repositories }] = await Promise.all([
-        octokit.rest.orgs.get({
-          org,
-        }),
-        octokit.rest.repos.listForOrg({
-          org,
-          sort: "updated",
-          per_page: 50, // Get more repos for organizations
-        }),
-      ]);
+      const [{ data: organization }, { data: repositories }, prs] =
+        await Promise.all([
+          octokit.rest.orgs.get({
+            org,
+          }),
+          octokit.rest.repos.listForOrg({
+            org,
+            sort: "updated",
+            per_page: 20, // Get more repos for organizations
+          }),
+          getTotalPrs(octokit, `org:${org}`),
+        ]);
 
       if (!organization) {
         throw new Error("Organization not found");
       }
+
+      const repositoriesWithCommits = await Promise.all(
+        repositories.map(async (repo) => {
+          const commits = await getTotalCommits(octokit, org, repo.name);
+          return {
+            ...repo,
+            commits,
+          };
+        }),
+      );
 
       return {
         organization: {
@@ -42,7 +56,7 @@ export const githubOrgDataToolConfigServer = (
           created_at: organization.created_at,
           updated_at: organization.updated_at,
         },
-        repositories: repositories.map((repo) => ({
+        repositories: repositoriesWithCommits.map((repo) => ({
           name: repo.name,
           description: repo.description,
           language: repo.language,
@@ -51,7 +65,9 @@ export const githubOrgDataToolConfigServer = (
           url: repo.html_url,
           updated_at: repo.updated_at ?? new Date().toISOString(),
           topics: repo.topics ?? [],
+          commits: repo.commits ?? 0,
         })),
+        prs: prs,
       };
     },
     message:

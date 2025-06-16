@@ -1,3 +1,5 @@
+"use client";
+
 import { memo } from "react";
 import { motion } from "motion/react";
 import equal from "fast-deep-equal";

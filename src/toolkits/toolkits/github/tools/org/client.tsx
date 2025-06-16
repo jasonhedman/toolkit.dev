@@ -12,12 +12,9 @@ import {
   Mail,
   Search,
   Star,
-  GitFork,
-  Users,
-  Building,
-  MapPin,
-  Calendar,
-  FileText,
+  GitCommit,
+  GitPullRequest,
+  BookMarked,
 } from "lucide-react";
 import { GithubAvatar } from "../../components/user-avatar";
 import { SiGithub, SiX } from "@icons-pack/react-simple-icons";
@@ -40,190 +37,154 @@ export const githubOrgDataToolConfigClient: ClientToolConfig<
       </HStack>
     );
   },
-  ResultComponent: ({ result: { organization, repositories } }) => {
+  ResultComponent: ({
+    result: { organization, repositories, prs },
+    append,
+  }) => {
     return (
       <div className="flex flex-col gap-4">
         {/* Organization Banner */}
-        <div className="relative overflow-hidden rounded-lg border bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-950/20 dark:to-purple-950/20">
-          <div className="p-6">
-            <HStack className="gap-4">
-              <VStack className="flex-1 items-start">
-                <HStack className="flex-1">
-                  <GithubAvatar login={organization.login} className="size-16" />
-                  <VStack className="items-start gap-1">
-                    <HStack className="items-center gap-2">
-                      <h3 className="text-2xl font-bold md:text-3xl">
-                        {organization.name ?? organization.login}
-                      </h3>
-                      <Building className="size-6 text-muted-foreground" />
-                    </HStack>
-                    <p className="text-muted-foreground text-sm">@{organization.login}</p>
-                    {organization.description && (
-                      <p className="text-muted-foreground mt-2 max-w-2xl">
-                        {organization.description}
-                      </p>
-                    )}
-                    
-                    {/* Organization Details */}
-                    <VStack className="items-start gap-1 mt-2">
-                      {organization.location && (
-                        <HStack className="gap-2 text-sm">
-                          <MapPin className="size-4" />
-                          <span>{organization.location}</span>
-                        </HStack>
-                      )}
-                      <HStack className="gap-2 text-sm">
-                        <Calendar className="size-4" />
-                        <span>Created {new Date(organization.created_at).toLocaleDateString()}</span>
-                      </HStack>
-                    </VStack>
-                  </VStack>
+        <HStack className="gap-4">
+          <VStack className="flex-1 items-start">
+            <HStack className="flex-1">
+              <GithubAvatar login={organization.login} className="size-10" />
+              <VStack className="items-start gap-0">
+                <HStack className="items-center gap-2">
+                  <h3 className="text-xl font-bold md:text-2xl">
+                    {organization.login}
+                  </h3>
                 </HStack>
-                
-                {/* Action Buttons */}
-                <HStack className="flex-wrap mt-3">
-                  <Link href={`https://github.com/${organization.login}`} target="_blank">
-                    <Button variant={"outline"} size={"sm"}>
-                      <SiGithub className="size-4" />
-                      <span>GitHub Organization</span>
-                    </Button>
-                  </Link>
-
-                  {organization.blog && (
-                    <Link href={organization.blog} target="_blank">
-                      <Button variant={"outline"} size={"sm"}>
-                        <Globe className="size-4" />
-                        <span>Website</span>
-                      </Button>
-                    </Link>
-                  )}
-
-                  {organization.twitter_username && (
-                    <Link
-                      href={`https://twitter.com/${organization.twitter_username}`}
-                      target="_blank"
-                    >
-                      <Button variant={"outline"} size={"sm"}>
-                        <SiX className="size-4" />
-                        <span>Twitter</span>
-                      </Button>
-                    </Link>
-                  )}
-
-                  {organization.email && (
-                    <Link href={`mailto:${organization.email}`} target="_blank">
-                      <Button variant={"outline"} size={"sm"}>
-                        <Mail className="size-4" />
-                        <span>Email</span>
-                      </Button>
-                    </Link>
-                  )}
-                </HStack>
+                <p className="text-muted-foreground text-xs">
+                  {organization.description}
+                </p>
               </VStack>
-              
-              {/* Stats */}
-              <div className="grid grid-cols-2 gap-3 rounded-lg bg-background/80 border p-4">
-                {[
-                  {
-                    icon: Star,
-                    label: "Repositories",
-                    value: organization.public_repos,
-                  },
-                  {
-                    icon: FileText,
-                    label: "Gists",
-                    value: organization.public_gists,
-                  },
-                  {
-                    icon: Users,
-                    label: "Followers",
-                    value: organization.followers,
-                  },
-                  {
-                    icon: Users,
-                    label: "Following",
-                    value: organization.following,
-                  },
-                ].map((item) => (
-                  <VStack key={item.label} className="items-center gap-1">
-                    <HStack className="gap-1 font-bold text-lg">
-                      <item.icon className="size-5" />
-                      {item.value.toLocaleString()}
-                    </HStack>
-                    <p className="text-muted-foreground text-xs text-center">
-                      {item.label}
-                    </p>
-                  </VStack>
-                ))}
-              </div>
             </HStack>
+            <HStack className="flex-wrap">
+              <Link
+                href={`https://github.com/${organization.login}`}
+                target="_blank"
+              >
+                <Button variant={"outline"} size={"sm"}>
+                  <SiGithub className="size-4" />
+                  <span>Profile</span>
+                </Button>
+              </Link>
+
+              {organization.blog && (
+                <Link href={organization.blog} target="_blank">
+                  <Button variant={"outline"} size={"sm"}>
+                    <Globe className="size-4" />
+                    <span>Website</span>
+                  </Button>
+                </Link>
+              )}
+
+              {organization.twitter_username && (
+                <Link
+                  href={`https://twitter.com/${organization.twitter_username}`}
+                  target="_blank"
+                >
+                  <Button variant={"outline"} size={"sm"}>
+                    <SiX className="size-4" />
+                    <span>Twitter</span>
+                  </Button>
+                </Link>
+              )}
+
+              {organization.email && (
+                <Link href={`mailto:${organization.email}`} target="_blank">
+                  <Button variant={"outline"} size={"sm"}>
+                    <Mail className="size-4" />
+                    <span>Email</span>
+                  </Button>
+                </Link>
+              )}
+            </HStack>
+          </VStack>
+          <div className="grid grid-cols-1 gap-2 rounded-lg p-2">
+            {[
+              {
+                icon: GitCommit,
+                label: "Commits",
+                value: repositories.reduce(
+                  (acc, repo) => acc + repo.commits,
+                  0,
+                ),
+              },
+              {
+                icon: GitPullRequest,
+                label: "PRs",
+                value: prs,
+              },
+              {
+                icon: BookMarked,
+                label: "Stars",
+                value: organization.public_repos,
+              },
+            ].map((item) => (
+              <HStack
+                key={item.label}
+                className="flex-1 items-center justify-between gap-4"
+              >
+                <p className="text-muted-foreground text-xs">{item.label}</p>
+                <HStack key={item.label} className="gap-1 font-medium">
+                  <item.icon className="size-4" />
+                  {item.value.toLocaleString()}
+                </HStack>
+              </HStack>
+            ))}
           </div>
-        </div>
+        </HStack>
 
         {/* Repository List */}
         <div className="flex flex-col gap-2">
-          <h4 className="text-lg font-semibold">Repositories ({repositories.length})</h4>
-          <div className="grid gap-3">
-            {repositories.slice(0, 20).map((repo, index) => (
-              <div
-                key={index}
-                className="group w-full cursor-pointer rounded-lg border p-4 transition-colors hover:bg-muted/50"
+          <h4 className="font-semibold">Repositories</h4>
+          <div className="grid">
+            {repositories.slice(0, 5).map((repo) => (
+              <HStack
+                key={repo.name}
+                className="group w-full cursor-pointer items-center border-b py-2 last:border-b-0 last:pb-0"
+                onClick={() => {
+                  void append({
+                    role: "user",
+                    content: `Get more information about ${repo.name}`,
+                  });
+                }}
               >
-                <Link href={repo.url} target="_blank" className="block">
-                  <VStack className="items-start gap-3">
-                    <HStack className="w-full items-start justify-between">
-                      <VStack className="flex-1 items-start gap-2">
-                        <HStack className="items-center gap-2 flex-wrap">
-                          <h5 className="group-hover:text-primary font-medium text-lg transition-colors">
-                            {repo.name}
-                          </h5>
-                          {repo.language && (
-                            <Badge variant="secondary" className="text-xs">
-                              {repo.language}
-                            </Badge>
-                          )}
-                        </HStack>
-                        {repo.description && (
-                          <p className="text-muted-foreground text-sm">
-                            {repo.description}
-                          </p>
-                        )}
-                        {repo.topics.length > 0 && (
-                          <HStack className="flex-wrap gap-1">
-                            {repo.topics.slice(0, 5).map((topic) => (
-                              <Badge key={topic} variant="outline" className="text-xs">
-                                {topic}
-                              </Badge>
-                            ))}
-                            {repo.topics.length > 5 && (
-                              <Badge variant="outline" className="text-xs">
-                                +{repo.topics.length - 5}
-                              </Badge>
-                            )}
-                          </HStack>
-                        )}
-                      </VStack>
-                      <VStack className="items-end gap-2">
-                        <HStack className="gap-4 text-sm">
-                          <HStack className="gap-1">
-                            <Star className="size-4" />
-                            {repo.stars.toLocaleString()}
-                          </HStack>
-                          <HStack className="gap-1">
-                            <GitFork className="size-4" />
-                            {repo.forks.toLocaleString()}
-                          </HStack>
-                        </HStack>
-                        <p className="text-muted-foreground text-xs">
-                          Updated {new Date(repo.updated_at).toLocaleDateString()}
-                        </p>
-                      </VStack>
-                    </HStack>
-                  </VStack>
-                </Link>
-              </div>
+                <VStack className="group flex w-full cursor-pointer items-start gap-0">
+                  <HStack className="items-center gap-2">
+                    <h3 className="group-hover:text-primary line-clamp-2 transition-colors">
+                      {repo.name}
+                    </h3>
+                    {repo.language && (
+                      <Badge
+                        variant="primary"
+                        className="size-fit px-1 py-0 text-xs"
+                      >
+                        {repo.language}
+                      </Badge>
+                    )}
+                  </HStack>
+                  {repo.description && (
+                    <p className="text-muted-foreground text-xs">
+                      {repo.description}
+                    </p>
+                  )}
+                </VStack>
+                <HStack className="items-center gap-4">
+                  <HStack className="gap-1 text-sm">
+                    <Star className="size-4 text-yellow-500" />
+                    {repo.stars.toLocaleString()}
+                  </HStack>
+                </HStack>
+              </HStack>
             ))}
           </div>
+          {repositories.length > 5 && (
+            <p className="text-muted-foreground pt-2 text-xs">
+              + {organization.public_repos - 5} more
+            </p>
+          )}
         </div>
       </div>
     );

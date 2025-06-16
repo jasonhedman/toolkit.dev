@@ -4,7 +4,7 @@ import { languageModels } from "@/ai/models";
 
 import type { providers } from "@/ai/registry";
 import { Servers } from "@/toolkits/toolkits/shared";
-import { clientToolkits } from "@/toolkits/toolkits/client";
+import { serverToolkits } from "@/toolkits/toolkits/server";
 
 const textPartSchema = z.object({
   text: z.string().min(1).max(2000),
@@ -49,10 +49,10 @@ export const postRequestBodySchema = z.object({
         parameters: z.record(z.string(), z.any()),
       })
       .refine((toolkit) => {
-        return toolkit.id in clientToolkits;
+        return toolkit.id in serverToolkits;
       })
       .refine((toolkit) => {
-        return clientToolkits[toolkit.id].parameters?.parse(toolkit.parameters);
+        return serverToolkits[toolkit.id].parameters?.parse(toolkit.parameters);
       }),
   ),
 });

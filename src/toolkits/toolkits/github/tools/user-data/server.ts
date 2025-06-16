@@ -1,6 +1,8 @@
 import { type userDataTool } from "./base";
 import { type Octokit } from "octokit";
 import type { ServerToolConfig } from "@/toolkits/types";
+import { getTotalCommits, getTotalCommitsSearch } from "../../lib/commits";
+import { getTotalPrs } from "../../lib/prs";
 
 export const githubUserDataToolConfigServer = (
   octokit: Octokit,
@@ -10,9 +12,12 @@ export const githubUserDataToolConfigServer = (
 > => {
   return {
     callback: async ({ username }) => {
-      const { data: user } = await octokit.rest.users.getByUsername({
-        username,
-      });
+      const [userResponse, commits, prs] = await Promise.all([
+        octokit.rest.users.getByUsername({ username }),
+        getTotalCommitsSearch(octokit, `author:${username}`),
+        getTotalPrs(octokit, `author:${username}`),
+      ]);
+      const { data: user } = userResponse;
 
       if (!user) {
         throw new Error("User not found");
@@ -36,6 +41,8 @@ export const githubUserDataToolConfigServer = (
           created_at: user.created_at,
           updated_at: user.updated_at,
         },
+        commits,
+        prs,
       };
     },
     message:

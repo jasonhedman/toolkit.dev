@@ -66,3 +66,17 @@ export const getTotalCommits = async (
 
   return totalPages;
 };
+
+export const getTotalCommitsSearch = async (
+  octokit: Octokit,
+  query: string,
+) => {
+  const {
+    data: { total_count },
+  } = await octokit.rest.search.commits({
+    q: query,
+    per_page: 1,
+  });
+
+  return total_count;
+};

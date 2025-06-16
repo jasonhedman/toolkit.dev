@@ -61,5 +61,6 @@ export const createServerToolkit = <
         {} as Record<ToolNames, ServerTool>,
       );
     },
+    parameters: toolkitConfig.parameters,
   };
 };

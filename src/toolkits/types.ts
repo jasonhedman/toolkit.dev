@@ -85,6 +85,7 @@ export type ServerToolkit<
   tools: (
     params: z.infer<ZodObject<Parameters>>,
   ) => Promise<Record<ToolNames, ServerTool>>;
+  parameters: z.ZodObject<Parameters>;
 };
 
 export type McpServerConfigBase<

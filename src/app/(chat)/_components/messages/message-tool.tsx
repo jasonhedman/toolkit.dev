@@ -1,3 +1,5 @@
+"use client";
+
 import { AnimatedShinyText } from "@/components/magicui/animated-shiny-text";
 import { Card } from "@/components/ui/card";
 import { HStack } from "@/components/ui/stack";
@@ -17,11 +19,6 @@ interface Props {
 const MessageToolComponent: React.FC<Props> = ({ toolInvocation }) => {
   const argsDefined = toolInvocation.args !== undefined;
   const completeOnFirstMount = toolInvocation.state === "result";
-
-  console.log({
-    argsDefined,
-    completeOnFirstMount,
-  });
 
   const { toolName } = toolInvocation;
 
