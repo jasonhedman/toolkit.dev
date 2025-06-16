@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 
-import { Edit } from "lucide-react";
+import { Edit, Globe } from "lucide-react";
 
 import {
   SidebarGroup,
@@ -23,6 +23,11 @@ export const NavMain = () => {
       title: "New Chat",
       url: workbenchId ? `/workbench/${workbenchId}` : "/",
       icon: Edit,
+    },
+    {
+      title: "Public Workbenches",
+      url: "/workbench/public",
+      icon: Globe,
     },
   ];
 
