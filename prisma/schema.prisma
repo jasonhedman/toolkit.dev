@@ -146,13 +146,14 @@ model UserFeature {
 }
 
 model Workbench {
-    id           String   @id @default(uuid())
-    name         String
-    systemPrompt String   @db.Text
-    toolkitIds   String[] // Array of toolkit IDs
-    userId       String
-    createdAt    DateTime @default(now())
-    updatedAt    DateTime @updatedAt
-    user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-    chats        Chat[]
+    id              String     @id @default(uuid())
+    name            String
+    systemPrompt    String     @db.Text
+    toolkitConfigs  Json       @default("[]") // Changed from toolkitIds to store parameters
+    visibility      Visibility @default(private) // Added visibility field
+    userId          String
+    createdAt       DateTime   @default(now())
+    updatedAt       DateTime   @updatedAt
+    user            User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+    chats           Chat[]
 }

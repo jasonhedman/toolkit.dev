@@ -16,9 +16,15 @@ import { useRouter } from "next/navigation";
 import { api } from "@/trpc/react";
 import { toast } from "sonner";
 import { ToolkitIcons } from "@/components/toolkit/toolkit-icons";
+import type { Toolkits } from "@/toolkits/toolkits/shared";
+
+interface ToolkitConfig {
+  id: string;
+  parameters?: Record<string, unknown>;
+}
 
 export const ToolsSelect = () => {
-  const { toolkits, addToolkit, removeToolkit, workbench } = useChatContext();
+  const { toolkits, addToolkit, removeToolkit, workbench, updateToolkitParameters } = useChatContext();
   const [isOpen, setIsOpen] = useState(false);
   const router = useRouter();
 
@@ -33,60 +39,75 @@ export const ToolsSelect = () => {
 
   const handleSave = () => {
     if (workbench) {
+      // Convert toolkits to toolkitConfigs format
+      const toolkitConfigs = toolkits.map((toolkit) => ({
+        id: toolkit.id,
+        parameters: toolkit.parameters,
+      }));
+
+      // Safely get visibility with fallback
+      const workbenchData = workbench as unknown as { visibility?: string };
+      const visibility = (workbenchData.visibility as 'public' | 'private') ?? 'private';
+
       updateWorkbench({
         id: workbench.id,
         name: workbench.name,
         systemPrompt: workbench.systemPrompt,
-        toolkitIds: toolkits.map((toolkit) => toolkit.id),
+        toolkitConfigs,
+        visibility,
       });
     }
   };
+
+  // Extract toolkit IDs for display
+  const toolkitIds = toolkits.map((toolkit) => toolkit.id);
 
   return (
     <TooltipProvider>
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
         <DialogTrigger asChild>
-          <Button
-            variant={"outline"}
-            className="w-fit justify-start bg-transparent md:w-auto md:px-2"
-          >
-            {toolkits.length > 0 ? (
-              <ToolkitIcons toolkits={toolkits.map((toolkit) => toolkit.id)} />
-            ) : (
-              <Wrench />
-            )}
-            <span className="hidden md:block">
-              {toolkits.length > 0
-                ? `${toolkits.length} Toolkit${toolkits.length > 1 ? "s" : ""}`
-                : "Add Toolkits"}
-            </span>
+          <Button variant="ghost" size="icon">
+            <Wrench className="size-4" />
           </Button>
         </DialogTrigger>
-
-        <DialogContent className="max-h-[80vh] w-full max-w-2xl gap-4 overflow-hidden">
-          <DialogHeader className="gap-0">
-            <DialogTitle className="text-xl">Manage Toolkits</DialogTitle>
+        <DialogContent className="max-w-2xl gap-2">
+          <DialogHeader>
+            <DialogTitle>Configure Toolkits</DialogTitle>
             <DialogDescription>
-              Add or remove tools to enhance your chat experience
+              Add or remove toolkits and configure their parameters for this chat.
+              {workbench && " Changes will be saved to your workbench."}
             </DialogDescription>
           </DialogHeader>
-          <div>
+          <div className="max-h-[60vh] overflow-y-auto">
             <ToolkitList
               selectedToolkits={toolkits}
               onAddToolkit={addToolkit}
               onRemoveToolkit={removeToolkit}
+              onUpdateParameters={updateToolkitParameters}
             />
           </div>
-          {workbench !== undefined && (
-            <Button
-              variant={"outline"}
-              className="bg-transparent"
-              onClick={handleSave}
-              disabled={isPending}
-            >
-              {isPending ? <Loader2 className="animate-spin" /> : <Save />}
-              Save
-            </Button>
+          {workbench && (
+            <div className="flex justify-between border-t pt-4">
+              <div className="flex items-center gap-2">
+                <ToolkitIcons toolkits={toolkitIds} />
+                <span className="text-sm text-muted-foreground">
+                  {toolkits.length} toolkit{toolkits.length !== 1 ? "s" : ""} selected
+                </span>
+              </div>
+              <Button onClick={handleSave} disabled={isPending}>
+                {isPending ? (
+                  <>
+                    <Loader2 className="mr-2 size-4 animate-spin" />
+                    Saving...
+                  </>
+                ) : (
+                  <>
+                    <Save className="mr-2 size-4" />
+                    Save to Workbench
+                  </>
+                )}
+              </Button>
+            </div>
           )}
         </DialogContent>
       </Dialog>

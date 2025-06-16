@@ -10,7 +10,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { Plus, Info } from "lucide-react";
+import { Plus, Info, Settings } from "lucide-react";
 import { HStack, VStack } from "@/components/ui/stack";
 import { clientToolkits } from "@/toolkits/toolkits/client";
 import type { ClientToolkit } from "@/toolkits/types";
@@ -23,12 +23,14 @@ interface ToolkitListProps {
   selectedToolkits: SelectedToolkit[];
   onAddToolkit: (toolkit: SelectedToolkit) => void;
   onRemoveToolkit: (id: Toolkits) => void;
+  onUpdateParameters?: (id: Toolkits, parameters: Record<string, unknown>) => void;
 }
 
 export const ToolkitList: React.FC<ToolkitListProps> = ({
   selectedToolkits,
   onAddToolkit,
   onRemoveToolkit,
+  onUpdateParameters,
 }) => {
   return (
     <TooltipProvider>
@@ -52,6 +54,7 @@ export const ToolkitList: React.FC<ToolkitListProps> = ({
                         selectedToolkits={selectedToolkits}
                         onAddToolkit={onAddToolkit}
                         onRemoveToolkit={onRemoveToolkit}
+                        onUpdateParameters={onUpdateParameters}
                       />
                     );
                   })}
@@ -70,6 +73,7 @@ interface ToolkitItemProps {
   selectedToolkits: SelectedToolkit[];
   onAddToolkit: (toolkit: SelectedToolkit) => void;
   onRemoveToolkit: (id: Toolkits) => void;
+  onUpdateParameters?: (id: Toolkits, parameters: Record<string, unknown>) => void;
 }
 
 const ToolkitItem = ({
@@ -78,20 +82,56 @@ const ToolkitItem = ({
   selectedToolkits,
   onAddToolkit,
   onRemoveToolkit,
+  onUpdateParameters,
 }: ToolkitItemProps) => {
   const isSelected = selectedToolkits.some((t) => t.id === id);
+  const selectedToolkit = selectedToolkits.find((t) => t.id === id);
   const needsConfiguration = Object.keys(toolkit.parameters.shape).length > 0;
 
+  const handleUpdateParameters = (parameters: Record<string, unknown>) => {
+    if (onUpdateParameters) {
+      onUpdateParameters(id, parameters);
+    }
+  };
+
   const addToolkitButtons = isSelected ? (
-    <Button
-      variant="primaryOutline"
-      size="sm"
-      onClick={() => onRemoveToolkit(id)}
-      className="bg-transparent"
-      type="button"
-    >
-      Active
-    </Button>
+    <HStack className="gap-1">
+      {needsConfiguration && onUpdateParameters && (
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="bg-transparent size-8 p-0"
+              type="button"
+            >
+              <Settings className="size-4" />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-80">
+            <ClientToolkitConfigure
+              toolkit={toolkit}
+              id={id}
+              schema={toolkit.parameters}
+              initialParameters={selectedToolkit?.parameters}
+              onAdd={(updatedToolkit) => {
+                handleUpdateParameters(updatedToolkit.parameters);
+              }}
+              isUpdate={true}
+            />
+          </PopoverContent>
+        </Popover>
+      )}
+      <Button
+        variant="primaryOutline"
+        size="sm"
+        onClick={() => onRemoveToolkit(id)}
+        className="bg-transparent"
+        type="button"
+      >
+        Active
+      </Button>
+    </HStack>
   ) : needsConfiguration ? (
     <Popover>
       <PopoverTrigger asChild>

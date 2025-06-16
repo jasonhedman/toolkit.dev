@@ -27,6 +27,17 @@ import { Button } from "@/components/ui/button";
 import { HStack } from "@/components/ui/stack";
 import { cn } from "@/lib/utils";
 
+interface ToolkitConfig {
+  id: string;
+  parameters?: Record<string, unknown>;
+}
+
+interface WorkbenchWithConfigs {
+  id: string;
+  name: string;
+  toolkitConfigs?: unknown;
+}
+
 export function WorkbenchSelect() {
   const { isMobile, open } = useSidebar();
 
@@ -52,6 +63,15 @@ export function WorkbenchSelect() {
   const workbench = workbenches.pages[0]?.items.find(
     (workbench) => workbench.id === workbenchId,
   );
+
+  // Helper function to extract toolkit IDs from workbench
+  const getToolkitIds = (workbench: WorkbenchWithConfigs): Toolkits[] => {
+    if (!workbench?.toolkitConfigs) return [];
+    const configs = workbench.toolkitConfigs as ToolkitConfig[];
+    return Array.isArray(configs)
+      ? configs.map((config) => config.id as Toolkits)
+      : [];
+  };
 
   return (
     <SidebarGroup className="p-0">
@@ -122,7 +142,7 @@ export function WorkbenchSelect() {
                         {workbench.name}
                       </span>
                       <ToolkitIcons
-                        toolkits={workbench.toolkitIds as Toolkits[]}
+                        toolkits={getToolkitIds(workbench)}
                         iconClassName="size-3"
                         iconContainerClassName="p-1"
                       />

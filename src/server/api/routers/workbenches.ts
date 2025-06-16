@@ -1,6 +1,12 @@
 import { createTRPCRouter, protectedProcedure } from "@/server/api/trpc";
 import { z } from "zod";
 
+// Define the toolkit config schema
+const toolkitConfigSchema = z.object({
+  id: z.string(),
+  parameters: z.record(z.any()).default({}),
+});
+
 export const workbenchesRouter = createTRPCRouter({
   getWorkbenches: protectedProcedure
     .input(
@@ -73,7 +79,8 @@ export const workbenchesRouter = createTRPCRouter({
       z.object({
         name: z.string().min(1).max(100),
         systemPrompt: z.string().max(10000),
-        toolkitIds: z.array(z.string()),
+        toolkitConfigs: z.array(toolkitConfigSchema).default([]),
+        visibility: z.enum(["public", "private"]).default("private"),
       }),
     )
     .mutation(async ({ ctx, input }) => {
@@ -83,7 +90,8 @@ export const workbenchesRouter = createTRPCRouter({
         data: {
           name: input.name,
           systemPrompt: input.systemPrompt,
-          toolkitIds: input.toolkitIds,
+          toolkitConfigs: input.toolkitConfigs,
+          visibility: input.visibility,
           userId,
         },
       });
@@ -95,7 +103,8 @@ export const workbenchesRouter = createTRPCRouter({
         id: z.string(),
         name: z.string().min(1).max(100),
         systemPrompt: z.string().max(10000),
-        toolkitIds: z.array(z.string()),
+        toolkitConfigs: z.array(toolkitConfigSchema).default([]),
+        visibility: z.enum(["public", "private"]).default("private"),
       }),
     )
     .mutation(async ({ ctx, input }) => {
@@ -109,7 +118,8 @@ export const workbenchesRouter = createTRPCRouter({
         data: {
           name: input.name,
           systemPrompt: input.systemPrompt,
-          toolkitIds: input.toolkitIds,
+          toolkitConfigs: input.toolkitConfigs,
+          visibility: input.visibility,
         },
       });
     }),
@@ -227,7 +237,8 @@ export const workbenchesRouter = createTRPCRouter({
         data: {
           name: `${originalWorkbench.name} (Copy)`,
           systemPrompt: originalWorkbench.systemPrompt,
-          toolkitIds: originalWorkbench.toolkitIds,
+          toolkitConfigs: originalWorkbench.toolkitConfigs,
+          visibility: originalWorkbench.visibility,
           userId,
         },
       });

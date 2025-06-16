@@ -58,6 +58,7 @@ interface ChatContextType {
   toolkits: Array<SelectedToolkit>;
   addToolkit: (toolkit: SelectedToolkit) => void;
   removeToolkit: (id: Toolkits) => void;
+  updateToolkitParameters: (id: Toolkits, parameters: Record<string, unknown>) => void;
 
   workbench?: Workbench;
 
@@ -119,28 +120,62 @@ export function ChatProvider({
 
     // If this is a workbench chat, initialize with workbench toolkits
     if (workbench) {
-      const workbenchToolkits = workbench.toolkitIds
-        .map((toolkitId) => {
-          const clientToolkit =
-            clientToolkits[toolkitId as keyof typeof clientToolkits];
-          if (clientToolkit) {
-            return {
-              id: toolkitId,
-              toolkit: clientToolkit,
-              parameters: {}, // Use default parameters for workbench toolkits
-            };
-          }
-          return null;
-        })
-        .filter(
-          (
-            toolkit,
-          ): toolkit is {
-            id: Toolkits;
-            toolkit: ClientToolkit;
-            parameters: z.infer<ClientToolkit["parameters"]>;
-          } => toolkit !== null,
-        );
+      // Handle new toolkitConfigs structure or fallback to old toolkitIds
+      const workbenchData = workbench as unknown as { 
+        toolkitConfigs?: Array<{ id: string; parameters?: Record<string, unknown> }>;
+        toolkitIds?: string[];
+      };
+      let workbenchToolkits: Array<SelectedToolkit> = [];
+
+      if (Array.isArray(workbenchData.toolkitConfigs)) {
+        // New structure with parameters
+        workbenchToolkits = workbenchData.toolkitConfigs
+          .map((config) => {
+            const clientToolkit =
+              clientToolkits[config.id as keyof typeof clientToolkits];
+            if (clientToolkit) {
+              return {
+                id: config.id as Toolkits,
+                toolkit: clientToolkit,
+                parameters: config.parameters ?? {},
+              };
+            }
+            return null;
+          })
+          .filter(
+            (
+              toolkit,
+            ): toolkit is {
+              id: Toolkits;
+              toolkit: ClientToolkit;
+              parameters: z.infer<ClientToolkit["parameters"]>;
+            } => toolkit !== null,
+          );
+      } else if (Array.isArray(workbenchData.toolkitIds)) {
+        // Legacy structure - fallback
+        workbenchToolkits = workbenchData.toolkitIds
+          .map((toolkitId) => {
+            const clientToolkit =
+              clientToolkits[toolkitId as keyof typeof clientToolkits];
+            if (clientToolkit) {
+              return {
+                id: toolkitId as Toolkits,
+                toolkit: clientToolkit,
+                parameters: {}, // Use default parameters for legacy workbench toolkits
+              };
+            }
+            return null;
+          })
+          .filter(
+            (
+              toolkit,
+            ): toolkit is {
+              id: Toolkits;
+              toolkit: ClientToolkit;
+              parameters: z.infer<ClientToolkit["parameters"]>;
+            } => toolkit !== null,
+          );
+      }
 
       setToolkitsState(workbenchToolkits);
       return;
@@ -202,6 +237,13 @@ export function ChatProvider({
 
   const removeToolkit = (id: Toolkits) => {
     setToolkits(toolkits.filter((t) => t.id !== id));
+  };
+
+  const updateToolkitParameters = (id: Toolkits, parameters: Record<string, unknown>) => {
+    const updatedToolkits = toolkits.map((toolkit) =>
+      toolkit.id === id ? { ...toolkit, parameters } : toolkit
+    );
+    setToolkits(updatedToolkits);
   };
 
   const {
@@ -299,6 +341,7 @@ export function ChatProvider({
     toolkits,
     addToolkit,
     removeToolkit,
+    updateToolkitParameters,
     workbench,
   };
 

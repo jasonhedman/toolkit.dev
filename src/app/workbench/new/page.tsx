@@ -21,6 +21,13 @@ import {
   DialogContent,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Anvil, Plus } from "lucide-react";
 import { ToolkitIcons } from "@/components/toolkit/toolkit-icons";
 import { clientToolkits } from "@/toolkits/toolkits/client";
@@ -29,6 +36,7 @@ export default function NewWorkbenchPage() {
   const router = useRouter();
   const [name, setName] = useState("");
   const [systemPrompt, setSystemPrompt] = useState("");
+  const [visibility, setVisibility] = useState<'public' | 'private'>('private');
   const [selectedToolkits, setSelectedToolkits] = useState<SelectedToolkit[]>(
     [],
   );
@@ -51,10 +59,17 @@ export default function NewWorkbenchPage() {
       return;
     }
 
+    // Convert selectedToolkits to toolkitConfigs format
+    const toolkitConfigs = selectedToolkits.map((toolkit) => ({
+      id: toolkit.id,
+      parameters: toolkit.parameters,
+    }));
+
     createMutation.mutate({
       name: name.trim(),
       systemPrompt: systemPrompt.trim(),
-      toolkitIds: selectedToolkits.map((toolkit) => toolkit.id),
+      toolkitConfigs,
+      visibility,
     });
   };
 
@@ -65,6 +80,14 @@ export default function NewWorkbenchPage() {
   const handleRemoveToolkit = (id: Toolkits) => {
     setSelectedToolkits(
       selectedToolkits.filter((toolkit) => toolkit.id !== id),
+    );
+  };
+
+  const handleUpdateToolkitParameters = (id: Toolkits, parameters: Record<string, unknown>) => {
+    setSelectedToolkits(toolkits =>
+      toolkits.map(toolkit =>
+        toolkit.id === id ? { ...toolkit, parameters } : toolkit
+      )
     );
   };
 
@@ -106,6 +129,25 @@ export default function NewWorkbenchPage() {
               </p>
             </VStack>
 
+            {/* Visibility Field */}
+            <VStack className="w-full items-start gap-2">
+              <Label htmlFor="visibility" className="text-base font-semibold">
+                Visibility
+              </Label>
+              <Select value={visibility} onValueChange={(value: 'public' | 'private') => setVisibility(value)}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="private">Private</SelectItem>
+                  <SelectItem value="public">Public</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-muted-foreground text-xs">
+                Private workbenches are only visible to you. Public workbenches can be viewed by others.
+              </p>
+            </VStack>
+
             {/* System Prompt Field */}
             <VStack className="w-full items-start gap-2">
               <Label htmlFor="systemPrompt" className="text-base font-semibold">
@@ -128,40 +170,44 @@ export default function NewWorkbenchPage() {
 
             {/* Toolkit Selection */}
             <VStack className="w-full items-start gap-2">
-              <Label className="text-base font-semibold">Select Toolkits</Label>
+              <Label className="text-base font-semibold">
+                Selected Toolkits ({selectedToolkits.length})
+              </Label>
+              <div className="flex w-full flex-wrap gap-2">
+                {selectedToolkits.map((toolkit) => (
+                  <div
+                    key={toolkit.id}
+                    className="flex items-center gap-1 rounded-md border bg-secondary/50 px-2 py-1 text-xs"
+                  >
+                    <ToolkitIcons
+                      toolkits={[toolkit.id]}
+                      iconClassName="size-3"
+                      iconContainerClassName="p-0"
+                    />
+                    <span>{toolkit.toolkit.name}</span>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="ml-1 size-4 rounded-full p-0 hover:bg-destructive hover:text-destructive-foreground"
+                      onClick={() => handleRemoveToolkit(toolkit.id)}
+                      tabIndex={-1}
+                    >
+                      ×
+                    </Button>
+                  </div>
+                ))}
+                {selectedToolkits.length === 0 && (
+                  <p className="text-muted-foreground text-sm">
+                    No toolkits selected
+                  </p>
+                )}
+              </div>
               <Dialog>
                 <DialogTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className="w-full justify-start px-2"
-                  >
-                    {selectedToolkits.length > 0 ? (
-                      <HStack className="w-full">
-                        <ToolkitIcons
-                          toolkits={selectedToolkits.map(
-                            (toolkit) => toolkit.id,
-                          )}
-                        />
-                        <p className="text-muted-foreground text-xs">
-                          {selectedToolkits.length} Toolkit
-                          {selectedToolkits.length !== 1 ? "s" : ""} selected
-                        </p>
-                      </HStack>
-                    ) : (
-                      <HStack className="w-full justify-between">
-                        <HStack className="flex items-center gap-2">
-                          <Plus className="text-muted-foreground size-4" />
-                          <p className="text-muted-foreground text-xs">
-                            Select toolkits...
-                          </p>
-                        </HStack>
-                        <ToolkitIcons
-                          toolkits={Object.keys(clientToolkits) as Toolkits[]}
-                          iconContainerClassName="bg-background"
-                          iconClassName="text-muted-foreground"
-                        />
-                      </HStack>
-                    )}
+                  <Button type="button" variant="outline" size="sm">
+                    <Plus className="size-4" />
+                    Add Toolkits
                   </Button>
                 </DialogTrigger>
                 <DialogContent className="max-h-[80vh] max-w-lg gap-2 overflow-hidden">
@@ -169,7 +215,7 @@ export default function NewWorkbenchPage() {
                     <DialogTitle>Select Toolkits</DialogTitle>
                     <DialogDescription>
                       Choose the toolkits that will be available in this
-                      workbench.
+                      workbench. You can configure parameters for each toolkit.
                     </DialogDescription>
                   </DialogHeader>
                   <div className="flex-1 overflow-y-auto">
@@ -177,12 +223,14 @@ export default function NewWorkbenchPage() {
                       selectedToolkits={selectedToolkits}
                       onAddToolkit={handleAddToolkit}
                       onRemoveToolkit={handleRemoveToolkit}
+                      onUpdateParameters={handleUpdateToolkitParameters}
                     />
                   </div>
                 </DialogContent>
               </Dialog>
               <p className="text-muted-foreground text-xs">
                 Select the toolkits that will be available in this workbench.
+                You can configure parameters for each toolkit after adding them.
               </p>
             </VStack>
           </VStack>
