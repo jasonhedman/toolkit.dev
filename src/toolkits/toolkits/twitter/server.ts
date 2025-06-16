@@ -2,152 +2,171 @@ import { createServerToolkit } from "@/toolkits/create-toolkit";
 import { baseTwitterToolkitConfig } from "./base";
 import { TwitterTools } from "./tools";
 import { getTokenForProvider } from "@/trpc/get-token";
+import { TwitterApi } from "twitter-api-v2";
 
 export const twitterServerToolkit = createServerToolkit(
   baseTwitterToolkitConfig,
   async (params) => {
     const token = await getTokenForProvider("twitter");
     
-    const headers = {
-      "Authorization": `Bearer ${token}`,
-      "Content-Type": "application/json",
-    };
+    // Create Twitter API client with OAuth token
+    const twitterClient = new TwitterApi(token);
+    const readOnlyClient = twitterClient.readOnly;
 
     return {
       [TwitterTools.SearchTweets]: {
         callback: async (args) => {
-          const searchParams = new URLSearchParams({
-            query: args.query,
-            max_results: args.max_results.toString(),
-            sort_order: args.sort_order,
-            "tweet.fields": "created_at,public_metrics,possibly_sensitive,conversation_id,author_id",
-            "user.fields": "username,name,verified",
-            expansions: "author_id",
-          });
+          try {
+            const searchResult = await readOnlyClient.v2.search(args.query, {
+              max_results: args.max_results,
+              sort_order: args.sort_order,
+              "tweet.fields": ["created_at", "public_metrics", "possibly_sensitive", "conversation_id", "author_id"],
+              "user.fields": ["username", "name", "verified"],
+              expansions: ["author_id"],
+            });
 
-          const response = await fetch(
-            `https://api.x.com/2/tweets/search/recent?${searchParams}`,
-            { headers }
-          );
+            const tweets = searchResult.data?.data || [];
+            const users = searchResult.includes?.users || [];
 
-          if (!response.ok) {
-            throw new Error(`Twitter API error: ${response.statusText}`);
+            return {
+              tweets: tweets.map((tweet) => {
+                const author = users.find((user) => user.id === tweet.author_id);
+                return {
+                  id: tweet.id,
+                  text: tweet.text,
+                  author_username: author?.username || "",
+                  author_name: author?.name || "",
+                  created_at: tweet.created_at || "",
+                  public_metrics: tweet.public_metrics || {
+                    retweet_count: 0,
+                    like_count: 0,
+                    reply_count: 0,
+                    quote_count: 0,
+                  },
+                  possibly_sensitive: tweet.possibly_sensitive,
+                  conversation_id: tweet.conversation_id,
+                };
+              }),
+              next_token: searchResult.meta?.next_token,
+            };
+          } catch (error) {
+            throw new Error(`Failed to search tweets: ${error instanceof Error ? error.message : 'Unknown error'}`);
           }
-
-          const data = await response.json();
-          
-          return {
-            tweets: data.data?.map((tweet: any) => {
-              const author = data.includes?.users?.find((user: any) => user.id === tweet.author_id);
-              return {
-                id: tweet.id,
-                text: tweet.text,
-                author_username: author?.username || "",
-                author_name: author?.name || "",
-                created_at: tweet.created_at,
-                public_metrics: tweet.public_metrics,
-                possibly_sensitive: tweet.possibly_sensitive,
-                conversation_id: tweet.conversation_id,
-              };
-            }) || [],
-            next_token: data.meta?.next_token,
-          };
         },
         message: (result) => `Found ${result.tweets.length} tweets`,
       },
 
       [TwitterTools.GetTweet]: {
         callback: async (args) => {
-          const searchParams = new URLSearchParams({
-            "tweet.fields": "created_at,public_metrics,possibly_sensitive,conversation_id,in_reply_to_user_id,lang,source,author_id",
-            "user.fields": "username,name,verified",
-            expansions: "author_id",
-          });
+          try {
+            const tweetResult = await readOnlyClient.v2.singleTweet(args.tweet_id, {
+              "tweet.fields": [
+                "created_at",
+                "public_metrics",
+                "possibly_sensitive",
+                "conversation_id",
+                "in_reply_to_user_id",
+                "lang",
+                "source",
+                "author_id"
+              ],
+              "user.fields": ["username", "name", "verified"],
+              expansions: ["author_id"],
+            });
 
-          const response = await fetch(
-            `https://api.x.com/2/tweets/${args.tweet_id}?${searchParams}`,
-            { headers }
-          );
+            const tweet = tweetResult.data;
+            const author = tweetResult.includes?.users?.[0];
 
-          if (!response.ok) {
-            throw new Error(`Tweet not found or Twitter API error: ${response.statusText}`);
+            return {
+              tweet: {
+                id: tweet.id,
+                text: tweet.text,
+                author_username: author?.username || "",
+                author_name: author?.name || "",
+                author_verified: author?.verified,
+                created_at: tweet.created_at || "",
+                public_metrics: tweet.public_metrics || {
+                  retweet_count: 0,
+                  like_count: 0,
+                  reply_count: 0,
+                  quote_count: 0,
+                },
+                possibly_sensitive: tweet.possibly_sensitive,
+                conversation_id: tweet.conversation_id,
+                in_reply_to_user_id: tweet.in_reply_to_user_id,
+                lang: tweet.lang,
+                source: tweet.source,
+              },
+            };
+          } catch (error) {
+            throw new Error(`Failed to get tweet: ${error instanceof Error ? error.message : 'Unknown error'}`);
           }
-
-          const data = await response.json();
-          const author = data.includes?.users?.[0];
-          
-          return {
-            tweet: {
-              id: data.data.id,
-              text: data.data.text,
-              author_username: author?.username || "",
-              author_name: author?.name || "",
-              author_verified: author?.verified,
-              created_at: data.data.created_at,
-              public_metrics: data.data.public_metrics,
-              possibly_sensitive: data.data.possibly_sensitive,
-              conversation_id: data.data.conversation_id,
-              in_reply_to_user_id: data.data.in_reply_to_user_id,
-              lang: data.data.lang,
-              source: data.data.source,
-            },
-          };
         },
         message: "Retrieved tweet details",
       },
 
       [TwitterTools.GetUser]: {
         callback: async (args) => {
-          const isUserId = /^\d+$/.test(args.user_identifier);
-          const endpoint = isUserId 
-            ? `https://api.x.com/2/users/${args.user_identifier}`
-            : `https://api.x.com/2/users/by/username/${args.user_identifier}`;
+          try {
+            const isUserId = /^\d+$/.test(args.user_identifier);
+            const userResult = isUserId
+              ? await readOnlyClient.v2.user(args.user_identifier, {
+                  "user.fields": [
+                    "created_at",
+                    "description",
+                    "location",
+                    "url",
+                    "verified",
+                    "profile_image_url",
+                    "public_metrics",
+                    "protected"
+                  ],
+                })
+              : await readOnlyClient.v2.userByUsername(args.user_identifier, {
+                  "user.fields": [
+                    "created_at",
+                    "description",
+                    "location",
+                    "url",
+                    "verified",
+                    "profile_image_url",
+                    "public_metrics",
+                    "protected"
+                  ],
+                });
 
-          const searchParams = new URLSearchParams({
-            "user.fields": "created_at,description,location,url,verified,profile_image_url,public_metrics,protected",
-          });
+            const user = userResult.data;
 
-          const response = await fetch(
-            `${endpoint}?${searchParams}`,
-            { headers }
-          );
-
-          if (!response.ok) {
-            throw new Error(`User not found or Twitter API error: ${response.statusText}`);
+            return {
+              user: {
+                id: user.id,
+                username: user.username,
+                name: user.name,
+                description: user.description,
+                location: user.location,
+                url: user.url,
+                verified: user.verified,
+                created_at: user.created_at || "",
+                profile_image_url: user.profile_image_url,
+                public_metrics: user.public_metrics || {
+                  followers_count: 0,
+                  following_count: 0,
+                  tweet_count: 0,
+                  listed_count: 0,
+                },
+                protected: user.protected,
+              },
+            };
+          } catch (error) {
+            throw new Error(`Failed to get user: ${error instanceof Error ? error.message : 'Unknown error'}`);
           }
-
-          const data = await response.json();
-          
-          return {
-            user: {
-              id: data.data.id,
-              username: data.data.username,
-              name: data.data.name,
-              description: data.data.description,
-              location: data.data.location,
-              url: data.data.url,
-              verified: data.data.verified,
-              created_at: data.data.created_at,
-              profile_image_url: data.data.profile_image_url,
-              public_metrics: data.data.public_metrics,
-              protected: data.data.protected,
-            },
-          };
         },
         message: (result) => `Retrieved user: @${result.user.username}`,
       },
 
       [TwitterTools.SearchUsers]: {
         callback: async (args) => {
-          const searchParams = new URLSearchParams({
-            query: args.query,
-            max_results: args.max_results.toString(),
-            "user.fields": "description,location,verified,public_metrics,profile_image_url",
-          });
-
-          // Note: Twitter API v2 doesn't have a direct user search endpoint
-          // This would need to be implemented using a different approach
-          // For now, we'll return a placeholder response
+          // Twitter API v2 doesn't have a direct user search endpoint
           throw new Error("User search is not available in Twitter API v2. Consider using tweet search to find users by their tweets.");
         },
         message: (result) => `Found ${result.users.length} users`,
@@ -155,239 +174,191 @@ export const twitterServerToolkit = createServerToolkit(
 
       [TwitterTools.GetUserTimeline]: {
         callback: async (args) => {
-          const isUserId = /^\d+$/.test(args.user_identifier);
-          let userId = args.user_identifier;
-          
-          if (!isUserId) {
-            // First get user ID from username
-            const userResponse = await fetch(
-              `https://api.x.com/2/users/by/username/${args.user_identifier}`,
-              { headers }
-            );
-            
-            if (!userResponse.ok) {
-              throw new Error(`User not found: ${args.user_identifier}`);
+          try {
+            const isUserId = /^\d+$/.test(args.user_identifier);
+            let userId = args.user_identifier;
+
+            if (!isUserId) {
+              const userResult = await readOnlyClient.v2.userByUsername(args.user_identifier);
+              userId = userResult.data.id;
             }
-            
-            const userData = await userResponse.json();
-            userId = userData.data.id;
+
+            const timelineResult = await readOnlyClient.v2.userTimeline(userId, {
+              max_results: args.max_results,
+              exclude: [
+                ...(args.exclude_replies ? ["replies"] : []),
+                ...(args.exclude_retweets ? ["retweets"] : []),
+              ] as ("replies" | "retweets")[],
+              "tweet.fields": ["created_at", "public_metrics", "possibly_sensitive", "conversation_id"],
+            });
+
+            const tweets = timelineResult.data?.data || [];
+
+            return {
+              tweets: tweets.map((tweet) => ({
+                id: tweet.id,
+                text: tweet.text,
+                created_at: tweet.created_at || "",
+                public_metrics: tweet.public_metrics || {
+                  retweet_count: 0,
+                  like_count: 0,
+                  reply_count: 0,
+                  quote_count: 0,
+                },
+                possibly_sensitive: tweet.possibly_sensitive,
+                conversation_id: tweet.conversation_id,
+              })),
+              next_token: timelineResult.meta?.next_token,
+            };
+          } catch (error) {
+            throw new Error(`Failed to get user timeline: ${error instanceof Error ? error.message : 'Unknown error'}`);
           }
-
-          const searchParams = new URLSearchParams({
-            max_results: args.max_results.toString(),
-            exclude: [
-              ...(args.exclude_replies ? ["replies"] : []),
-              ...(args.exclude_retweets ? ["retweets"] : []),
-            ].join(","),
-            "tweet.fields": "created_at,public_metrics,possibly_sensitive,conversation_id",
-          });
-
-          const response = await fetch(
-            `https://api.x.com/2/users/${userId}/tweets?${searchParams}`,
-            { headers }
-          );
-
-          if (!response.ok) {
-            throw new Error(`Timeline not accessible or Twitter API error: ${response.statusText}`);
-          }
-
-          const data = await response.json();
-          
-          return {
-            tweets: data.data?.map((tweet: any) => ({
-              id: tweet.id,
-              text: tweet.text,
-              created_at: tweet.created_at,
-              public_metrics: tweet.public_metrics,
-              possibly_sensitive: tweet.possibly_sensitive,
-              conversation_id: tweet.conversation_id,
-            })) || [],
-            next_token: data.meta?.next_token,
-          };
         },
         message: (result) => `Retrieved ${result.tweets.length} tweets from timeline`,
       },
 
       [TwitterTools.GetUserFollowers]: {
         callback: async (args) => {
-          const isUserId = /^\d+$/.test(args.user_identifier);
-          let userId = args.user_identifier;
-          
-          if (!isUserId) {
-            const userResponse = await fetch(
-              `https://api.x.com/2/users/by/username/${args.user_identifier}`,
-              { headers }
-            );
-            
-            if (!userResponse.ok) {
-              throw new Error(`User not found: ${args.user_identifier}`);
+          try {
+            const isUserId = /^\d+$/.test(args.user_identifier);
+            let userId = args.user_identifier;
+
+            if (!isUserId) {
+              const userResult = await readOnlyClient.v2.userByUsername(args.user_identifier);
+              userId = userResult.data.id;
             }
-            
-            const userData = await userResponse.json();
-            userId = userData.data.id;
+
+            const followersResult = await readOnlyClient.v2.followers(userId, {
+              max_results: args.max_results,
+              "user.fields": ["description", "verified", "public_metrics", "profile_image_url"],
+            });
+
+            const followers = followersResult.data?.data || [];
+
+            return {
+              followers: followers.map((user) => ({
+                id: user.id,
+                username: user.username,
+                name: user.name,
+                description: user.description,
+                verified: user.verified,
+                public_metrics: {
+                  followers_count: user.public_metrics?.followers_count || 0,
+                  following_count: user.public_metrics?.following_count || 0,
+                },
+                profile_image_url: user.profile_image_url,
+              })),
+              next_token: followersResult.meta?.next_token,
+            };
+          } catch (error) {
+            throw new Error(`Failed to get followers: ${error instanceof Error ? error.message : 'Unknown error'}`);
           }
-
-          const searchParams = new URLSearchParams({
-            max_results: args.max_results.toString(),
-            "user.fields": "description,verified,public_metrics,profile_image_url",
-          });
-
-          const response = await fetch(
-            `https://api.x.com/2/users/${userId}/followers?${searchParams}`,
-            { headers }
-          );
-
-          if (!response.ok) {
-            throw new Error(`Cannot access followers or Twitter API error: ${response.statusText}`);
-          }
-
-          const data = await response.json();
-          
-          return {
-            followers: data.data?.map((user: any) => ({
-              id: user.id,
-              username: user.username,
-              name: user.name,
-              description: user.description,
-              verified: user.verified,
-              public_metrics: {
-                followers_count: user.public_metrics.followers_count,
-                following_count: user.public_metrics.following_count,
-              },
-              profile_image_url: user.profile_image_url,
-            })) || [],
-            next_token: data.meta?.next_token,
-          };
         },
         message: (result) => `Retrieved ${result.followers.length} followers`,
       },
 
       [TwitterTools.GetUserFollowing]: {
         callback: async (args) => {
-          const isUserId = /^\d+$/.test(args.user_identifier);
-          let userId = args.user_identifier;
-          
-          if (!isUserId) {
-            const userResponse = await fetch(
-              `https://api.x.com/2/users/by/username/${args.user_identifier}`,
-              { headers }
-            );
-            
-            if (!userResponse.ok) {
-              throw new Error(`User not found: ${args.user_identifier}`);
+          try {
+            const isUserId = /^\d+$/.test(args.user_identifier);
+            let userId = args.user_identifier;
+
+            if (!isUserId) {
+              const userResult = await readOnlyClient.v2.userByUsername(args.user_identifier);
+              userId = userResult.data.id;
             }
-            
-            const userData = await userResponse.json();
-            userId = userData.data.id;
+
+            const followingResult = await readOnlyClient.v2.following(userId, {
+              max_results: args.max_results,
+              "user.fields": ["description", "verified", "public_metrics", "profile_image_url"],
+            });
+
+            const following = followingResult.data?.data || [];
+
+            return {
+              following: following.map((user) => ({
+                id: user.id,
+                username: user.username,
+                name: user.name,
+                description: user.description,
+                verified: user.verified,
+                public_metrics: {
+                  followers_count: user.public_metrics?.followers_count || 0,
+                  following_count: user.public_metrics?.following_count || 0,
+                },
+                profile_image_url: user.profile_image_url,
+              })),
+              next_token: followingResult.meta?.next_token,
+            };
+          } catch (error) {
+            throw new Error(`Failed to get following: ${error instanceof Error ? error.message : 'Unknown error'}`);
           }
-
-          const searchParams = new URLSearchParams({
-            max_results: args.max_results.toString(),
-            "user.fields": "description,verified,public_metrics,profile_image_url",
-          });
-
-          const response = await fetch(
-            `https://api.x.com/2/users/${userId}/following?${searchParams}`,
-            { headers }
-          );
-
-          if (!response.ok) {
-            throw new Error(`Cannot access following list or Twitter API error: ${response.statusText}`);
-          }
-
-          const data = await response.json();
-          
-          return {
-            following: data.data?.map((user: any) => ({
-              id: user.id,
-              username: user.username,
-              name: user.name,
-              description: user.description,
-              verified: user.verified,
-              public_metrics: {
-                followers_count: user.public_metrics.followers_count,
-                following_count: user.public_metrics.following_count,
-              },
-              profile_image_url: user.profile_image_url,
-            })) || [],
-            next_token: data.meta?.next_token,
-          };
         },
         message: (result) => `Retrieved ${result.following.length} following`,
       },
 
       [TwitterTools.GetTweetLikedBy]: {
         callback: async (args) => {
-          const searchParams = new URLSearchParams({
-            max_results: args.max_results.toString(),
-            "user.fields": "description,verified,public_metrics,profile_image_url",
-          });
+          try {
+            const likesResult = await readOnlyClient.v2.tweetLikedBy(args.tweet_id, {
+              max_results: args.max_results,
+              "user.fields": ["description", "verified", "public_metrics", "profile_image_url"],
+            });
 
-          const response = await fetch(
-            `https://api.x.com/2/tweets/${args.tweet_id}/liking_users?${searchParams}`,
-            { headers }
-          );
+            const users = likesResult.data?.data || [];
 
-          if (!response.ok) {
-            throw new Error(`Cannot access likes data or Twitter API error: ${response.statusText}`);
+            return {
+              users: users.map((user) => ({
+                id: user.id,
+                username: user.username,
+                name: user.name,
+                description: user.description,
+                verified: user.verified,
+                public_metrics: {
+                  followers_count: user.public_metrics?.followers_count || 0,
+                  following_count: user.public_metrics?.following_count || 0,
+                  tweet_count: user.public_metrics?.tweet_count || 0,
+                },
+                profile_image_url: user.profile_image_url,
+              })),
+              next_token: likesResult.meta?.next_token,
+            };
+          } catch (error) {
+            throw new Error(`Failed to get users who liked tweet: ${error instanceof Error ? error.message : 'Unknown error'}`);
           }
-
-          const data = await response.json();
-          
-          return {
-            users: data.data?.map((user: any) => ({
-              id: user.id,
-              username: user.username,
-              name: user.name,
-              description: user.description,
-              verified: user.verified,
-              public_metrics: {
-                followers_count: user.public_metrics.followers_count,
-                following_count: user.public_metrics.following_count,
-                tweet_count: user.public_metrics.tweet_count,
-              },
-              profile_image_url: user.profile_image_url,
-            })) || [],
-            next_token: data.meta?.next_token,
-          };
         },
         message: (result) => `Retrieved ${result.users.length} users who liked the tweet`,
       },
 
       [TwitterTools.GetTweetRetweetedBy]: {
         callback: async (args) => {
-          const searchParams = new URLSearchParams({
-            max_results: args.max_results.toString(),
-            "user.fields": "description,verified,public_metrics,profile_image_url",
-          });
+          try {
+            const retweetsResult = await readOnlyClient.v2.tweetRetweetedBy(args.tweet_id, {
+              max_results: args.max_results,
+              "user.fields": ["description", "verified", "public_metrics", "profile_image_url"],
+            });
 
-          const response = await fetch(
-            `https://api.x.com/2/tweets/${args.tweet_id}/retweeted_by?${searchParams}`,
-            { headers }
-          );
+            const users = retweetsResult.data?.data || [];
 
-          if (!response.ok) {
-            throw new Error(`Cannot access retweets data or Twitter API error: ${response.statusText}`);
+            return {
+              users: users.map((user) => ({
+                id: user.id,
+                username: user.username,
+                name: user.name,
+                description: user.description,
+                verified: user.verified,
+                public_metrics: {
+                  followers_count: user.public_metrics?.followers_count || 0,
+                  following_count: user.public_metrics?.following_count || 0,
+                  tweet_count: user.public_metrics?.tweet_count || 0,
+                },
+                profile_image_url: user.profile_image_url,
+              })),
+              next_token: retweetsResult.meta?.next_token,
+            };
+          } catch (error) {
+            throw new Error(`Failed to get users who retweeted: ${error instanceof Error ? error.message : 'Unknown error'}`);
           }
-
-          const data = await response.json();
-          
-          return {
-            users: data.data?.map((user: any) => ({
-              id: user.id,
-              username: user.username,
-              name: user.name,
-              description: user.description,
-              verified: user.verified,
-              public_metrics: {
-                followers_count: user.public_metrics.followers_count,
-                following_count: user.public_metrics.following_count,
-                tweet_count: user.public_metrics.tweet_count,
-              },
-              profile_image_url: user.profile_image_url,
-            })) || [],
-            next_token: data.meta?.next_token,
-          };
         },
         message: (result) => `Retrieved ${result.users.length} users who retweeted`,
       },
