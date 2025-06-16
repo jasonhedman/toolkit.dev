@@ -1,6 +1,10 @@
 import React from "react";
 import type { ClientToolConfig } from "@/toolkits/types";
-import type { listDatabasesTool, queryDatabaseTool, createDatabaseTool } from "./base";
+import type {
+  listDatabasesTool,
+  queryDatabaseTool,
+  createDatabaseTool,
+} from "./base";
 import { Database, Search, Plus } from "lucide-react";
 import { ToolCallDisplay } from "../../components";
 import { NotionDatabase } from "../../components/database";

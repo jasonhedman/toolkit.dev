@@ -12,16 +12,16 @@ export const googleCalendarGetEventToolConfigServer = (
     callback: async ({ calendarId, eventId }) => {
       const auth = new google.auth.OAuth2();
       auth.setCredentials({ access_token: accessToken });
-      
+
       const calendar = google.calendar({ version: "v3", auth });
-      
+
       const response = await calendar.events.get({
         calendarId,
         eventId,
       });
-      
+
       const event = response.data;
-      
+
       return {
         id: event.id!,
         summary: event.summary ?? undefined,
@@ -39,10 +39,12 @@ export const googleCalendarGetEventToolConfigServer = (
         },
         status: event.status ?? undefined,
         visibility: event.visibility ?? undefined,
-        organizer: event.organizer ? {
-          email: event.organizer.email ?? undefined,
-          displayName: event.organizer.displayName ?? undefined,
-        } : undefined,
+        organizer: event.organizer
+          ? {
+              email: event.organizer.email ?? undefined,
+              displayName: event.organizer.displayName ?? undefined,
+            }
+          : undefined,
         attendees: event.attendees?.map((attendee) => ({
           email: attendee.email ?? undefined,
           displayName: attendee.displayName ?? undefined,

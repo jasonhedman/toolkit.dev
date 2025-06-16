@@ -1,5 +1,3 @@
-import { HardDrive } from "lucide-react";
-
 import { GoogleDriveTools } from "./tools";
 import { createClientToolkit } from "@/toolkits/create-toolkit";
 import { baseGoogleDriveToolkitConfig } from "./base";
@@ -42,7 +40,12 @@ export const googleDriveClientToolkit = createClientToolkit(
 
       if (isLoadingAccount || isLoadingAccess) {
         return (
-          <Button variant="outline" size="sm" disabled>
+          <Button
+            variant="outline"
+            size="sm"
+            disabled
+            className="bg-transparent"
+          >
             <Loader2 className="size-4 animate-spin" />
           </Button>
         );
@@ -53,7 +56,7 @@ export const googleDriveClientToolkit = createClientToolkit(
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger>
-                <Badge variant="primary">Private Beta</Badge>
+                <Badge variant="outline">Private Beta</Badge>
               </TooltipTrigger>
               <TooltipContent className="max-w-xs text-center">
                 We need to add you as a test user on Google Cloud for us to
@@ -93,8 +96,8 @@ export const googleDriveClientToolkit = createClientToolkit(
                 },
               );
             }}
+            className="bg-transparent"
           >
-            <HardDrive className="size-4" />
             Connect
           </Button>
         );
@@ -120,6 +123,7 @@ export const googleDriveClientToolkit = createClientToolkit(
                 },
               );
             }}
+            className="bg-transparent"
           >
             Grant Access
           </Button>

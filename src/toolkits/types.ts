@@ -83,6 +83,7 @@ export type ServerToolkit<
   ToolNames extends string = string,
   Parameters extends ZodRawShape = ZodRawShape,
 > = {
+  systemPrompt: string;
   tools: (
     params: z.infer<ZodObject<Parameters>>,
   ) => Promise<Record<ToolNames, ServerTool>>;

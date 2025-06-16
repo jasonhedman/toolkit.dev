@@ -41,12 +41,14 @@ export const createServerToolkit = <
   Parameters extends ZodRawShape = ZodRawShape,
 >(
   toolkitConfig: ToolkitConfig<ToolNames, Parameters>,
+  systemPrompt: string,
   toolConfigs: (
     params: z.infer<ZodObject<Parameters>>,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
   ) => Promise<Record<ToolNames, ServerToolConfig<any, any>>>,
 ): ServerToolkit<ToolNames, Parameters> => {
   return {
+    systemPrompt,
     tools: async (params: z.infer<ZodObject<Parameters>>) => {
       const tools = await toolConfigs(params);
 

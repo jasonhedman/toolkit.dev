@@ -1,5 +1,3 @@
-import { Calendar } from "lucide-react";
-
 import { GoogleCalendarTools } from "./tools";
 import { createClientToolkit } from "@/toolkits/create-toolkit";
 import { baseGoogleCalendarToolkitConfig } from "./base";
@@ -45,7 +43,12 @@ export const googleCalendarClientToolkit = createClientToolkit(
 
       if (isLoadingAccount || isLoadingAccess) {
         return (
-          <Button variant="outline" size="sm" disabled>
+          <Button
+            variant="outline"
+            size="sm"
+            disabled
+            className="bg-transparent"
+          >
             <Loader2 className="size-4 animate-spin" />
           </Button>
         );
@@ -56,7 +59,7 @@ export const googleCalendarClientToolkit = createClientToolkit(
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger>
-                <Badge variant="primary">Private Beta</Badge>
+                <Badge variant="outline">Private Beta</Badge>
               </TooltipTrigger>
               <TooltipContent className="max-w-xs text-center">
                 We need to add you as a test user on Google Cloud for us to
@@ -96,8 +99,8 @@ export const googleCalendarClientToolkit = createClientToolkit(
                 },
               );
             }}
+            className="bg-transparent"
           >
-            <Calendar className="size-4" />
             Connect
           </Button>
         );

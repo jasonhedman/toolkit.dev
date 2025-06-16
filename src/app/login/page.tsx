@@ -17,7 +17,7 @@ export default async function LoginPage() {
   }));
 
   return (
-    <div className="flex min-h-screen items-center justify-center p-6">
+    <div className="flex flex-1 flex-col items-center justify-center p-4">
       <div className="w-full max-w-md">
         <LoginForm providers={mappedProviders} />
       </div>

@@ -8,3 +8,4 @@ export { accountsRouter } from "./accounts";
 export { imagesRouter } from "./images";
 export { memoriesRouter } from "./memories";
 export { featuresRouter } from "./features";
+export { workbenchesRouter } from "./workbenches";

@@ -61,7 +61,7 @@ export default function OnboardingPage() {
   };
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center p-4">
+    <div className="flex flex-1 flex-col items-center justify-center p-4">
       <VStack className="max-w-2xl gap-4">
         <VStack className="gap-4">
           <Logo className="size-16" />

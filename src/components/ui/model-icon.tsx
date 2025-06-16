@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils";
 import type { Provider } from "@/ai/types";
-import { modelIcons } from "@/app/(chat)/_components/input/model-select/utils";
+import { modelIcons } from "@/app/_components/chat/input/model-select/utils";
 
 interface Props {
   provider: Provider;

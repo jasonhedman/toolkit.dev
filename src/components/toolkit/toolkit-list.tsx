@@ -38,7 +38,7 @@ export const ToolkitList: React.FC<ToolkitListProps> = ({
             <VStack key={group.id} className="w-full items-start">
               <HStack className="gap-2">
                 <group.icon className="size-4" />
-                <h3 className="text-lg font-bold">{group.name}</h3>
+                <h3 className="font-bold">{group.name}</h3>
               </HStack>
               <div className="bg-muted/50 w-full rounded-md border">
                 {Object.entries(clientToolkits)
@@ -88,13 +88,19 @@ const ToolkitItem = ({
       size="sm"
       onClick={() => onRemoveToolkit(id)}
       className="bg-transparent"
+      type="button"
     >
       Active
     </Button>
   ) : needsConfiguration ? (
     <Popover>
       <PopoverTrigger asChild>
-        <Button variant="outline" size="sm" className="bg-transparent">
+        <Button
+          variant="outline"
+          size="sm"
+          className="bg-transparent"
+          type="button"
+        >
           Add
           <Plus className="size-4" />
         </Button>
@@ -114,6 +120,7 @@ const ToolkitItem = ({
       size="sm"
       onClick={() => onAddToolkit({ id, toolkit, parameters: {} })}
       className="bg-transparent"
+      type="button"
     >
       Add
       <Plus className="size-4" />
@@ -126,10 +133,10 @@ const ToolkitItem = ({
         <div className="flex flex-1 flex-col">
           <HStack>
             <toolkit.icon className="size-4" />
-            <h3 className="font-medium">{toolkit.name}</h3>
+            <h3 className="text-sm font-medium">{toolkit.name}</h3>
             <Tooltip>
               <TooltipTrigger asChild>
-                <Info className="text-muted-foreground size-4 cursor-pointer" />
+                <Info className="text-muted-foreground size-3 cursor-pointer" />
               </TooltipTrigger>
               <TooltipContent side="right" className="max-w-64">
                 <div className="space-y-2">

@@ -27,7 +27,12 @@ export const githubClientToolkit = createClientToolkit(
 
       if (isLoading) {
         return (
-          <Button variant="outline" size="sm" disabled>
+          <Button
+            variant="outline"
+            size="sm"
+            disabled
+            className="bg-transparent"
+          >
             <Loader2 className="size-4 animate-spin" />
           </Button>
         );
@@ -43,8 +48,8 @@ export const githubClientToolkit = createClientToolkit(
                 callbackUrl: window.location.href,
               });
             }}
+            className="bg-transparent"
           >
-            <SiGithub className="size-4" />
             Connect
           </Button>
         );

@@ -21,12 +21,12 @@ model Account {
     type                     String
     provider                 String
     providerAccountId        String
-    refresh_token            String? // @db.Text
-    access_token             String? // @db.Text
+    refresh_token            String? @db.Text
+    access_token             String? @db.Text
     expires_at               Int?
     token_type               String?
     scope                    String?
-    id_token                 String? // @db.Text
+    id_token                 String? @db.Text
     session_state            String?
     user                     User    @relation(fields: [userId], references: [id], onDelete: Cascade)
     refresh_token_expires_in Int?
@@ -54,6 +54,7 @@ model User {
     files         File[]
     images        Image[]
     userFeatures  UserFeature[]
+    workbenches   Workbench[]
 }
 
 model VerificationToken {
@@ -70,17 +71,19 @@ enum Visibility {
 }
 
 model Chat {
-    id         String     @id @default(uuid())
-    createdAt  DateTime   @default(now())
-    title      String
-    userId     String
-    visibility Visibility @default(private)
-    parentChatId String?  // For branched chats
-    user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-    parentChat Chat?      @relation("ChatBranch", fields: [parentChatId], references: [id], onDelete: Cascade)
-    branches   Chat[]     @relation("ChatBranch")
-    messages   Message[]
-    stream     Stream[]
+    id           String     @id @default(uuid())
+    createdAt    DateTime   @default(now())
+    title        String
+    userId       String
+    visibility   Visibility @default(private)
+    parentChatId String?    // For branched chats
+    workbenchId  String?    // Optional association with workbench
+    user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+    parentChat   Chat?      @relation("ChatBranch", fields: [parentChatId], references: [id], onDelete: Cascade)
+    branches     Chat[]     @relation("ChatBranch")
+    messages     Message[]
+    stream       Stream[]
+    workbench    Workbench? @relation(fields: [workbenchId], references: [id], onDelete: SetNull)
 }
 
 model Message {
@@ -140,4 +143,16 @@ model UserFeature {
     feature   Feature  @relation(fields: [featureId], references: [id], onDelete: Cascade)
 
     @@unique([userId, featureId])
+}
+
+model Workbench {
+    id           String   @id @default(uuid())
+    name         String
+    systemPrompt String   @db.Text
+    toolkitIds   String[] // Array of toolkit IDs
+    userId       String
+    createdAt    DateTime @default(now())
+    updatedAt    DateTime @updatedAt
+    user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+    chats        Chat[]
 }

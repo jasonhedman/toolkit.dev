@@ -27,8 +27,8 @@ export const clientToolkits: ClientToolkits = {
   [Toolkits.Exa]: exaClientToolkit,
   [Toolkits.Github]: githubClientToolkit,
   [Toolkits.GoogleCalendar]: googleCalendarClientToolkit,
-  [Toolkits.GoogleDrive]: googleDriveClientToolkit,
   [Toolkits.Notion]: notionClientToolkit,
+  [Toolkits.GoogleDrive]: googleDriveClientToolkit,
 };
 
 export function getClientToolkit<T extends Toolkits>(

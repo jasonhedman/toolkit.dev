@@ -1,18 +1,18 @@
-export { 
+export {
   notionListDatabasesToolConfigServer,
   notionQueryDatabaseToolConfigServer,
-  notionCreateDatabaseToolConfigServer
+  notionCreateDatabaseToolConfigServer,
 } from "./databases/server";
 
-export { 
+export {
   notionGetPageToolConfigServer,
   notionSearchPagesToolConfigServer,
-  notionCreatePageToolConfigServer
+  notionCreatePageToolConfigServer,
 } from "./pages/server";
 
-export { 
+export {
   notionGetBlocksToolConfigServer,
-  notionAppendBlocksToolConfigServer
+  notionAppendBlocksToolConfigServer,
 } from "./blocks/server";
 
 export { notionListUsersToolConfigServer } from "./users/server";

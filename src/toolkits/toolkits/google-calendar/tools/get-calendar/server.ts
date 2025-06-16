@@ -12,15 +12,15 @@ export const googleCalendarGetCalendarToolConfigServer = (
     callback: async ({ calendarId }) => {
       const auth = new google.auth.OAuth2();
       auth.setCredentials({ access_token: accessToken });
-      
+
       const calendar = google.calendar({ version: "v3", auth });
-      
+
       const response = await calendar.calendars.get({
         calendarId,
       });
-      
+
       const cal = response.data;
-      
+
       return {
         id: cal.id!,
         summary: cal.summary!,

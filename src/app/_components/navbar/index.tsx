@@ -2,20 +2,21 @@ import { Logo } from "@/components/ui/logo";
 
 import { AccountButton } from "./account-button";
 import { ColorModeToggle } from "./color-mode-toggle";
+import { HStack } from "@/components/ui/stack";
 
 export const Navbar = () => {
   return (
-    <div className="flex items-center justify-between p-2 md:hidden">
-      <div className="flex items-center gap-2">
+    <HStack className="bg-background sticky top-0 z-10 justify-between p-2 md:hidden">
+      <HStack>
         <Logo className="size-6" />
-        <h1 className="overflow-hidden text-2xl font-bold whitespace-nowrap">
-          Open Chat
+        <h1 className="text-primary overflow-hidden text-lg font-bold whitespace-nowrap">
+          Toolkit.dev
         </h1>
-      </div>
-      <div className="flex items-center gap-2">
+      </HStack>
+      <HStack>
         <AccountButton />
         <ColorModeToggle />
-      </div>
-    </div>
+      </HStack>
+    </HStack>
   );
 };

@@ -45,7 +45,7 @@ const PureChatItem = ({
   return (
     <SidebarMenuItem>
       <SidebarMenuButton asChild isActive={isActive}>
-        <Link href={`/chat/${chat.id}`} onClick={() => setOpenMobile(false)}>
+        <Link href={`/${chat.id}`} onClick={() => setOpenMobile(false)}>
           <div className="flex min-w-0 items-center gap-2">
             {chat.parentChatId && (
               <GitBranch className="text-muted-foreground size-3 shrink-0" />

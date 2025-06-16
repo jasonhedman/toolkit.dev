@@ -49,7 +49,7 @@ export const notionAppendBlocksToolConfigClient: ClientToolConfig<
       <ToolCallDisplay
         icon={Plus}
         label="Append Blocks"
-        value={`${args.block_type ?? 'paragraph'} - "${(args.content ?? "").slice(0, 30)}..."`}
+        value={`${args.block_type ?? "paragraph"} - "${(args.content ?? "").slice(0, 30)}..."`}
       />
     );
   },

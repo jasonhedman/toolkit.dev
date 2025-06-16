@@ -1,6 +1,6 @@
 export enum NotionTools {
   ListDatabases = "list-databases",
-  QueryDatabase = "query-database", 
+  QueryDatabase = "query-database",
   CreateDatabase = "create-database",
   GetPage = "get-page",
   SearchPages = "search-pages",
@@ -10,7 +10,11 @@ export enum NotionTools {
   ListUsers = "list-users",
 }
 
-export { listDatabasesTool, queryDatabaseTool, createDatabaseTool } from "./databases/base";
+export {
+  listDatabasesTool,
+  queryDatabaseTool,
+  createDatabaseTool,
+} from "./databases/base";
 export { getPageTool, searchPagesTool, createPageTool } from "./pages/base";
 export { getBlocksTool, appendBlocksTool } from "./blocks/base";
 export { listUsersTool } from "./users/base";

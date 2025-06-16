@@ -24,6 +24,7 @@ import { ChatItem } from "./item";
 import { api } from "@/trpc/react";
 import { useDeleteChat } from "@/app/_hooks/use-delete-chat";
 import { Button } from "@/components/ui/button";
+import { usePathname } from "next/navigation";
 
 export const NavChats = () => {
   return (
@@ -39,6 +40,13 @@ export const NavChats = () => {
 };
 
 const NavChatsBody = () => {
+  const pathname = usePathname();
+
+  const [, type, resourceId] = pathname.split("/");
+
+  const workbenchId =
+    type === "workbench" && resourceId !== "new" ? resourceId : undefined;
+
   const { setOpenMobile } = useSidebar();
 
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
@@ -48,6 +56,7 @@ const NavChatsBody = () => {
     api.chats.getChats.useSuspenseInfiniteQuery(
       {
         limit: 10,
+        workbenchId,
       },
       {
         getNextPageParam: (lastPage) =>
@@ -79,7 +88,7 @@ const NavChatsBody = () => {
           <ChatItem
             key={chat.id}
             chat={chat}
-            isActive={false}
+            isActive={pathname.includes(chat.id)}
             onDelete={() => {
               setDeleteId(chat.id);
               setShowDeleteDialog(true);

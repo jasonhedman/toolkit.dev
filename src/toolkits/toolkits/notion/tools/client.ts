@@ -1,18 +1,18 @@
-export { 
+export {
   notionListDatabasesToolConfigClient,
   notionQueryDatabaseToolConfigClient,
-  notionCreateDatabaseToolConfigClient
+  notionCreateDatabaseToolConfigClient,
 } from "./databases/client";
 
-export { 
+export {
   notionGetPageToolConfigClient,
   notionSearchPagesToolConfigClient,
-  notionCreatePageToolConfigClient
+  notionCreatePageToolConfigClient,
 } from "./pages/client";
 
-export { 
+export {
   notionGetBlocksToolConfigClient,
-  notionAppendBlocksToolConfigClient
+  notionAppendBlocksToolConfigClient,
 } from "./blocks/client";
 
 export { notionListUsersToolConfigClient } from "./users/client";

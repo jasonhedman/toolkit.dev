@@ -8,15 +8,17 @@ export const chatsRouter = createTRPCRouter({
       z.object({
         limit: z.number().min(1).max(100).default(10),
         cursor: z.string().nullish(),
+        workbenchId: z.string().nullish(),
       }),
     )
     .query(async ({ ctx, input }) => {
       const userId = ctx.session.user.id;
-      const { limit, cursor } = input;
+      const { limit, cursor, workbenchId } = input;
 
       const items = await ctx.db.chat.findMany({
         where: {
           userId,
+          workbenchId,
         },
         orderBy: {
           createdAt: "desc",
@@ -42,6 +44,10 @@ export const chatsRouter = createTRPCRouter({
       return ctx.db.chat.findUnique({
         where: {
           id: input,
+          OR: [{ userId: ctx.session.user.id }, { visibility: "public" }],
+        },
+        include: {
+          workbench: true,
         },
       });
     }),
@@ -53,6 +59,7 @@ export const chatsRouter = createTRPCRouter({
         title: z.string(),
         visibility: z.enum(["public", "private"]),
         userId: z.string(),
+        workbenchId: z.string().optional(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
@@ -75,6 +82,23 @@ export const chatsRouter = createTRPCRouter({
           userId: ctx.session.user.id,
         },
         data: { visibility: input.visibility },
+      });
+    }),
+
+  updateChatTitle: protectedProcedure
+    .input(
+      z.object({
+        id: z.string(),
+        title: z.string(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      return ctx.db.chat.update({
+        where: {
+          id: input.id,
+          userId: ctx.session.user.id,
+        },
+        data: { title: input.title },
       });
     }),
 

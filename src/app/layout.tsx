@@ -43,7 +43,7 @@ export default function RootLayout({
           <ThemeProvider>
             <SidebarProvider>
               <AppSidebar />
-              <SidebarInset className="flex h-dvh flex-col md:pt-8">
+              <SidebarInset className="flex h-dvh flex-col">
                 <Navbar />
                 {children}
               </SidebarInset>
