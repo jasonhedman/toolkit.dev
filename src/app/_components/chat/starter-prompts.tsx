@@ -58,6 +58,20 @@ const DYNAMIC_STARTER_PROMPTS: StarterPrompt[] = [
       "Intelligent meeting coordination with multi-source document preparation and learning preferences",
   },
   {
+    title: "AI-Powered YouTube Strategy for Developers",
+    prompt:
+      "Research trending web development topics, analyze GitHub trending repositories, generate YouTube video ideas with custom thumbnails, and organize them into a comprehensive Notion content calendar with memory of successful content patterns",
+    toolkitIds: [
+      Toolkits.Exa,
+      Toolkits.Github,
+      Toolkits.Image,
+      Toolkits.Notion,
+      Toolkits.Memory,
+    ],
+    description:
+      "Complete YouTube content strategy combining trend research, repository analysis, visual thumbnails, organized planning, and learning from past successes",
+  },
+  {
     title: "Data-Driven Productivity Analysis",
     prompt:
       "Analyze my Notion task database with Python, create productivity visualizations, and schedule optimization based on calendar patterns",
