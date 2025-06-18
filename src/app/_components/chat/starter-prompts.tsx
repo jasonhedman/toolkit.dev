@@ -60,16 +60,15 @@ const DYNAMIC_STARTER_PROMPTS: StarterPrompt[] = [
   {
     title: "AI-Powered YouTube Strategy for Developers",
     prompt:
-      "Research trending web development topics, analyze GitHub trending repositories, generate YouTube video ideas with custom thumbnails, and organize them into a comprehensive Notion content calendar with memory of successful content patterns",
+      "DEMO: Find recent AI tools and coding developments for YouTube video topics. Start by analyzing trending GitHub repositories in web development, then research trending AI dev tools and coding topics online. After both searches, provide 3 specific video topics based on recent developments (new AI tools, frameworks, or coding trends) with viral-worthy titles. Keep it concise and focused on what's new and exciting for developers. IMPORTANT: Begin with GitHub analysis first, then web search.",
     toolkitIds: [
-      Toolkits.Exa,
       Toolkits.Github,
-      Toolkits.Image,
+      Toolkits.Exa,
       Toolkits.Notion,
       Toolkits.Memory,
     ],
     description:
-      "Complete YouTube content strategy combining trend research, repository analysis, visual thumbnails, organized planning, and learning from past successes",
+      "Demo: Complete YouTube content strategy with GitHub-first analysis, trend research, organized planning, and learning from past successes",
   },
   {
     title: "Data-Driven Productivity Analysis",
