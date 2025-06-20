@@ -40,7 +40,10 @@ export const HeroSection: React.FC = () => {
             </p>
 
             <div className="flex flex-col-reverse gap-4 sm:flex-row">
-              <Link href="https://github.com/jasonhedman/toolkit.dev">
+              <Link
+                href="https://github.com/jasonhedman/toolkit.dev"
+                target="_blank"
+              >
                 <Button
                   variant="outline"
                   size="lg"
