@@ -1,6 +1,7 @@
 import { Space_Grotesk } from "next/font/google";
 import { JetBrains_Mono } from "next/font/google";
 import { cookies } from "next/headers";
+import { Analytics } from "@vercel/analytics/next";
 
 import { TRPCReactProvider } from "@/trpc/react";
 
@@ -44,6 +45,7 @@ export default async function RootLayout({
       className={`${spaceGrotesk.variable} ${jetBrainsMono.variable} ${initialTheme === "dark" ? "dark" : ""}`}
     >
       <body>
+        <Analytics />
         <TRPCReactProvider>
           <ThemeProvider initialTheme={initialTheme}>
             <SidebarProvider>

@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { VStack } from "@/components/ui/stack";
 import { MotionContainer } from "./motion-container";
 import { AuthModal } from "../auth-modal";
+import Link from "next/link";
 
 export const HeroSection: React.FC = () => {
   return (
@@ -39,16 +40,18 @@ export const HeroSection: React.FC = () => {
             </p>
 
             <div className="flex flex-col-reverse gap-4 sm:flex-row">
-              <Button
-                variant="outline"
-                size="lg"
-                className="text-base font-semibold"
-              >
-                <span className="flex items-center gap-2">
-                  <SiGithub />
-                  Contribute
-                </span>
-              </Button>
+              <Link href="https://github.com/jasonhedman/toolkit.dev">
+                <Button
+                  variant="outline"
+                  size="lg"
+                  className="text-base font-semibold"
+                >
+                  <span className="flex items-center gap-2">
+                    <SiGithub />
+                    Contribute
+                  </span>
+                </Button>
+              </Link>
               <AuthModal>
                 <Button
                   size="lg"
