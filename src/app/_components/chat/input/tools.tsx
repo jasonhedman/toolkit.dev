@@ -116,7 +116,10 @@ export const ToolsSelect = () => {
           </Button>
         </DialogTrigger>
 
-        <DialogContent className="flex max-h-[80vh] w-full max-w-2xl flex-col gap-4 overflow-hidden">
+        <DialogContent
+          className="flex max-h-[80vh] w-full max-w-2xl flex-col gap-4 overflow-hidden"
+          showCloseButton={false}
+        >
           <DialogHeader className="gap-0">
             <DialogTitle className="text-xl">Manage Toolkits</DialogTitle>
             <DialogDescription>
