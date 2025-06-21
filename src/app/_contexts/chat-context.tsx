@@ -32,9 +32,7 @@ import { anthropicModels } from "@/ai/models/anthropic";
 import type { PersistedToolkit } from "@/lib/cookies/types";
 import { clientCookieUtils } from "@/lib/cookies/client";
 
-const DEFAULT_CHAT_MODEL = anthropicModels.find(
-  (model) => model.modelId === "claude-3-7-sonnet-latest",
-)!;
+const DEFAULT_CHAT_MODEL = anthropicModels[0]!;
 
 interface ChatContextType {
   // Chat state
@@ -96,6 +94,8 @@ export function ChatProvider({
   initialPreferences,
 }: ChatProviderProps) {
   const utils = api.useUtils();
+
+  console.log(initialPreferences);
 
   const [selectedChatModel, setSelectedChatModelState] =
     useState<LanguageModel>(
