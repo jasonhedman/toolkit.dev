@@ -68,9 +68,11 @@ export const providers: (
     : []),
     ...("AUTH_SPOTIFY_ID" in env && "AUTH_SPOTIFY_SECRET" in env
       ? [
+        // Add scopes here to read/write user information - refer https://developer.spotify.com/documentation/web-api/concepts/scopes
         SpotifyProvider({
             clientId: env.AUTH_SPOTIFY_ID,
             clientSecret: env.AUTH_SPOTIFY_SECRET,
+            authorization:"https://accounts.spotify.com/authorize?scope=user-read-email playlist-read-private playlist-read-collaborative"
           }),
         ]
       : []),

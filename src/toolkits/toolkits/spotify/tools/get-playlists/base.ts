@@ -16,6 +16,26 @@ export const getPlaylistsBase = createBaseTool({
         name: z.string(),
         url: z.string().url(),
         image: z.string().url().optional(),
+        description: z.string(),
+        public: z.boolean(),
+        collaborative: z.boolean(),
+        owner: z.object({
+          id: z.string(),
+          display_name: z.string().optional(),
+        }),
+        tracks: z.object({
+          total: z.number(),
+        }),
+        snapshot_id: z.string(),
+        uri: z.string(),
+        type: z.string(),
+        images: z.array(
+          z.object({
+            url: z.string().url(),
+            height: z.number().nullable(),
+            width: z.number().nullable(),
+          })
+        ),
       })
     ),
   }),

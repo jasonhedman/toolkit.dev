@@ -8,15 +8,8 @@ import { Loader2 } from "lucide-react";
 import { ToolkitGroups } from "@/toolkits/types";
 import { Toolkits } from "../shared";
 import { baseSpotifyToolkitConfig } from "./base";
+import { getPlaylistsToolConfigClient } from "./tools/get-playlists/client";
 
-//TODO: Implement the actual CallComponent and ResultComponent for production use
-const getPlaylistsToolConfigClient = {
-  description: "Get the user's Spotify playlists.",
-  inputSchema: undefined as any, 
-  outputSchema: undefined as any, 
-  CallComponent: () => null,
-  ResultComponent: () => null,
-};
 
   export const spotifyClientToolkit = createClientToolkit(
     baseSpotifyToolkitConfig,
