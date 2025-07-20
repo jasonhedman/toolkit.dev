@@ -1,16 +1,21 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import Link from "next/link";
 import { motion } from "motion/react";
 import { Code, type LucideIcon } from "lucide-react";
 import { CardTitle } from "@/components/ui/card";
 import { CodeBlock } from "@/components/ui/code-block";
 import { HStack, VStack } from "@/components/ui/stack";
-import { toolkitCreationSteps } from "./data";
+import { toolkitCreationTabs } from "./data";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 export const ToolkitCreationSection: React.FC = () => {
+  const [activeTab, setActiveTab] = useState(toolkitCreationTabs[0].id);
+
+  const activeTabData = toolkitCreationTabs.find(tab => tab.id === activeTab);
+
   return (
     <section
       className="from-background to-muted/20 bg-gradient-to-b py-24"
@@ -41,49 +46,110 @@ export const ToolkitCreationSection: React.FC = () => {
           </Link>
         </motion.div>
 
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-          {toolkitCreationSteps.map((step, index) => (
-            <StepCard key={index} {...step} />
-          ))}
+        {/* Tabs and Content Container */}
+        <div className="lg:grid lg:grid-cols-5 lg:gap-8">
+          {/* Tabs - Mobile: horizontal scroll, Desktop: vertical */}
+          <div className="lg:col-span-2">
+            {/* Mobile tabs */}
+            <div className="lg:hidden">
+              <div className="flex gap-2 overflow-x-auto pb-4 scrollbar-hide">
+                {toolkitCreationTabs.map((tab) => (
+                  <TabButton
+                    key={tab.id}
+                    tab={tab}
+                    isActive={activeTab === tab.id}
+                    onClick={() => setActiveTab(tab.id)}
+                    className="min-w-max"
+                  />
+                ))}
+              </div>
+            </div>
+
+            {/* Desktop tabs */}
+            <div className="hidden lg:block">
+              <VStack className="gap-2">
+                {toolkitCreationTabs.map((tab) => (
+                  <TabButton
+                    key={tab.id}
+                    tab={tab}
+                    isActive={activeTab === tab.id}
+                    onClick={() => setActiveTab(tab.id)}
+                    className="w-full"
+                  />
+                ))}
+              </VStack>
+            </div>
+          </div>
+
+          {/* Content Area */}
+          <div className="lg:col-span-3 mt-6 lg:mt-0">
+            {activeTabData && (
+              <motion.div
+                key={activeTab}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3 }}
+                className="h-full"
+              >
+                <CodeBlock
+                  language="typescript"
+                  value={activeTabData.code}
+                  heading="Example Code"
+                  showLineNumbers={true}
+                  allowCopy={true}
+                  headerClassName="bg-primary/20 dark:bg-primary/20 py-3"
+                  headingClassName="text-lg font-bold"
+                  className="h-full min-h-[500px]"
+                />
+              </motion.div>
+            )}
+          </div>
         </div>
       </div>
     </section>
   );
 };
 
-const StepCard: React.FC<{
-  icon: LucideIcon;
-  title: string;
-  description: string;
-  code: string;
-  codeTitle: string;
-  delay: number;
-}> = ({ icon: Icon, title, description, code, codeTitle, delay }) => (
-  <motion.div
-    initial={{ opacity: 0, y: 20 }}
-    whileInView={{ opacity: 1, y: 0 }}
-    transition={{ delay, duration: 0.5 }}
-    viewport={{ once: true }}
-  >
-    <VStack className="h-full items-start gap-4">
-      <HStack className="gap-4">
-        <div className="bg-primary/40 rounded-lg p-2">
-          {<Icon className="size-6" />}
+const TabButton: React.FC<{
+  tab: {
+    id: string;
+    title: string;
+    description: string;
+    icon: LucideIcon;
+  };
+  isActive: boolean;
+  onClick: () => void;
+  className?: string;
+}> = ({ tab, isActive, onClick, className }) => {
+  const Icon = tab.icon;
+
+  return (
+    <button
+      onClick={onClick}
+      className={cn(
+        "text-left p-4 rounded-lg border transition-all duration-200 hover:shadow-md",
+        isActive
+          ? "bg-primary/10 border-primary/50 shadow-md"
+          : "bg-card border-border hover:bg-muted/50",
+        className
+      )}
+    >
+      <HStack className="gap-3 items-start">
+        <div className={cn(
+          "rounded-lg p-2 shrink-0",
+          isActive ? "bg-primary/20" : "bg-primary/10"
+        )}>
+          <Icon className="size-5" />
         </div>
-        <div>
-          <CardTitle className="text-lg">{title}</CardTitle>
-          <p className="text-muted-foreground text-sm">{description}</p>
-        </div>
+        <VStack className="gap-1 min-w-0">
+          <CardTitle className="text-sm font-semibold leading-tight">
+            {tab.title}
+          </CardTitle>
+          <p className="text-muted-foreground text-xs leading-relaxed">
+            {tab.description}
+          </p>
+        </VStack>
       </HStack>
-      <CodeBlock
-        language="typescript"
-        value={code}
-        heading={codeTitle}
-        showLineNumbers={false}
-        allowCopy={false}
-        headerClassName="bg-primary/20 dark:bg-primary/20 py-2"
-        headingClassName="text-base font-bold"
-      />
-    </VStack>
-  </motion.div>
-);
+    </button>
+  );
+};
