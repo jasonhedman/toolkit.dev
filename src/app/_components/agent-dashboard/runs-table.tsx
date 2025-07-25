@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useMemo } from "react";
 import {
   Table,
   TableBody,
@@ -32,11 +32,13 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
+import { useAgentRuns } from "@/app/_hooks/use-agent-runs";
+import { useCancelAgentRun } from "@/app/_hooks/use-cancel-agent-run";
 
 interface AgentRun {
   id: string;
   taskId: string;
-  status: "QUEUED" | "EXECUTING" | "COMPLETED" | "FAILED" | "CANCELLED";
+  status: "WAITING_FOR_DEPLOY" | "QUEUED" | "EXECUTING" | "REATTEMPTING" | "FROZEN" | "COMPLETED" | "CANCELED" | "FAILED" | "CRASHED" | "INTERRUPTED" | "SYSTEM_FAILURE" | "DELAYED" | "EXPIRED" | "TIMED_OUT";
   model: string;
   prompt: string;
   toolkits: string[];
@@ -44,6 +46,9 @@ interface AgentRun {
   completedAt?: string;
   output?: string;
   error?: string;
+  durationMs?: number;
+  costInCents?: number;
+  metadata?: Record<string, any>;
 }
 
 const getStatusIcon = (status: AgentRun["status"]) => {
@@ -56,7 +61,7 @@ const getStatusIcon = (status: AgentRun["status"]) => {
       return <CheckCircle className="h-4 w-4 text-green-500" />;
     case "FAILED":
       return <XCircle className="h-4 w-4 text-red-500" />;
-    case "CANCELLED":
+    case "CANCELED":
       return <XCircle className="h-4 w-4 text-gray-500" />;
     default:
       return <Clock className="h-4 w-4 text-gray-500" />;
@@ -86,7 +91,7 @@ const getStatusBadge = (status: AgentRun["status"]) => {
         {getStatusIcon(status)}
         Failed
       </Badge>;
-    case "CANCELLED":
+    case "CANCELED":
       return <Badge variant="outline" className={`${baseClasses} border-gray-500 text-gray-700`}>
         {getStatusIcon(status)}
         Cancelled
@@ -97,71 +102,34 @@ const getStatusBadge = (status: AgentRun["status"]) => {
 };
 
 export const AgentRunsTable = () => {
-  const [runs, setRuns] = useState<AgentRun[]>([]);
-  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
-
-  const fetchRuns = async () => {
-    try {
-      setLoading(true);
-      const response = await fetch("/api/agent/runs");
-      if (!response.ok) {
-        throw new Error("Failed to fetch runs");
-      }
-      const data = await response.json();
-      setRuns(data.runs || []);
-    } catch (error) {
-      console.error("Error fetching runs:", error);
-      toast.error("Failed to fetch agent runs");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchRuns();
-    
-    // Poll for updates every 5 seconds
-    const interval = setInterval(fetchRuns, 5000);
-    return () => clearInterval(interval);
-  }, []);
-
-  const filteredRuns = runs.filter((run) => {
-    const matchesSearch = 
-      run.prompt.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      run.model.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      run.taskId.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesStatus = statusFilter === "all" || run.status === statusFilter;
-    
-    return matchesSearch && matchesStatus;
+  
+  const { runs, isLoading, refetch } = useAgentRuns({
+    status: statusFilter === "all" ? undefined : statusFilter,
   });
+  
+  const { cancelRun } = useCancelAgentRun();
 
-  const viewRunDetails = (run: AgentRun) => {
+  const filteredRuns = useMemo(() => {
+    return runs.filter((run) => {
+      const matchesSearch = 
+        run.prompt.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        run.model.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        run.taskId.toLowerCase().includes(searchTerm.toLowerCase());
+      
+      const matchesStatus = statusFilter === "all" || run.status === statusFilter;
+      
+      return matchesSearch && matchesStatus;
+    });
+  }, [runs, searchTerm, statusFilter]);
+
+  const viewRunDetails = (run: any) => {
     // Open a modal or navigate to details page
     toast.info(`Viewing details for run: ${run.taskId}`);
   };
 
-  const cancelRun = async (runId: string) => {
-    try {
-      const response = await fetch(`/api/agent/runs/${runId}/cancel`, {
-        method: "POST",
-      });
-      
-      if (!response.ok) {
-        throw new Error("Failed to cancel run");
-      }
-      
-      toast.success("Run cancelled successfully");
-      fetchRuns();
-    } catch (error) {
-      console.error("Error cancelling run:", error);
-      toast.error("Failed to cancel run");
-    }
-  };
-
-  if (loading && runs.length === 0) {
+  if (isLoading && runs.length === 0) {
     return (
       <Card className="p-8">
         <div className="flex items-center justify-center space-x-2">
@@ -212,7 +180,7 @@ export const AgentRunsTable = () => {
           </DropdownMenuContent>
         </DropdownMenu>
 
-        <Button onClick={fetchRuns} variant="outline" size="sm">
+        <Button onClick={refetch} variant="outline" size="sm">
           <RefreshCw className="h-4 w-4" />
         </Button>
       </div>
@@ -264,7 +232,7 @@ export const AgentRunsTable = () => {
                   </TableCell>
                   <TableCell>
                     <div className="flex flex-wrap gap-1">
-                      {run.toolkits.slice(0, 2).map((toolkit) => (
+                      {run.toolkits.slice(0, 2).map((toolkit: string) => (
                         <Badge key={toolkit} variant="secondary" className="text-xs">
                           {toolkit}
                         </Badge>

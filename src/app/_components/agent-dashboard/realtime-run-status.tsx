@@ -1,11 +1,12 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Clock, CheckCircle, XCircle, Loader2 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
+import { useAgentRuns } from "@/app/_hooks/use-agent-runs";
 
 interface AgentRun {
   id: string;
@@ -29,37 +30,12 @@ interface Props {
 }
 
 export const RealtimeRunStatus: React.FC<Props> = ({ runId, onComplete }) => {
-  const [run, setRun] = useState<AgentRun | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { runs, isLoading, error } = useAgentRuns({
+    runId,
+    pollingInterval: 2000,
+  });
 
-  const fetchRunStatus = async () => {
-    try {
-      const response = await fetch(`/api/agent/runs?runId=${runId}`);
-      if (!response.ok) {
-        throw new Error("Failed to fetch run status");
-      }
-      const data = await response.json();
-      const foundRun = data.runs?.find((r: AgentRun) => r.taskId === runId);
-      if (foundRun) {
-        setRun(foundRun);
-        setError(null);
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Unknown error");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchRunStatus();
-    
-    // Poll for updates every 2 seconds
-    const interval = setInterval(fetchRunStatus, 2000);
-    
-    return () => clearInterval(interval);
-  }, [runId]);
+  const run = runs.length > 0 ? runs[0] : null;
 
   React.useEffect(() => {
     if (run?.status === "COMPLETED" && onComplete) {
@@ -72,13 +48,13 @@ export const RealtimeRunStatus: React.FC<Props> = ({ runId, onComplete }) => {
       <Card className="p-4 border-red-200">
         <div className="flex items-center gap-2 text-red-600">
           <XCircle className="h-4 w-4" />
-          <span className="text-sm">Error loading run status: {error}</span>
+          <span className="text-sm">Error loading run status: {error.message}</span>
         </div>
       </Card>
     );
   }
 
-  if (!run) {
+  if (isLoading || !run) {
     return (
       <Card className="p-4">
         <div className="flex items-center gap-2">

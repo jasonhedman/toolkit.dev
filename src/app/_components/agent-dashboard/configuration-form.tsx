@@ -17,9 +17,9 @@ import { allLanguageModels } from "@/ai/models/all";
 import type { LanguageModel } from "@/ai/types";
 import { clientToolkits } from "@/toolkits/toolkits/client";
 import type { Toolkits } from "@/toolkits/toolkits/shared";
-import { toast } from "sonner";
 import { Loader2, Play, Sparkles } from "lucide-react";
 import { ToolkitIcons } from "@/components/toolkit/toolkit-icons";
+import { useRunAgent } from "@/app/_hooks/use-run-agent";
 
 interface AgentConfig {
   model: string;
@@ -43,8 +43,8 @@ export const AgentConfigurationForm = ({ onRunStarted }: Props) => {
     systemPrompt: defaultSystemPrompt,
     useNativeSearch: false,
   });
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedToolkits, setSelectedToolkits] = useState<Set<string>>(new Set());
+  const { runAgent, isLoading, data, reset } = useRunAgent();
 
   const handleToolkitToggle = (toolkitId: string) => {
     const newSelected = new Set(selectedToolkits);
@@ -70,49 +70,33 @@ export const AgentConfigurationForm = ({ onRunStarted }: Props) => {
     e.preventDefault();
     
     if (!config.prompt.trim()) {
-      toast.error("Please enter a prompt for the agent");
       return;
     }
 
-    setIsSubmitting(true);
-    
-    try {
-      const response = await fetch("/api/agent/run", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          messages: [{ role: "user", content: config.prompt }],
-          toolkits: config.toolkits,
-          selectedChatModel: config.model,
-          systemPrompt: config.systemPrompt,
-          useNativeSearch: config.useNativeSearch,
-        }),
-      });
+    runAgent({
+      messages: [{ role: "user", content: config.prompt }],
+      toolkits: config.toolkits,
+      selectedChatModel: config.model,
+      systemPrompt: config.systemPrompt,
+      useNativeSearch: config.useNativeSearch,
+    });
+  };
 
-      if (!response.ok) {
-        throw new Error("Failed to start agent run");
-      }
-
-      const result = await response.json();
-      toast.success(`Agent run started! Task ID: ${result.taskId}`);
-      
+  // Handle successful run start
+  React.useEffect(() => {
+    if (data) {
       // Notify parent component about the new run
       if (onRunStarted) {
-        onRunStarted(result.taskId, result.handle);
+        onRunStarted(data.taskId, data.handle);
       }
       
       // Clear the prompt but keep other settings
       setConfig(prev => ({ ...prev, prompt: "" }));
       
-    } catch (error) {
-      console.error("Error starting agent run:", error);
-      toast.error("Failed to start agent run");
-    } finally {
-      setIsSubmitting(false);
+      // Reset the mutation state for next run
+      reset();
     }
-  };
+  }, [data, onRunStarted, reset]);
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
@@ -243,8 +227,8 @@ export const AgentConfigurationForm = ({ onRunStarted }: Props) => {
 
       {/* Submit Button */}
       <div className="flex justify-end">
-        <Button type="submit" disabled={isSubmitting || !config.prompt.trim()} className="flex items-center gap-2">
-          {isSubmitting ? (
+        <Button type="submit" disabled={isLoading || !config.prompt.trim()} className="flex items-center gap-2">
+          {isLoading ? (
             <>
               <Loader2 className="h-4 w-4 animate-spin" />
               Starting Agent...

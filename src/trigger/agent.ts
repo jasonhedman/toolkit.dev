@@ -1,6 +1,6 @@
 import { logger, task } from "@trigger.dev/sdk/v3";
 import { generateText } from "ai";
-import { createAgentConfig } from "@/ai/agent-config";
+import { createRuntimeAgentConfig } from "@/ai/agent-config";
 import { convertToCoreMessages } from "ai";
 import { openrouter } from "@openrouter/ai-sdk-provider";
 import { Toolkits } from "@/toolkits/toolkits/shared";
@@ -27,8 +27,8 @@ export const runAgentTask = task({
     });
 
     try {
-      // Use shared agent configuration
-      const agentConfig = await createAgentConfig({
+      // Use runtime agent configuration (without tool usage tracking)
+      const agentConfig = await createRuntimeAgentConfig({
         toolkits: payload.toolkits || [],
         selectedChatModel: payload.selectedChatModel || "openai/gpt-4",
         useNativeSearch: payload.useNativeSearch || false,
