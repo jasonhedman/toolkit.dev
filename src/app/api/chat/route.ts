@@ -28,13 +28,11 @@ import type { ResumableStreamContext } from "resumable-stream";
 import type {
   CoreAssistantMessage,
   CoreToolMessage,
-  Tool,
   UIMessage,
 } from "ai";
 import type { Chat } from "@prisma/client";
-import { openai } from "@ai-sdk/openai";
-import { getServerToolkit } from "@/toolkits/toolkits/server";
 import { languageModels } from "@/ai/models";
+import { createAgentConfig } from "@/ai/agent-config";
 
 export const maxDuration = 60;
 
@@ -153,106 +151,25 @@ export async function POST(request: Request) {
     const streamId = generateUUID();
     await api.streams.createStreamId({ streamId, chatId: id });
 
-    const toolkitTools = await Promise.all(
-      toolkits.map(async ({ id, parameters }) => {
-        const toolkit = getServerToolkit(id);
-        const tools = await toolkit.tools(parameters);
-        return Object.keys(tools).reduce(
-          (acc, toolName) => {
-            const serverTool = tools[toolName as keyof typeof tools];
-            acc[`${id}_${toolName}`] = tool({
-              description: serverTool.description,
-              parameters: serverTool.inputSchema,
-              execute: async (args) => {
-                try {
-                  const result = await serverTool.callback(args);
-
-                  // Increment tool usage on successful execution
-                  try {
-                    const serverCaller = await createServerOnlyCaller();
-                    await serverCaller.tools.incrementToolUsageServer({
-                      toolkit: id,
-                      tool: toolName,
-                    });
-                  } catch (error) {
-                    console.error("Failed to increment tool usage:", error);
-                  }
-
-                  if (serverTool.message) {
-                    return {
-                      result,
-                      message:
-                        typeof serverTool.message === "function"
-                          ? serverTool.message(result)
-                          : serverTool.message,
-                    };
-                  } else {
-                    return {
-                      result,
-                    };
-                  }
-                } catch (error) {
-                  console.error(error);
-                  return {
-                    isError: true,
-                    result: {
-                      error:
-                        error instanceof Error
-                          ? error.message
-                          : "An error occurred while executing the tool",
-                    },
-                  };
-                }
-              },
-            });
-            return acc;
-          },
-          {} as Record<string, Tool>,
-        );
-      }),
-    );
-
-    // Collect toolkit system prompts
-    const toolkitSystemPrompts = await Promise.all(
-      toolkits.map(async ({ id }) => {
-        const toolkit = getServerToolkit(id);
-        return toolkit.systemPrompt;
-      }),
-    );
-
-    const tools = toolkitTools.reduce(
-      (acc, toolkitTools) => {
-        return {
-          ...acc,
-          ...toolkitTools,
-        };
-      },
-      {} as Record<string, Tool>,
-    );
-
-    const isOpenAi = selectedChatModel.startsWith("openai");
-
-    // Build comprehensive system prompt
-    const baseSystemPrompt = `You are a helpful assistant. The current date and time is ${new Date().toLocaleString()}. Whenever you are asked to write code, you must include a language with \`\`\``;
-
-    const toolkitInstructions =
-      toolkitSystemPrompts.length > 0
-        ? `\n\n## Available Toolkits\n\nYou have access to the following toolkits and their capabilities:\n\n${toolkitSystemPrompts.join("\n\n---\n\n")}\n\n${systemPrompt ?? ""}`
-        : "";
-
-    const fullSystemPrompt = baseSystemPrompt + toolkitInstructions;
+    // Use shared agent configuration
+    const agentConfig = await createAgentConfig({
+      toolkits,
+      selectedChatModel,
+      useNativeSearch,
+      systemPrompt,
+    });
 
     const stream = createDataStream({
       execute: (dataStream) => {
         const result = streamText(
-          `${selectedChatModel}${useNativeSearch ? ":search" : ""}`,
+          `${agentConfig.selectedChatModel}${agentConfig.useNativeSearch ? ":search" : ""}` as `${string}/${string}`,
           {
-            system: fullSystemPrompt,
+            system: agentConfig.systemPrompt,
             messages: convertToCoreMessages(messages),
-            maxSteps: 15,
-            toolCallStreaming: true,
+            maxSteps: agentConfig.maxSteps,
+            toolCallStreaming: agentConfig.toolCallStreaming,
             experimental_transform: smoothStream({ chunking: "word" }),
-            experimental_generateMessageId: generateUUID,
+            experimental_generateMessageId: agentConfig.experimental_generateMessageId,
             onError: (error) => {
               console.error("Stream error occurred:", error);
 
@@ -339,12 +256,7 @@ export async function POST(request: Request) {
                 }
               }
             },
-            tools: {
-              ...tools,
-              ...(isOpenAi && useNativeSearch
-                ? { web_search_preview: openai.tools.webSearchPreview() }
-                : {}),
-            },
+            tools: agentConfig.tools,
           },
         );
 
