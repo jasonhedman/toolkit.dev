@@ -1,25 +1,33 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/server/db";
 import { auth } from "@/server/auth";
+import { StravaTokenManager } from "@/lib/strava-auth";
+import { RateLimiter } from "@/lib/rate-limit";
 
 export async function GET(request: NextRequest) {
+  // Apply rate limiting
+  const rateLimit = RateLimiter.checkRateLimit(request, { maxRequests: 5, windowMs: 15 * 60 * 1000 });
+  
+  if (!rateLimit.allowed) {
+    console.error("🚴 Rate limit exceeded for Strava OAuth");
+    return NextResponse.redirect(`${process.env.NEXTAUTH_URL}/?error=rate_limit_exceeded`);
+  }
+
   const { searchParams } = new URL(request.url);
   const code = searchParams.get("code");
   const state = searchParams.get("state");
   const error = searchParams.get("error");
 
-  console.log("🚴 CUSTOM STRAVA OAUTH HANDLER");
-  console.log("Code:", code);
-  console.log("State:", state);
-  console.log("Error:", error);
+  // Log minimal info for debugging (no sensitive data)
+  console.log("🚴 Strava OAuth callback received");
 
   if (error) {
-    console.log("🚴 OAuth error:", error);
+    console.error("🚴 Strava OAuth error:", error);
     return NextResponse.redirect(`${process.env.NEXTAUTH_URL}/?error=strava_auth_failed`);
   }
 
   if (!code) {
-    console.log("🚴 No authorization code received");
+    console.error("🚴 No authorization code received");
     return NextResponse.redirect(`${process.env.NEXTAUTH_URL}/?error=strava_no_code`);
   }
 
@@ -27,43 +35,22 @@ export async function GET(request: NextRequest) {
     // Get the current session
     const session = await auth();
     if (!session?.user?.id) {
-      console.log("🚴 No valid session found");
+      console.error("🚴 No valid session found");
       return NextResponse.redirect(`${process.env.NEXTAUTH_URL}/login?error=session_required`);
     }
 
-    console.log("🚴 Exchanging code for tokens...");
-    
-    // Exchange authorization code for access token using the EXACT format that works
-    const tokenParams = new URLSearchParams({
-      client_id: process.env.AUTH_STRAVA_ID!,
-      client_secret: process.env.AUTH_STRAVA_SECRET!,
-      code: code,
-      grant_type: "authorization_code",
-    });
-
-    console.log("🚴 Token request params:", tokenParams.toString());
-
-    const tokenResponse = await fetch("https://www.strava.com/oauth/token", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded",
-        "Accept": "*/*",
-      },
-      body: tokenParams,
-    });
-
-    console.log("🚴 Token response status:", tokenResponse.status);
-    console.log("🚴 Token response headers:", Object.fromEntries(tokenResponse.headers.entries()));
-
-    if (!tokenResponse.ok) {
-      const errorText = await tokenResponse.text();
-      console.log("🚴 Token exchange failed:", errorText);
-      return NextResponse.redirect(`${process.env.NEXTAUTH_URL}/?error=strava_token_failed`);
+    // Validate state parameter for CSRF protection
+    if (!StravaTokenManager.validateState(state, process.env.NEXTAUTH_URL)) {
+      console.error("🚴 Invalid state parameter");
+      return NextResponse.redirect(`${process.env.NEXTAUTH_URL}/?error=strava_invalid_state`);
     }
 
-    const tokenData = await tokenResponse.json();
-    console.log("🚴 Token exchange SUCCESS!");
-    console.log("🚴 Token data keys:", Object.keys(tokenData));
+    console.log("🚴 Exchanging authorization code for tokens...");
+    
+    // Exchange authorization code for access token using secure token manager
+    const tokenData = await StravaTokenManager.exchangeCodeForToken(code);
+
+    console.log("🚴 Token exchange successful");
 
     // Save the Strava account to the database
     const existingAccount = await db.account.findFirst({
@@ -80,7 +67,7 @@ export async function GET(request: NextRequest) {
         data: {
           access_token: tokenData.access_token,
           refresh_token: tokenData.refresh_token,
-          expires_at: tokenData.expires_at ? Math.floor(Date.now() / 1000) + tokenData.expires_in : null,
+          expires_at: Math.floor(Date.now() / 1000) + tokenData.expires_in,
           token_type: tokenData.token_type,
           scope: tokenData.scope,
           providerAccountId: tokenData.athlete.id.toString(),
@@ -97,7 +84,7 @@ export async function GET(request: NextRequest) {
           providerAccountId: tokenData.athlete.id.toString(),
           access_token: tokenData.access_token,
           refresh_token: tokenData.refresh_token,
-          expires_at: tokenData.expires_at ? Math.floor(Date.now() / 1000) + tokenData.expires_in : null,
+          expires_at: Math.floor(Date.now() / 1000) + tokenData.expires_in,
           token_type: tokenData.token_type,
           scope: tokenData.scope,
         },
@@ -117,14 +104,14 @@ export async function GET(request: NextRequest) {
           redirectUrl = decodeURIComponent(redirectParam);
         }
       } catch (error) {
-        console.log("🚴 Error parsing state parameter:", error);
+        console.error("🚴 Error parsing state parameter:", error);
       }
     }
     
     return NextResponse.redirect(redirectUrl);
 
   } catch (error) {
-    console.error("🚴 Custom Strava OAuth error:", error);
+    console.error("🚴 Strava OAuth error:", error instanceof Error ? error.message : 'Unknown error');
     return NextResponse.redirect(`${process.env.NEXTAUTH_URL}/?error=strava_oauth_failed`);
   }
 } 

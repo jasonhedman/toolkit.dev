@@ -29,6 +29,11 @@ const createAuthSchema = () => {
     authSchema.AUTH_NOTION_SECRET = z.string();
   }
 
+  if (process.env.AUTH_STRAVA_ID || process.env.AUTH_STRAVA_SECRET) {
+    authSchema.AUTH_STRAVA_ID = z.string();
+    authSchema.AUTH_STRAVA_SECRET = z.string();
+  }
+
   return authSchema;
 };
 
@@ -60,9 +65,9 @@ const authRuntimeEnv = () => {
     object.AUTH_NOTION_SECRET = process.env.AUTH_NOTION_SECRET;
   }
 
-  if (process.env.AUTH_NOTION_ID || process.env.AUTH_NOTION_SECRET) {
-    object.AUTH_NOTION_ID = process.env.AUTH_NOTION_ID;
-    object.AUTH_NOTION_SECRET = process.env.AUTH_NOTION_SECRET;
+  if (process.env.AUTH_STRAVA_ID || process.env.AUTH_STRAVA_SECRET) {
+    object.AUTH_STRAVA_ID = process.env.AUTH_STRAVA_ID;
+    object.AUTH_STRAVA_SECRET = process.env.AUTH_STRAVA_SECRET;
   }
 
   return object;
@@ -127,7 +132,7 @@ export const env = createEnv({
    * `NEXT_PUBLIC_`.
    */
   client: {
-    // NEXT_PUBLIC_CLIENTVAR: z.string(),
+    NEXT_PUBLIC_STRAVA_CLIENT_ID: z.string(),
   },
 
   /**
@@ -145,6 +150,7 @@ export const env = createEnv({
     MEM0_API_KEY: process.env.MEM0_API_KEY,
     E2B_API_KEY: process.env.E2B_API_KEY,
     GITHUB_TOKEN: process.env.GITHUB_TOKEN,
+    NEXT_PUBLIC_STRAVA_CLIENT_ID: process.env.NEXT_PUBLIC_STRAVA_CLIENT_ID,
     ...authRuntimeEnv(),
     ...imageModelRuntimeEnv(),
   },

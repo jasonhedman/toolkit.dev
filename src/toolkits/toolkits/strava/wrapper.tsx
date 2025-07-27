@@ -44,13 +44,20 @@ export const StravaWrapper: ClientToolkitWrapper = ({ Item }) => {
           content={
             <AuthButton
               onClick={() => {
+                // Generate secure state parameter
+                const redirectUrl = `${window.location.href}?${Toolkits.Strava}=true`;
+                const stateParams = new URLSearchParams();
+                stateParams.set("redirect", encodeURIComponent(redirectUrl));
+                stateParams.set("timestamp", Date.now().toString());
+                const state = stateParams.toString();
+
                 // Direct OAuth flow to bypass NextAuth's broken Strava handling
                 const stravaAuthUrl = new URL("https://www.strava.com/oauth/authorize");
-                stravaAuthUrl.searchParams.set("client_id", "170027");
+                stravaAuthUrl.searchParams.set("client_id", process.env.NEXT_PUBLIC_STRAVA_CLIENT_ID || "");
                 stravaAuthUrl.searchParams.set("response_type", "code");
                 stravaAuthUrl.searchParams.set("redirect_uri", `${window.location.origin}/api/auth/strava`);
                 stravaAuthUrl.searchParams.set("scope", "read,activity:read_all");
-                stravaAuthUrl.searchParams.set("state", `redirect=${encodeURIComponent(window.location.href + "?" + Toolkits.Strava + "=true")}`);
+                stravaAuthUrl.searchParams.set("state", state);
                 
                 window.location.href = stravaAuthUrl.toString();
               }}

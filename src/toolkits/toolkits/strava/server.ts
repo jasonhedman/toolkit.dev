@@ -13,6 +13,7 @@ import {
 } from "./tools/server";
 import { StravaTools } from "./tools";
 import { api } from "@/trpc/server";
+import { StravaTokenManager } from "@/lib/strava-auth";
 
 export const stravaToolkitServer = createServerToolkit(
   baseStravaToolkitConfig,
@@ -56,11 +57,8 @@ export const stravaToolkitServer = createServerToolkit(
       throw new Error("No Strava account found. Please connect your Strava account first.");
     }
 
-    // Create Strava API client with access token
-    const stravaApiHeaders = {
-      'Authorization': `Bearer ${account.access_token}`,
-      'Content-Type': 'application/json',
-    };
+    // Get valid access token with automatic refresh using secure token manager
+    const stravaApiHeaders = await StravaTokenManager.createApiHeaders(account.userId);
 
     return {
       [StravaTools.GetAthleteProfile]: stravaGetAthleteProfileToolConfigServer(stravaApiHeaders),
