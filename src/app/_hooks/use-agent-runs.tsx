@@ -4,7 +4,6 @@ import { useState, useEffect } from "react";
 interface UseAgentRunsOptions {
   limit?: number;
   status?: string;
-  runId?: string;
   pollingInterval?: number;
   enabled?: boolean;
 }
@@ -13,7 +12,6 @@ export const useAgentRuns = (options: UseAgentRunsOptions = {}) => {
   const {
     limit = 50,
     status,
-    runId,
     pollingInterval = 5000,
     enabled = true,
   } = options;
@@ -24,7 +22,6 @@ export const useAgentRuns = (options: UseAgentRunsOptions = {}) => {
     {
       limit,
       status,
-      runId,
     },
     {
       enabled,

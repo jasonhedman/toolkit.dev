@@ -6,23 +6,8 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Clock, CheckCircle, XCircle, Loader2 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
-import { useAgentRuns } from "@/app/_hooks/use-agent-runs";
-
-interface AgentRun {
-  id: string;
-  taskId: string;
-  status: "WAITING_FOR_DEPLOY" | "QUEUED" | "EXECUTING" | "REATTEMPTING" | "FROZEN" | "COMPLETED" | "CANCELED" | "FAILED" | "CRASHED" | "INTERRUPTED" | "SYSTEM_FAILURE" | "DELAYED" | "EXPIRED" | "TIMED_OUT";
-  model: string;
-  prompt: string;
-  toolkits: string[];
-  createdAt: string;
-  completedAt?: string;
-  output?: string;
-  error?: string;
-  durationMs?: number;
-  costInCents?: number;
-  metadata?: Record<string, any>;
-}
+import { useAgentRun } from "@/app/_hooks/use-agent-run";
+import type { AgentRun } from "./types";
 
 interface Props {
   runId: string;
@@ -30,12 +15,10 @@ interface Props {
 }
 
 export const RealtimeRunStatus: React.FC<Props> = ({ runId, onComplete }) => {
-  const { runs, isLoading, error } = useAgentRuns({
+  const { run, isLoading, error } = useAgentRun({
     runId,
     pollingInterval: 2000,
   });
-
-  const run = runs.length > 0 ? runs[0] : null;
 
   React.useEffect(() => {
     if (run?.status === "COMPLETED" && onComplete) {

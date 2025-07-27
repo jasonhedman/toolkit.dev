@@ -64,19 +64,51 @@ export const runAgentTask = task({
         usage: result.usage
       });
 
+      // Return a more ergonomic structure for frontend consumption
       return {
         success: true,
-        response: result.text,
-        usage: result.usage,
-        finishReason: result.finishReason,
-        toolResults: result.toolResults || [],
+        data: {
+          // Main response content
+          response: result.text,
+          finishReason: result.finishReason,
+          
+          // Usage and performance metrics
+          usage: {
+            promptTokens: result.usage?.promptTokens || 0,
+            completionTokens: result.usage?.completionTokens || 0,
+            totalTokens: result.usage?.totalTokens || 0,
+            steps: result.steps?.length || 0,
+          },
+          
+          // Tool execution results
+          toolResults: result.toolResults || [],
+          
+          // Input context for reference
+          input: {
+            model: payload.selectedChatModel || "openai/gpt-4",
+            prompt: payload.messages?.filter((msg: any) => msg.role === "user")?.pop()?.content || "No prompt",
+            toolkits: payload.toolkits?.map((t: any) => t.id) || [],
+            systemPrompt: payload.systemPrompt,
+            useNativeSearch: payload.useNativeSearch || false,
+          },
+          
+          // Metadata
+          metadata: {
+            taskId: ctx.task.id,
+            timestamp: new Date().toISOString(),
+          }
+        }
       };
 
     } catch (error) {
       logger.error("Agent task failed", { error });
       return {
         success: false,
-        error: error instanceof Error ? error.message : "Unknown error",
+        error: {
+          message: error instanceof Error ? error.message : "Unknown error",
+          timestamp: new Date().toISOString(),
+          taskId: ctx.task.id,
+        }
       };
     }
   },
@@ -150,7 +182,7 @@ export const companyResearchTask = task({
        if (result.ok) {
          logger.log("Company research completed", { 
            companyName: payload.companyName,
-           responseLength: result.output.response?.length || 0
+           responseLength: result.output.success && result.output.data ? result.output.data.response?.length || 0 : 0
          });
          return result.output;
        } else {

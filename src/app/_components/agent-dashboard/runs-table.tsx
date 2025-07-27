@@ -30,26 +30,12 @@ import {
   Search,
   Filter
 } from "lucide-react";
-import { toast } from "sonner";
+
 import { formatDistanceToNow } from "date-fns";
+import { useRouter } from "next/navigation";
 import { useAgentRuns } from "@/app/_hooks/use-agent-runs";
 import { useCancelAgentRun } from "@/app/_hooks/use-cancel-agent-run";
-
-interface AgentRun {
-  id: string;
-  taskId: string;
-  status: "WAITING_FOR_DEPLOY" | "QUEUED" | "EXECUTING" | "REATTEMPTING" | "FROZEN" | "COMPLETED" | "CANCELED" | "FAILED" | "CRASHED" | "INTERRUPTED" | "SYSTEM_FAILURE" | "DELAYED" | "EXPIRED" | "TIMED_OUT";
-  model: string;
-  prompt: string;
-  toolkits: string[];
-  createdAt: string;
-  completedAt?: string;
-  output?: string;
-  error?: string;
-  durationMs?: number;
-  costInCents?: number;
-  metadata?: Record<string, any>;
-}
+import type { AgentRun } from "./types";
 
 const getStatusIcon = (status: AgentRun["status"]) => {
   switch (status) {
@@ -104,6 +90,7 @@ const getStatusBadge = (status: AgentRun["status"]) => {
 export const AgentRunsTable = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const router = useRouter();
   
   const { runs, isLoading, refetch } = useAgentRuns({
     status: statusFilter === "all" ? undefined : statusFilter,
@@ -124,9 +111,8 @@ export const AgentRunsTable = () => {
     });
   }, [runs, searchTerm, statusFilter]);
 
-  const viewRunDetails = (run: any) => {
-    // Open a modal or navigate to details page
-    toast.info(`Viewing details for run: ${run.taskId}`);
+  const viewRunDetails = (run: AgentRun) => {
+    router.push(`/agents/run/${run.taskId}`);
   };
 
   if (isLoading && runs.length === 0) {

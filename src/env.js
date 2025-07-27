@@ -150,6 +150,7 @@ export const env = createEnv({
     MEM0_API_KEY: process.env.MEM0_API_KEY,
     E2B_API_KEY: process.env.E2B_API_KEY,
     GITHUB_TOKEN: process.env.GITHUB_TOKEN,
+    TRIGGER_SECRET_KEY: process.env.TRIGGER_SECRET_KEY,
     ...authRuntimeEnv(),
     ...imageModelRuntimeEnv(),
   },
