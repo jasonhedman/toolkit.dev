@@ -154,6 +154,7 @@ You can also add these providers:
 - [Github Provider](https://authjs.dev/getting-started/providers/github)
 - [Twitter Provider](https://authjs.dev/getting-started/providers/twitter)
 - [Notion Provider](https://authjs.dev/getting-started/providers/notion)
+- **Strava Provider** - Custom OAuth implementation (see Strava Toolkit section below)
 
 > We would love to see more auth providers integrated. Feel free to add any from the [Auth.js](https://authjs.dev/getting-started/providers/apple) supported providers list!
 
@@ -206,6 +207,32 @@ BLOB_READ_WRITE_TOKEN=<your token>
 ```
 
 > We are [working on building a local mock of this SDK] so you dont have to get a key, but for now you will need to get a key from Vercel.
+
+##### 8.5) Strava Toolkit
+
+We've implemented a comprehensive Strava integration with custom OAuth flow. This toolkit provides access to fitness data, activities, performance analytics, and training insights.
+
+**Features:**
+- **9 Powerful Tools** - From athlete profiles to segment leaderboards
+- **Custom OAuth Handler** - Bypasses NextAuth's broken Strava integration
+- **Complete API Coverage** - Activities, stats, segments, routes, and training zones
+- **Rich UI Components** - Activity cards, stats dashboards, and performance visualizations
+
+**Setup:**
+1. Create a Strava application at [Strava Developers](https://developers.strava.com/)
+2. Set authorization callback domain to `localhost:3000` (development)
+3. Add credentials to `.env.local`:
+```env
+AUTH_STRAVA_ID=<your-client-id>
+AUTH_STRAVA_SECRET=<your-client-secret>
+```
+
+**Example Use Cases:**
+- "Analyze my last 5 runs and show me pace trends"
+- "Find challenging cycling segments near San Francisco"
+- "Compare my performance this year vs last year"
+
+See the [Strava Toolkit README](./src/toolkits/toolkits/strava/README.md) for detailed documentation.
 
 #### 9) [OPTIONAL] Set up secondary data storage
 
