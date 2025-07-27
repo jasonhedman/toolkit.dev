@@ -36,13 +36,8 @@ interface StravaProfile {
   updated_at: string;
 }
 
-// Custom Strava provider - using custom OAuth flow due to NextAuth v5 beta issues
+// Strava provider using proper NextAuth OAuth flow
 const StravaProvider = (options: { clientId: string; clientSecret: string }): OAuthConfig<StravaProfile> => {
-  console.log("🚴 STRAVA PROVIDER CREATED:", {
-    clientId: options.clientId,
-    clientSecret: options.clientSecret ? "***PRESENT***" : "MISSING"
-  });
-  
   return {
     id: "strava",
     name: "Strava",
@@ -54,14 +49,11 @@ const StravaProvider = (options: { clientId: string; clientSecret: string }): OA
       params: {
         scope: "read,activity:read_all",
         response_type: "code",
-        redirect_uri: `${process.env.NEXTAUTH_URL}/api/auth/strava`,
       },
     },
-    // Override to use our custom handler (NextAuth v5 beta is broken for Strava)
-    token: `${process.env.NEXTAUTH_URL}/api/auth/strava`, // This won't be used, but required
-    userinfo: "https://www.strava.com/api/v3/athlete", // This won't be used, but required
+    token: "https://www.strava.com/oauth/token",
+    userinfo: "https://www.strava.com/api/v3/athlete",
     profile(profile: StravaProfile) {
-      console.log("🚴 PROFILE MAPPING:", profile);
       return {
         id: profile.id.toString(),
         name: `${profile.firstname} ${profile.lastname}`,
