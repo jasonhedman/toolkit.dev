@@ -14,6 +14,8 @@ import type { notionParameters } from "./notion/base";
 import type { NotionTools } from "./notion/tools";
 import type { e2bParameters } from "./e2b/base";
 import type { E2BTools } from "./e2b/tools/tools";
+import type { stravaParameters } from "./strava/base";
+import type { StravaTools } from "./strava/tools";
 
 export enum Toolkits {
   Exa = "exa",
@@ -24,9 +26,22 @@ export enum Toolkits {
   Memory = "memory",
   Notion = "notion",
   E2B = "e2b",
+  Strava = "strava",
 }
 
-export type ServerToolkitNames = {
+export type ToolkitParameters = {
+  [Toolkits.Exa]: exaParameters;
+  [Toolkits.Image]: imageParameters;
+  [Toolkits.Github]: githubParameters;
+  [Toolkits.GoogleCalendar]: googleCalendarParameters;
+  [Toolkits.GoogleDrive]: googleDriveParameters;
+  [Toolkits.Memory]: mem0Parameters;
+  [Toolkits.Notion]: notionParameters;
+  [Toolkits.E2B]: e2bParameters;
+  [Toolkits.Strava]: stravaParameters;
+};
+
+export type ToolkitTools = {
   [Toolkits.Exa]: ExaTools;
   [Toolkits.Image]: ImageTools;
   [Toolkits.Github]: GithubTools;
@@ -35,15 +50,5 @@ export type ServerToolkitNames = {
   [Toolkits.Memory]: Mem0Tools;
   [Toolkits.Notion]: NotionTools;
   [Toolkits.E2B]: E2BTools;
-};
-
-export type ServerToolkitParameters = {
-  [Toolkits.Exa]: typeof exaParameters.shape;
-  [Toolkits.Image]: typeof imageParameters.shape;
-  [Toolkits.Github]: typeof githubParameters.shape;
-  [Toolkits.GoogleCalendar]: typeof googleCalendarParameters.shape;
-  [Toolkits.GoogleDrive]: typeof googleDriveParameters.shape;
-  [Toolkits.Memory]: typeof mem0Parameters.shape;
-  [Toolkits.Notion]: typeof notionParameters.shape;
-  [Toolkits.E2B]: typeof e2bParameters.shape;
+  [Toolkits.Strava]: StravaTools;
 };

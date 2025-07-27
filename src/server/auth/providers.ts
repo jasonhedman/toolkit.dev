@@ -19,12 +19,72 @@ import type {
 import { IS_DEVELOPMENT } from "@/lib/constants";
 import { db } from "../db";
 
+// Custom Strava provider profile type
+interface StravaProfile {
+  id: number;
+  firstname: string;
+  lastname: string;
+  email: string;
+  profile: string;
+  profile_medium: string;
+  city: string;
+  state: string;
+  country: string;
+  sex: string;
+  premium: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+// Custom Strava provider - using custom OAuth flow due to NextAuth v5 beta issues
+const StravaProvider = (options: { clientId: string; clientSecret: string }): OAuthConfig<StravaProfile> => {
+  console.log("🚴 STRAVA PROVIDER CREATED:", {
+    clientId: options.clientId,
+    clientSecret: options.clientSecret ? "***PRESENT***" : "MISSING"
+  });
+  
+  return {
+    id: "strava",
+    name: "Strava",
+    type: "oauth",
+    clientId: options.clientId,
+    clientSecret: options.clientSecret,
+    authorization: {
+      url: "https://www.strava.com/oauth/authorize",
+      params: {
+        scope: "read,activity:read_all",
+        response_type: "code",
+        redirect_uri: `${process.env.NEXTAUTH_URL}/api/auth/strava`,
+      },
+    },
+    // Override to use our custom handler (NextAuth v5 beta is broken for Strava)
+    token: `${process.env.NEXTAUTH_URL}/api/auth/strava`, // This won't be used, but required
+    userinfo: "https://www.strava.com/api/v3/athlete", // This won't be used, but required
+    profile(profile: StravaProfile) {
+      console.log("🚴 PROFILE MAPPING:", profile);
+      return {
+        id: profile.id.toString(),
+        name: `${profile.firstname} ${profile.lastname}`,
+        email: profile.email || null,
+        image: profile.profile || profile.profile_medium || null,
+      };
+    },
+    style: {
+      logo: "https://developers.strava.com/images/strava_logo_orange.svg",
+      bg: "#fc4c02",
+      text: "#fff",
+    },
+    allowDangerousEmailAccountLinking: true,
+  };
+};
+
 export const providers: (
   | OAuthConfig<DiscordProfile>
   | OAuthConfig<GoogleProfile>
   | OAuthConfig<GitHubProfile>
   | OAuthConfig<TwitterProfile>
   | OAuthConfig<NotionProfile>
+  | OAuthConfig<StravaProfile>
   | CredentialsConfig<Record<string, CredentialInput>>
 )[] = [
   ...("AUTH_DISCORD_ID" in env && "AUTH_DISCORD_SECRET" in env
@@ -80,6 +140,14 @@ export const providers: (
               return new Response(JSON.stringify(body), response);
             },
           },
+        }),
+      ]
+    : []),
+  ...("AUTH_STRAVA_ID" in env && "AUTH_STRAVA_SECRET" in env
+    ? [
+        StravaProvider({
+          clientId: env.AUTH_STRAVA_ID,
+          clientSecret: env.AUTH_STRAVA_SECRET,
         }),
       ]
     : []),
