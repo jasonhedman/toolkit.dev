@@ -132,7 +132,7 @@ export const env = createEnv({
    * `NEXT_PUBLIC_`.
    */
   client: {
-    NEXT_PUBLIC_STRAVA_CLIENT_ID: z.string(),
+    NEXT_PUBLIC_STRAVA_CLIENT_ID: z.string().optional(),
   },
 
   /**

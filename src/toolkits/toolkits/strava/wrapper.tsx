@@ -53,7 +53,7 @@ export const StravaWrapper: ClientToolkitWrapper = ({ Item }) => {
 
                 // Direct OAuth flow to bypass NextAuth's broken Strava handling
                 const stravaAuthUrl = new URL("https://www.strava.com/oauth/authorize");
-                stravaAuthUrl.searchParams.set("client_id", process.env.NEXT_PUBLIC_STRAVA_CLIENT_ID || "");
+                stravaAuthUrl.searchParams.set("client_id", process.env.NEXT_PUBLIC_STRAVA_CLIENT_ID || "170027");
                 stravaAuthUrl.searchParams.set("response_type", "code");
                 stravaAuthUrl.searchParams.set("redirect_uri", `${window.location.origin}/api/auth/strava`);
                 stravaAuthUrl.searchParams.set("scope", "read,activity:read_all");

@@ -227,8 +227,8 @@ We've implemented a comprehensive Strava integration with custom OAuth flow. Thi
 AUTH_STRAVA_ID=<your-client-id>
 AUTH_STRAVA_SECRET=<your-client-secret>
 
-# Client-side ID (safe to expose)
-NEXT_PUBLIC_STRAVA_CLIENT_ID=<your-client-id>
+# Client-side ID (optional - will use hardcoded fallback if not provided)
+# NEXT_PUBLIC_STRAVA_CLIENT_ID=<your-client-id>
 ```
 
 **Example Use Cases:**
