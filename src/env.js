@@ -132,7 +132,7 @@ export const env = createEnv({
    * `NEXT_PUBLIC_`.
    */
   client: {
-    NEXT_PUBLIC_STRAVA_CLIENT_ID: z.string().optional(),
+    // NEXT_PUBLIC_CLIENTVAR: z.string(),
   },
 
   /**
@@ -150,7 +150,6 @@ export const env = createEnv({
     MEM0_API_KEY: process.env.MEM0_API_KEY,
     E2B_API_KEY: process.env.E2B_API_KEY,
     GITHUB_TOKEN: process.env.GITHUB_TOKEN,
-    NEXT_PUBLIC_STRAVA_CLIENT_ID: process.env.NEXT_PUBLIC_STRAVA_CLIENT_ID,
     ...authRuntimeEnv(),
     ...imageModelRuntimeEnv(),
   },

@@ -223,12 +223,8 @@ We've implemented a comprehensive Strava integration with custom OAuth flow. Thi
 2. Set authorization callback domain to `localhost:3000` (development)
 3. Add credentials to `.env.local`:
 ```env
-# Server-side credentials (keep secret)
 AUTH_STRAVA_ID=<your-client-id>
 AUTH_STRAVA_SECRET=<your-client-secret>
-
-# Client-side ID (optional - will use hardcoded fallback if not provided)
-# NEXT_PUBLIC_STRAVA_CLIENT_ID=<your-client-id>
 ```
 
 **Example Use Cases:**
