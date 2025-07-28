@@ -56,6 +56,7 @@ model User {
     images        Image[]
     userFeatures  UserFeature[]
     workbenches   Workbench[]
+    agentJobs     AgentJob[]
 }
 
 enum UserRole {
@@ -180,4 +181,24 @@ model Tool {
     toolkit     Toolkit  @relation(fields: [toolkitId], references: [id], onDelete: Cascade)
 
     @@id([id, toolkitId])
+}
+
+model AgentJob {
+    id           String   @id @default(uuid())
+    userId       String
+    triggerJobId String   @unique // The Trigger.dev job/run ID
+    prompt       String   @db.Text
+    model        String
+    toolkits     String[] // Array of toolkit IDs used
+    systemPrompt String?  @db.Text
+    status       String   // QUEUED, EXECUTING, COMPLETED, FAILED, CANCELED
+    createdAt    DateTime @default(now())
+    completedAt  DateTime?
+    error        String?  @db.Text
+    costInCents  Int?
+    durationMs   Int?
+    user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+    @@index([userId])
+    @@index([triggerJobId])
 }

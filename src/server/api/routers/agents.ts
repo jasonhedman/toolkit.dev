@@ -3,6 +3,7 @@ import { createTRPCRouter, protectedProcedure } from "@/server/api/trpc";
 import { tasks, runs, type RetrieveRunResult } from "@trigger.dev/sdk/v3";
 import type { runAgentTask } from "@/trigger/agent";
 import type { AgentRunOutput } from "@/app/_components/agent-dashboard/types";
+import { db } from "@/server/db";
 
 const triggerAgentSchema = z.object({
   messages: z.array(z.object({
@@ -32,6 +33,10 @@ export const agentsRouter = createTRPCRouter({
   run: protectedProcedure
     .input(triggerAgentSchema)
     .mutation(async ({ ctx, input }) => {
+      // Extract prompt from the last user message
+      const userMessage = input.messages.filter(msg => msg.role === "user").pop();
+      const prompt = userMessage?.content || "No prompt available";
+
       // Trigger the agent task
       const handle = await tasks.trigger<typeof runAgentTask>("run-agent", {
         messages: input.messages,
@@ -42,6 +47,19 @@ export const agentsRouter = createTRPCRouter({
         selectedChatModel: input.selectedChatModel || "openai/gpt-4",
         systemPrompt: input.systemPrompt,
         useNativeSearch: input.useNativeSearch || false,
+      });
+
+      // Create an AgentJob record in our database for access control
+      await db.agentJob.create({
+        data: {
+          userId: ctx.session.user.id,
+          triggerJobId: handle.id,
+          prompt: prompt,
+          model: input.selectedChatModel || "openai/gpt-4",
+          toolkits: input.toolkits?.map(t => t.id) || [],
+          systemPrompt: input.systemPrompt,
+          status: "QUEUED",
+        },
       });
 
       return {
@@ -55,42 +73,39 @@ export const agentsRouter = createTRPCRouter({
   getRun: protectedProcedure
     .input(getRunSchema)
     .query(async ({ ctx, input }) => {
-      const run = await runs.retrieve(input.runId) as RetrieveRunResult<typeof runAgentTask>;
-      console.log("Run:", run);
+      // First, check if the user owns this job
+      const agentJob = await db.agentJob.findFirst({
+        where: {
+          triggerJobId: input.runId,
+          userId: ctx.session.user.id,
+        },
+      });
 
-      if (!run) {
-        throw new Error(`Run with ID ${input.runId} not found`);
+      if (!agentJob) {
+        throw new Error("Job not found or access denied");
       }
 
-      // Transform the single run with proper output structure
-      let extractedPrompt = "No prompt available";
-      let extractedModel = "unknown";
-      let extractedToolkits: string[] = [];
+      // Fetch the actual run details from Trigger.dev
+      const run = await runs.retrieve(input.runId) as RetrieveRunResult<typeof runAgentTask>;
       
-      try {
-        // Get prompt and model from payload (input data)
-        const payload = run.payload;
-        if (payload?.messages && Array.isArray(payload.messages) && payload.messages.length > 0) {
-          // Get the last user message as the prompt
-          const userMessage = payload.messages.filter((msg: any) => msg.role === "user").pop();
-          if (userMessage?.content) {
-            extractedPrompt = userMessage.content;
-          }
-        }
-        
-        if (payload?.selectedChatModel) {
-          extractedModel = payload.selectedChatModel;
-        }
-        
-        if (payload?.toolkits && Array.isArray(payload.toolkits)) {
-          extractedToolkits = payload.toolkits.map((t: any) => t.id || t.name || 'Unknown');
-        }
-      } catch (error) {
-        console.error("Error extracting single run data:", error);
-        // Fallback values
-        extractedPrompt = "No prompt available";
-        extractedModel = "unknown";
-        extractedToolkits = [];
+      if (!run) {
+        throw new Error(`Run with ID ${input.runId} not found in Trigger.dev`);
+      }
+
+      // Update our local job record with latest status if needed
+      if (agentJob.status !== run.status) {
+        await db.agentJob.update({
+          where: { id: agentJob.id },
+          data: {
+            status: run.status,
+            completedAt: run.finishedAt,
+            durationMs: run.finishedAt && run.createdAt 
+              ? run.finishedAt.getTime() - run.createdAt.getTime() 
+              : undefined,
+            costInCents: (run as any).costInCents,
+            error: (run as any).error ? JSON.stringify((run as any).error) : undefined,
+          },
+        });
       }
 
       // Get the properly structured output from the task result
@@ -100,12 +115,12 @@ export const agentsRouter = createTRPCRouter({
         id: run.id,
         taskId: run.id,
         status: run.status,
-        model: extractedModel,
-        prompt: extractedPrompt,
-        toolkits: extractedToolkits,
+        model: agentJob.model,
+        prompt: agentJob.prompt,
+        toolkits: agentJob.toolkits,
         createdAt: run.createdAt.toISOString(),
         completedAt: run.finishedAt?.toISOString(),
-        output: taskOutput, // This should be the full AgentRunOutput structure
+        output: taskOutput,
         error: (run as any).error ? JSON.stringify((run as any).error) : undefined,
         durationMs: run.finishedAt && run.createdAt 
           ? run.finishedAt.getTime() - run.createdAt.getTime() 
@@ -113,16 +128,6 @@ export const agentsRouter = createTRPCRouter({
         costInCents: (run as any).costInCents,
         metadata: (run as any).metadata,
       };
-
-      console.log("Transformed run with output:", {
-        id: transformedRun.id,
-        status: transformedRun.status,
-        hasOutput: !!transformedRun.output,
-        outputStructure: transformedRun.output ? Object.keys(transformedRun.output) : [],
-        outputSuccess: transformedRun.output?.success,
-        hasData: !!transformedRun.output?.data,
-        hasError: !!transformedRun.output?.error,
-      });
 
       return {
         success: true,
@@ -134,86 +139,72 @@ export const agentsRouter = createTRPCRouter({
   listRuns: protectedProcedure
     .input(listRunsSchema)
     .query(async ({ ctx, input }) => {
-      // Fetch runs from Trigger.dev
-      const runsResponse = await runs.list({
-        limit: input.limit,
-        status: input.status ? [input.status as any] : undefined,
+      // Get user's agent jobs from our database
+      const agentJobs = await db.agentJob.findMany({
+        where: {
+          userId: ctx.session.user.id,
+          ...(input.status && input.status !== "all" ? { status: input.status } : {}),
+        },
+        orderBy: {
+          createdAt: "desc",
+        },
+        take: input.limit,
       });
 
-      console.log("Runs response:", runsResponse);
-
-      // Transform the data to match our AgentRun interface
-      const transformedRuns = runsResponse.data.map((run) => {
-        // Debug: Log the structure we're getting from Trigger.dev
-        console.log("Run structure:", {
-          id: run.id,
-          status: run.status,
-          hasPayload: !!(run as any).payload,
-          hasOutput: !!(run as any).output,
-          payloadKeys: (run as any).payload ? Object.keys((run as any).payload) : [],
-          outputType: typeof (run as any).output,
-          outputStructure: (run as any).output ? Object.keys((run as any).output) : [],
-        });
-        
-        // Extract the prompt from the payload's messages if available
-        let extractedPrompt = "No prompt available";
-        let extractedModel = "unknown";
-        let extractedToolkits: string[] = [];
-        
-        try {
-          // Get prompt and model from payload (input data)
-          const payload = (run as any).payload;
-          if (payload?.messages && Array.isArray(payload.messages) && payload.messages.length > 0) {
-            // Get the last user message as the prompt
-            const userMessage = payload.messages.filter((msg: any) => msg.role === "user").pop();
-            if (userMessage?.content) {
-              extractedPrompt = userMessage.content;
+      // For each job, we'll use the stored data but sync status if needed
+      const transformedRuns = await Promise.all(
+        agentJobs.map(async (job) => {
+          let updatedJob = job;
+          
+          // If job is still running, check for updates from Trigger.dev
+          if (job.status === "QUEUED" || job.status === "EXECUTING") {
+            try {
+              const run = await runs.retrieve(job.triggerJobId);
+              if (run && run.status !== job.status) {
+                // Update the job status in our database
+                updatedJob = await db.agentJob.update({
+                  where: { id: job.id },
+                  data: {
+                    status: run.status,
+                    completedAt: run.finishedAt,
+                    durationMs: run.finishedAt && run.createdAt 
+                      ? run.finishedAt.getTime() - run.createdAt.getTime() 
+                      : undefined,
+                    costInCents: (run as any).costInCents,
+                    error: (run as any).error ? JSON.stringify((run as any).error) : undefined,
+                  },
+                });
+              }
+            } catch (error) {
+              console.error(`Failed to sync status for job ${job.id}:`, error);
+              // Continue with stored data if sync fails
             }
           }
-          
-          if (payload?.selectedChatModel) {
-            extractedModel = payload.selectedChatModel;
-          }
-          
-          if (payload?.toolkits && Array.isArray(payload.toolkits)) {
-            extractedToolkits = payload.toolkits.map((t: any) => t.id || t.name || 'Unknown');
-          }
-        } catch (error) {
-          console.error("Error extracting run data:", error);
-          // Fallback values
-          extractedPrompt = "No prompt available";
-          extractedModel = "unknown";
-          extractedToolkits = [];
-        }
 
-        // Get the properly structured output from the task result
-        const taskOutput = (run as any).output as AgentRunOutput | undefined;
-
-        return {
-          id: run.id,
-          taskId: run.id,
-          status: run.status,
-          model: extractedModel,
-          prompt: extractedPrompt,
-          toolkits: extractedToolkits,
-          createdAt: run.createdAt.toISOString(),
-          completedAt: run.finishedAt?.toISOString(),
-          output: taskOutput, // This should be the full AgentRunOutput structure
-          error: (run as any).error ? JSON.stringify((run as any).error) : undefined,
-          durationMs: run.finishedAt && run.createdAt 
-            ? run.finishedAt.getTime() - run.createdAt.getTime() 
-            : undefined,
-          costInCents: (run as any).costInCents,
-          metadata: (run as any).metadata,
-        };
-      });
+          return {
+            id: updatedJob.triggerJobId,
+            taskId: updatedJob.triggerJobId,
+            status: updatedJob.status,
+            model: updatedJob.model,
+            prompt: updatedJob.prompt,
+            toolkits: updatedJob.toolkits,
+            createdAt: updatedJob.createdAt.toISOString(),
+            completedAt: updatedJob.completedAt?.toISOString(),
+            output: undefined, // We don't store output in our DB, would need to fetch from Trigger.dev if needed
+            error: updatedJob.error,
+            durationMs: updatedJob.durationMs,
+            costInCents: updatedJob.costInCents,
+            metadata: undefined,
+          };
+        })
+      );
 
       return {
         success: true,
         runs: transformedRuns,
         pagination: {
-          hasMore: (runsResponse as any).hasMore || false,
-          nextCursor: (runsResponse as any).nextCursor || null,
+          hasMore: agentJobs.length === input.limit, // Simple pagination
+          nextCursor: null,
         },
       };
     }),
@@ -224,8 +215,29 @@ export const agentsRouter = createTRPCRouter({
       runId: z.string(),
     }))
     .mutation(async ({ ctx, input }) => {
+      // First, check if the user owns this job
+      const agentJob = await db.agentJob.findFirst({
+        where: {
+          triggerJobId: input.runId,
+          userId: ctx.session.user.id,
+        },
+      });
+
+      if (!agentJob) {
+        throw new Error("Job not found or access denied");
+      }
+
       // Cancel the run using Trigger.dev API
       await runs.cancel(input.runId);
+
+      // Update our local job record
+      await db.agentJob.update({
+        where: { id: agentJob.id },
+        data: {
+          status: "CANCELED",
+          completedAt: new Date(),
+        },
+      });
 
       return {
         success: true,
