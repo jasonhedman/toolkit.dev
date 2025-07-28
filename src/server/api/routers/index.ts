@@ -10,3 +10,4 @@ export { featuresRouter } from "./features";
 export { workbenchesRouter } from "./workbenches";
 export { toolkitsRouter } from "./toolkits";
 export { toolsRouter } from "./tools";
+export { agentsRouter } from "./agents";
