@@ -29,6 +29,11 @@ const createAuthSchema = () => {
     authSchema.AUTH_NOTION_SECRET = z.string();
   }
 
+  if (process.env.AUTH_SPOTIFY_ID || process.env.AUTH_SPOTIFY_SECRET) {
+    authSchema.AUTH_SPOTIFY_ID = z.string();
+    authSchema.AUTH_SPOTIFY_SECRET = z.string();
+  }
+
   return authSchema;
 };
 
