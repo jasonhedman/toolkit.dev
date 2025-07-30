@@ -25,7 +25,7 @@ import {
   capabilityLabels,
   modelProviderNames,
 } from "./utils";
-import { LanguageModelCapability } from "@/ai/language/types";
+import { LanguageModelCapability } from "@/ai/types";
 
 import { useModelSelect } from "./use-model-select";
 
@@ -33,7 +33,16 @@ import { useChatContext } from "@/app/_contexts/chat-context";
 import { cn } from "@/lib/utils";
 import { NativeSearchToggle } from "./native-search-toggle";
 import { useIsMobile } from "@/hooks/use-mobile";
-import type { LanguageModel } from "@/ai/language/types";
+import type { LanguageModel } from "@/ai/types";
+
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
 
 // Shared content component for both dropdown and drawer
 const ModelSelectContent: React.FC<{
@@ -61,7 +70,7 @@ const ModelSelectContent: React.FC<{
   availableProviders,
   isMobile = false,
 }) => (
-  <>
+  <Command>
     <div
       className={cn(
         "bg-background border-b p-4",
@@ -72,12 +81,10 @@ const ModelSelectContent: React.FC<{
         Model Selector
       </h2>
       <div className="relative mb-2">
-        <Search className="text-muted-foreground absolute top-2.5 left-2 size-4" />
-        <Input
+        <CommandInput
           placeholder="Search models..."
           value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="pl-8"
+          onValueChange={setSearchQuery}
         />
       </div>
       <div className="space-y-2">
@@ -128,54 +135,56 @@ const ModelSelectContent: React.FC<{
         </div>
       </div>
     </div>
-    <div
+    <CommandList
       className={cn(
         "w-full max-w-full overflow-x-hidden overflow-y-auto px-1",
         isMobile ? "max-h-[50vh] pb-4" : "max-h-32 md:max-h-48",
       )}
     >
-      {models?.map((model) => (
-        <div
-          key={model.modelId}
-          className={cn(
-            "hover:bg-accent/50 flex w-full max-w-full cursor-pointer items-center gap-2 rounded-md px-3 py-2 transition-colors",
-            selectedChatModel?.modelId === model.modelId && "bg-accent",
-            isMobile && "min-h-[44px]",
-          )}
-          onClick={() => handleModelSelect(model)}
-        >
-          {/* Name, provider, new badge stack */}
-          <div className="flex max-w-full min-w-0 flex-1 flex-shrink-0 items-center gap-2 overflow-hidden">
-            <ModelProviderIcon
-              provider={model.provider}
-              className="size-4 flex-shrink-0"
-            />
-            <span className="truncate text-sm font-medium">{model.name}</span>
-            {model.isNew && (
-              <Badge variant="secondary" className="h-5 text-xs">
-                New
-              </Badge>
+      <CommandEmpty>No models found.</CommandEmpty>
+      <CommandGroup>
+        {models?.map((model) => (
+          <CommandItem
+            key={model.modelId}
+            value={`${model.name} ${model.provider}`}
+            onSelect={() => handleModelSelect(model)}
+            className={cn(
+              "flex w-full max-w-full cursor-pointer items-center gap-2 rounded-md px-3 py-2 transition-colors",
+              selectedChatModel?.modelId === model.modelId && "bg-accent",
+              isMobile && "min-h-[44px]",
             )}
-          </div>
-          {/* Capabilities justified to the right */}
-          <div className="flex flex-1 justify-end gap-1">
-            {model.capabilities?.map((capability) => {
-              const Icon = capabilityIcons[capability];
-              return (
-                <Badge
-                  key={capability}
-                  variant="capability"
-                  className={`h-5 gap-1 px-1 text-xs ${capabilityColors[capability]}`}
-                >
-                  {Icon && <Icon className="size-3" />}
+          >
+            <div className="flex max-w-full min-w-0 flex-1 flex-shrink-0 items-center gap-2 overflow-hidden">
+              <ModelProviderIcon
+                provider={model.provider}
+                className="size-4 flex-shrink-0"
+              />
+              <span className="truncate text-sm font-medium">{model.name}</span>
+              {model.isNew && (
+                <Badge variant="secondary" className="h-5 text-xs">
+                  New
                 </Badge>
-              );
-            })}
-          </div>
-        </div>
-      ))}
-    </div>
-  </>
+              )}
+            </div>
+            <div className="flex flex-1 justify-end gap-1">
+              {model.capabilities?.map((capability) => {
+                const Icon = capabilityIcons[capability];
+                return (
+                  <Badge
+                    key={capability}
+                    variant="capability"
+                    className={`h-5 gap-1 px-1 text-xs ${capabilityColors[capability]}`}
+                  >
+                    {Icon && <Icon className="size-3" />}
+                  </Badge>
+                );
+              })}
+            </div>
+          </CommandItem>
+        ))}
+      </CommandGroup>
+    </CommandList>
+  </Command>
 );
 
 export const ModelSelect: React.FC = () => {
