@@ -182,6 +182,9 @@ importers:
       lucide-react:
         specifier: ^0.513.0
         version: 0.513.0(react@19.1.0)
+      lumaai:
+        specifier: ^1.16.0
+        version: 1.16.0(encoding@0.1.13)
       mem0ai:
         specifier: ^2.1.30
         version: 2.1.30(@anthropic-ai/sdk@0.40.1(encoding@0.1.13))(@cloudflare/workers-types@4.20250614.0)(@google/genai@1.5.1(@modelcontextprotocol/sdk@1.12.2)(encoding@0.1.13))(@langchain/core@0.3.58(openai@5.3.0(ws@8.18.2)(zod@3.25.56)))(@mistralai/mistralai@1.7.2(zod@3.25.56))(@qdrant/js-client-rest@1.13.0(typescript@5.8.3))(@supabase/supabase-js@2.50.0)(@types/jest@29.5.14)(@types/pg@8.11.0)(@types/sqlite3@3.1.11)(cloudflare@4.3.0(encoding@0.1.13))(encoding@0.1.13)(groq-sdk@0.3.0(encoding@0.1.13))(neo4j-driver@5.28.1)(ollama@0.5.16)(pg@8.11.3)(redis@5.5.6)(sqlite3@5.1.7)(ws@8.18.2)
@@ -3943,6 +3946,9 @@ packages:
     resolution: {integrity: sha512-CJZKq2g8Y8yN4Aq002GahSXbG2JpFv9kXwyiOAMvUBv7pxeOFHUWKB0mO7MiY4ZVFCV4aNjv2BJFq/z3DgKPQg==}
     peerDependencies:
       react: ^16.5.1 || ^17.0.0 || ^18.0.0 || ^19.0.0
+
+  lumaai@1.16.0:
+    resolution: {integrity: sha512-Zwyz/7hbahClHv2+U5FsmTY5CfuNuqNSMeVpF/pgLP2kvuNMfU9EbWJ3jTokYZ6xTEsxyl4ow6FBohLm/n5q5g==}
 
   magic-string@0.30.17:
     resolution: {integrity: sha512-sNPKHvyjVf7gyjwS4xGTaW/mCnF8wnjtifKBEhxfZ7E/S8tQ0rssrwGNn6q8JH/ohItJfSQp9mBtQYuTlH5QnA==}
@@ -9492,6 +9498,18 @@ snapshots:
   lucide-react@0.513.0(react@19.1.0):
     dependencies:
       react: 19.1.0
+
+  lumaai@1.16.0(encoding@0.1.13):
+    dependencies:
+      '@types/node': 18.19.111
+      '@types/node-fetch': 2.6.12
+      abort-controller: 3.0.0
+      agentkeepalive: 4.6.0
+      form-data-encoder: 1.7.2
+      formdata-node: 4.4.1
+      node-fetch: 2.7.0(encoding@0.1.13)
+    transitivePeerDependencies:
+      - encoding
 
   magic-string@0.30.17:
     dependencies:

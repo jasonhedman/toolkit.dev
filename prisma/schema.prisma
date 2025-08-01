@@ -54,6 +54,7 @@ model User {
     chats         Chat[]
     files         File[]
     images        Image[]
+    videos        Video[]
     userFeatures  UserFeature[]
     workbenches   Workbench[]
 }
@@ -102,6 +103,15 @@ model Message {
     modelId     String      @default("openai:gpt-4o") // For tracking which model generated the message
     createdAt   DateTime     @default(now())
     chat        Chat         @relation(fields: [chatId], references: [id], onDelete: Cascade)
+}
+
+model Video {
+    id          String   @id @default(uuid())
+    userId      String
+    url         String
+    modelId     String   @default("ray-2") // which LumaAI model generated the video
+    createdAt   DateTime @default(now())
+    user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model File {

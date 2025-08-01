@@ -82,6 +82,7 @@
     "googleapis": "^150.0.1",
     "lottie-react": "^2.4.1",
     "lucide-react": "^0.513.0",
+    "lumaai": "^1.16.0",
     "mem0ai": "^2.1.30",
     "motion": "^12.16.0",
     "next": "^15.2.3",

@@ -8,6 +8,7 @@ export const generateImage = async (
   model: `${ImageModelProvider}:${string}`,
   prompt: string,
 ) => {
+  console.log(model);
   const { image } = await baseGenerateImage({
     model: imageModelRegistry.imageModel(model),
     prompt,
