@@ -14,15 +14,30 @@ import type { Message } from "ai";
 export type MessageEditorProps = {
   message: Message;
   setMode: Dispatch<SetStateAction<"view" | "edit">>;
+  chatId: string;
 };
 
-export function MessageEditor({ message, setMode }: MessageEditorProps) {
-  const { setMessages, reload } = useChatContext();
+export function MessageEditor({
+  message,
+  setMode,
+  chatId,
+}: MessageEditorProps) {
+  const { setMessages, append } = useChatContext();
   const { mutate } = useDeleteMessagesAfterTimestamp();
 
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
-  const [draftContent, setDraftContent] = useState<string>(message.content);
+  const [draftContent, setDraftContent] = useState<string>(() => {
+    if (message.parts && message.parts.length > 0) {
+      return message.parts
+        .filter((part) => part.type === "text")
+        .map((part) => part.text)
+        .join("\n")
+        .trim();
+    }
+
+    return message.content || "";
+  });
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
@@ -41,6 +56,37 @@ export function MessageEditor({ message, setMode }: MessageEditorProps) {
   const handleInput = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
     setDraftContent(event.target.value);
     adjustHeight();
+  };
+
+  const onSubmit = async () => {
+    setIsSubmitting(true);
+
+    const messageCreatedAt = message.createdAt;
+    const messageTimestamp = messageCreatedAt
+      ? messageCreatedAt.getTime()
+      : Date.now();
+    const deleteFromTimestamp = new Date(messageTimestamp);
+    mutate({
+      chatId: chatId,
+      timestamp: deleteFromTimestamp,
+    });
+
+    setMessages((messages) => {
+      const index = messages.findIndex((m) => m.id === message.id);
+      if (index !== -1) {
+        return messages.slice(0, index);
+      }
+      return messages;
+    });
+
+    setMode("view");
+
+    await append({
+      role: "user",
+      content: draftContent,
+    });
+
+    setIsSubmitting(false);
   };
 
   return (
@@ -68,34 +114,7 @@ export function MessageEditor({ message, setMode }: MessageEditorProps) {
           variant="default"
           className="h-fit px-3 py-2"
           disabled={isSubmitting}
-          onClick={async () => {
-            setIsSubmitting(true);
-
-            mutate({
-              chatId: message.id,
-              timestamp: new Date(),
-            });
-
-            // @ts-expect-error todo: support UIMessage in setMessages
-            setMessages((messages) => {
-              const index = messages.findIndex((m) => m.id === message.id);
-
-              if (index !== -1) {
-                const updatedMessage = {
-                  ...message,
-                  content: draftContent,
-                  parts: [{ type: "text", text: draftContent }],
-                };
-
-                return [...messages.slice(0, index), updatedMessage];
-              }
-
-              return messages;
-            });
-
-            setMode("view");
-            void reload();
-          }}
+          onClick={onSubmit}
         >
           {isSubmitting ? "Sending..." : "Send"}
         </Button>
