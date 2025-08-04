@@ -87,9 +87,9 @@ export const OpenRouterChecks = () => {
     return <KeyModal />;
   }
 
-  if (credits && credits.totalCredits - credits.totalUsage <= 0.01) {
-    return <InsufficientCreditsModal />;
-  }
+  // if (credits && credits.totalCredits - credits.totalUsage <= 0.01) {
+  //   return <InsufficientCreditsModal />;
+  // }
 
   return null;
 };

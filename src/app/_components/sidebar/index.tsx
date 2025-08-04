@@ -39,7 +39,7 @@ export async function AppSidebar({
 
   return (
     <HydrateClient>
-      <Sidebar collapsible="icon" className="relative" {...props}>
+      <Sidebar variant="inset" collapsible="icon" className="relative" {...props}>
         <SidebarHeader className="border-sidebar-border border-b p-3 group-data-[collapsible=icon]:p-2">
           <Link
             href="/"

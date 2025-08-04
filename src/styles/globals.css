@@ -178,7 +178,7 @@ body {
 }
 
 :root {
-  --background: oklch(0.9551 0 0);
+  --background: oklch(97.5% 0.00844 326deg);
   --foreground: oklch(0.3211 0 0);
   --card: oklch(0.9702 0 0);
   --card-foreground: oklch(0.3211 0 0);
@@ -202,15 +202,15 @@ body {
   --chart-3: oklch(0.6534 0 0);
   --chart-4: oklch(0.7316 0 0);
   --chart-5: oklch(0.8078 0 0);
-  --sidebar: oklch(0.937 0 0);
-  --sidebar-foreground: oklch(0.3211 0 0);
-  --sidebar-primary: oklch(0.4891 0 0);
+  --sidebar: oklch(93.4% 0.0294 322deg);
+  --sidebar-foreground: rgb(172, 22, 104);
+  --sidebar-primary: oklch(93.4% 0.0294 322deg);
   --sidebar-primary-foreground: oklch(1 0 0);
-  --sidebar-accent: oklch(0.9067 0 0);
-  --sidebar-accent-foreground: oklch(0.3211 0 0);
+  --sidebar-accent: oklch(97.91% 0.0011895867041327932 106.75377509115134);
+  --sidebar-accent-foreground: rgb(172, 22, 104);
   --sidebar-border: oklch(0.8576 0 0);
   --sidebar-ring: #4299e1;
-  --font-sans: Space Grotesk, serif;
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
   --font-serif: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
   --font-mono: JetBrains Mono, monospace;
   --radius: 0.5rem;

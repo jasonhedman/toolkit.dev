@@ -309,8 +309,19 @@ function SidebarInset({ className, ...props }: React.ComponentProps<"main">) {
     <main
       data-slot="sidebar-inset"
       className={cn(
-        "bg-background relative flex w-full flex-1 flex-col",
-        "md:peer-data-[variant=inset]:m-2 md:peer-data-[variant=inset]:ml-0 md:peer-data-[variant=inset]:rounded-xl md:peer-data-[variant=inset]:shadow-sm md:peer-data-[variant=inset]:peer-data-[state=collapsed]:ml-2",
+        // Ensure the page background (on the wrapper) owns the full viewport height,
+        // while the inset content does not force a second scroll container.
+        "bg-background relative flex w-full flex-col min-h-0",
+        // Make the inset content 30px shorter than the wrapper and place the gap at the top.
+        "md:peer-data-[variant=inset]:h-[calc(100vh-30px)] md:peer-data-[variant=inset]:mt-[30px]",
+        // Ensure the radius actually applies by clipping the background to the rounded shape.
+        "md:peer-data-[variant=inset]:overflow-hidden",
+        // Apply the requested corner radii: only top-left 30px, all other corners square.
+        "md:peer-data-[variant=inset]:rounded-none md:peer-data-[variant=inset]:rounded-tl-[30px] md:peer-data-[variant=inset]:shadow-sm",
+        // Add border on the top and left to match the inset look and corner radius.
+        "md:peer-data-[variant=inset]:border md:peer-data-[variant=inset]:border-t md:peer-data-[variant=inset]:border-l md:peer-data-[variant=inset]:border-sidebar-border md:peer-data-[variant=inset]:border-r-0 md:peer-data-[variant=inset]:border-b-0",
+        // Preserve left inset behavior with collapsed offset.
+        "md:peer-data-[variant=inset]:ml-0 md:peer-data-[variant=inset]:peer-data-[state=collapsed]:ml-2",
         className,
       )}
       {...props}

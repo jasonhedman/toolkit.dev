@@ -76,7 +76,7 @@ export default async function RootLayout({
               disableTransitionOnChange
             >
               <InstallPromptProvider>
-                <SidebarProvider>
+                <SidebarProvider className="data-[variant=inset]:bg-sidebar">
                   <AppSidebar />
                   <SidebarInset className="flex h-dvh flex-col">
                     <Navbar />
