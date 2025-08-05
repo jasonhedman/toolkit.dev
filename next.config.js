@@ -19,6 +19,9 @@ const config = {
             },
           ],
   },
+  experimental: {
+    authInterrupts: true,
+  },
 };
 
 export default config;

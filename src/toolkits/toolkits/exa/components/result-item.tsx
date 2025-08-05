@@ -1,4 +1,7 @@
 import React from "react";
+
+import Link from "next/link";
+
 import {
   Dialog,
   DialogContent,
@@ -8,9 +11,8 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Markdown } from "@/components/ui/markdown";
 import { HStack, VStack } from "@/components/ui/stack";
-import Link from "next/link";
+import { Markdown } from "@/components/ui/markdown";
 
 export interface ResultData {
   title: string | null;

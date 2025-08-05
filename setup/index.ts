@@ -17,21 +17,31 @@ async function main(): Promise<void> {
     "cyan",
   );
 
+  const steps = [
+    {
+      name: "Creating environment configuration",
+      step: createEnvFile,
+    },
+    {
+      name: "Installing project dependencies",
+      step: installDependencies,
+    },
+    {
+      name: "Starting Docker services",
+      step: startDockerServices,
+    },
+    {
+      name: "Running database migrations",
+      step: runMigrations,
+    },
+  ];
+
   try {
-    // Step 1: Create .env.local
-    logStep("Step 1/4", "Creating environment configuration...");
-    createEnvFile();
-
-    // Step 2: Install dependencies
-    logStep("Step 2/4", "Installing project dependencies...");
-    installDependencies();
-
-    logStep("Step 3/4", "Starting Docker services...");
-    startDockerServices();
-
-    // Step 3: Setup database
-    logStep("Step 4/4", "Running database migrations...");
-    runMigrations();
+    for (let i = 0; i < steps.length; i++) {
+      const step = steps[i]!;
+      logStep(`Step ${i + 1}/${steps.length}`, `${step.name}...`);
+      step.step();
+    }
   } catch (error) {
     logError("Setup failed: " + (error as Error).message);
     process.exit(1);

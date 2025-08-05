@@ -33,15 +33,6 @@ export const providers: (
   | OAuthConfig<SpotifyProfile>
   | CredentialsConfig<Record<string, CredentialInput>>
 )[] = [
-  ...("AUTH_DISCORD_ID" in env && "AUTH_DISCORD_SECRET" in env
-    ? [
-        DiscordProvider({
-          clientId: env.AUTH_DISCORD_ID,
-          clientSecret: env.AUTH_DISCORD_SECRET,
-          allowDangerousEmailAccountLinking: true,
-        }),
-      ]
-    : []),
   ...("AUTH_GOOGLE_ID" in env && "AUTH_GOOGLE_SECRET" in env
     ? [
         GoogleProvider({
@@ -86,6 +77,15 @@ export const providers: (
               return new Response(JSON.stringify(body), response);
             },
           },
+        }),
+      ]
+    : []),
+  ...("AUTH_DISCORD_ID" in env && "AUTH_DISCORD_SECRET" in env
+    ? [
+        DiscordProvider({
+          clientId: env.AUTH_DISCORD_ID,
+          clientSecret: env.AUTH_DISCORD_SECRET,
+          allowDangerousEmailAccountLinking: true,
         }),
       ]
     : []),

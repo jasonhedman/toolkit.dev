@@ -5,6 +5,26 @@ import {
 
 const openRouterModelData: Omit<LanguageModel, "provider">[] = [
   {
+    name: "Horizon Beta",
+    modelId: "horizon-beta",
+    description:
+      "A cloaked model provided to the community to gather feedback. Supports vision and long-context tasks.",
+    capabilities: [
+      LanguageModelCapability.Vision,
+      LanguageModelCapability.ToolCalling,
+      LanguageModelCapability.Pdf,
+      LanguageModelCapability.Free,
+    ],
+    bestFor: [
+      "Image analysis",
+      "Long-context tasks",
+      "Community feedback",
+      "General purpose AI",
+    ],
+    contextLength: 256000,
+    isNew: true,
+  },
+  {
     name: "Auto",
     modelId: "auto",
     description:
@@ -20,26 +40,6 @@ const openRouterModelData: Omit<LanguageModel, "provider">[] = [
       "Multi-capability tasks",
     ],
     contextLength: 200000, // Using a high value since it can route to models with large context
-    isNew: true,
-  },
-  {
-    name: "Horizon Alpha",
-    modelId: "horizon-alpha",
-    description:
-      "A cloaked model provided to the community to gather feedback. Supports vision and long-context tasks.",
-    capabilities: [
-      LanguageModelCapability.Vision,
-      LanguageModelCapability.ToolCalling,
-      LanguageModelCapability.Reasoning,
-      LanguageModelCapability.Pdf,
-    ],
-    bestFor: [
-      "Image analysis",
-      "Long-context tasks",
-      "Community feedback",
-      "General purpose AI",
-    ],
-    contextLength: 256000,
     isNew: true,
   },
 ];
