@@ -119,6 +119,25 @@
       transform: translateZ(0) rotate(360deg);
     }
   }
+  @keyframes wrench-spin {
+    9% {
+      transform: translateX(0) translateY(0) rotate(0deg);
+    }
+    13% {
+      transform: translateX(0) translateY(0) rotate(0deg);
+    }
+    25% {
+      transform: translateX(-15px) translateY(0) rotate(120deg);
+    }
+    28% {
+      transform: translateX(-15px) translateY(0) rotate(120deg);
+    }
+    79% {
+      transform: translateX(0) translateY(0) rotate(0deg);
+    }
+  }
+
+
   --animate-shiny-text: shiny-text 8s infinite;
   @keyframes shiny-text {
     0%,
