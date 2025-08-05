@@ -2,6 +2,7 @@ import React from "react";
 
 import Image from "next/image";
 
+import { Loader } from "@/components/ui/loader";
 import type { baseGenerateTool } from "./base";
 
 import type { ClientToolConfig } from "@/toolkits/types";
@@ -10,8 +11,18 @@ export const generateToolConfigClient: ClientToolConfig<
   typeof baseGenerateTool.inputSchema.shape,
   typeof baseGenerateTool.outputSchema.shape
 > = {
-  CallComponent: ({ args }) => {
-    return <span className="opacity/60 text-sm font-light">{args.prompt}</span>;
+  CallComponent: ({ args, isPartial }) => {
+    return (
+      <div className="flex flex-col items-center gap-4 py-4">
+        <Loader variant="wrench" />
+        <span className="text-sm font-medium text-foreground">
+          Generating your image...
+        </span>
+        <span className="text-sm font-light text-muted-foreground">
+          "{args.prompt}"
+        </span>
+      </div>
+    );
   },
   ResultComponent: ({ result }) => {
     return (
