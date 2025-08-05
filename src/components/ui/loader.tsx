@@ -44,20 +44,29 @@ interface LoaderProps
   variant?: "spinner" | "wrench";
 }
 
-function Loader({ className, size, text, variant = "spinner", ...props }: LoaderProps) {
+function Loader({
+  className,
+  size,
+  text,
+  variant = "spinner",
+  ...props
+}: LoaderProps) {
   const WrenchIcon = () => (
-          <svg
-        xmlns="http://www.w3.org/2000/svg"
-        viewBox="-80 -290 520 800"
-        className="w-32 h-52"
-        preserveAspectRatio="xMidYMid meet"
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="-80 -290 520 800"
+      className="h-52 w-32"
+      preserveAspectRatio="xMidYMid meet"
     >
       {/* Wrench - moved down and left to get into bolt */}
-      <g 
+      <g
         transform="translate(-61, 63)"
         className={cn(wrenchLoaderVariants({ size }))}
         style={{
-          animation: variant === "wrench" ? "wrench-spin 2.7s ease-in-out infinite" : undefined,
+          animation:
+            variant === "wrench"
+              ? "wrench-spin 2.7s ease-in-out infinite"
+              : undefined,
           transformOrigin: "365px 130px",
         }}
       >
@@ -68,24 +77,26 @@ function Loader({ className, size, text, variant = "spinner", ...props }: Loader
           fillRule="evenodd"
         />
       </g>
-      
+
       {/* Hex bolt - moved up and right more and made 5% smaller */}
-      <g 
-        fill="none" 
-        stroke="#4299e1" 
-        strokeWidth="12" 
-        strokeLinejoin="round" 
+      <g
+        fill="none"
+        stroke="#4299e1"
+        strokeWidth="12"
+        strokeLinejoin="round"
         transform="translate(363, 126) scale(0.95)"
       >
         {/* Regular hexagon (radius 40) */}
-        <polygon points="
+        <polygon
+          points="
           40,0
           20,34.641
           -20,34.641
           -40,0
           -20,-34.641
           20,-34.641
-        ">
+        "
+        >
           <animateTransform
             attributeName="transform"
             attributeType="XML"
@@ -122,11 +133,9 @@ function Loader({ className, size, text, variant = "spinner", ...props }: Loader
       ) : (
         <div className={cn(loaderVariants({ size }))} />
       )}
-      {text && (
-        <span className="text-sm text-muted-foreground">{text}</span>
-      )}
+      {text && <span className="text-muted-foreground text-sm">{text}</span>}
     </div>
   );
 }
 
-export { Loader, loaderVariants }; 
+export { Loader, loaderVariants };

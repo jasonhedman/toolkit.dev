@@ -13,10 +13,10 @@ export const generateToolConfigClient: ClientToolConfig<
     return (
       <div className="flex flex-col items-center gap-4 py-4">
         <Loader variant="wrench" />
-        <span className="text-sm font-medium text-foreground">
+        <span className="text-foreground text-sm font-medium">
           Generating your video...
         </span>
-        <span className="text-sm font-light text-muted-foreground">
+        <span className="text-muted-foreground text-sm font-light">
           "{args.prompt}"
         </span>
       </div>
