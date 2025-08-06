@@ -11,6 +11,7 @@ import { discordToolkitServer } from "./discord/server";
 import { stravaToolkitServer } from "./strava/server";
 import { spotifyToolkitServer } from "./spotify/server";
 import { videoToolkitServer } from "./video/server";
+import { twitterToolkitServer } from "./twitter/server";
 import {
   Toolkits,
   type ServerToolkitNames,
@@ -37,6 +38,7 @@ export const serverToolkits: ServerToolkits = {
   [Toolkits.Strava]: stravaToolkitServer,
   [Toolkits.Spotify]: spotifyToolkitServer,
   [Toolkits.Video]: videoToolkitServer,
+  [Toolkits.Twitter]: twitterToolkitServer,
 };
 
 export function getServerToolkit<T extends Toolkits>(
