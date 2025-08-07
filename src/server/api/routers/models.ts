@@ -71,8 +71,8 @@ export const modelsRouter = createTRPCRouter({
             totalMessages > 0
               ? ((model._count.modelId / totalMessages) * 100).toFixed(1)
               : "0",
-          provider: parts[0] || "unknown",
-          modelName: parts[1] || model.modelId,
+          provider: parts[0] ?? "unknown",
+          modelName: parts[1] ?? model.modelId,
         };
       });
     }),
@@ -125,8 +125,8 @@ export const modelsRouter = createTRPCRouter({
       const providerCounts = messages.reduce(
         (acc, message) => {
           const separator = message.modelId.includes(":") ? ":" : "/";
-          const provider = message.modelId.split(separator)[0] || "unknown";
-          acc[provider] = (acc[provider] || 0) + 1;
+          const provider = message.modelId.split(separator)[0] ?? "unknown";
+          acc[provider] = (acc[provider] ?? 0) + 1;
           return acc;
         },
         {} as Record<string, number>,
@@ -219,7 +219,7 @@ export const modelsRouter = createTRPCRouter({
       const providers = new Set(
         uniqueProviders.map((m) => {
           const separator = m.modelId.includes(":") ? ":" : "/";
-          return m.modelId.split(separator)[0] || "unknown";
+          return m.modelId.split(separator)[0] ?? "unknown";
         }),
       );
 
