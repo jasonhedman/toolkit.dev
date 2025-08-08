@@ -5,10 +5,32 @@ import { api } from "@/trpc/react";
 
 type Timeframe = "today" | "week" | "month" | "all";
 
+interface TopModel {
+  rank: number;
+  modelId: string;
+  modelName: string;
+  provider: string;
+  messageCount: number;
+  percentage: string;
+}
+
+interface ProviderShare {
+  provider: string;
+  messageCount: number;
+  percentage: string;
+}
+
+interface OverallStats {
+  totalMessages: number;
+  uniqueModels: number;
+  uniqueProviders: number;
+  timeframe: Timeframe;
+}
+
 interface ModelsLeaderboardProps {
-  initialTopModels: any[];
-  initialProviderShare: any[];
-  initialOverallStats: any;
+  initialTopModels: TopModel[];
+  initialProviderShare: ProviderShare[];
+  initialOverallStats: OverallStats;
 }
 
 export function ModelsLeaderboard({
@@ -120,7 +142,7 @@ export function ModelsLeaderboard({
             <div className="mb-12">
               <h2 className="mb-4 text-2xl font-semibold">Top Models</h2>
               <div className="space-y-3">
-                {topModels.map((model: any) => (
+                {topModels.map((model: TopModel) => (
                   <div
                     key={model.modelId}
                     className="bg-card rounded-lg border p-6"
@@ -162,7 +184,7 @@ export function ModelsLeaderboard({
               <div className="space-y-3">
                 {providerShare
                   .slice(0, 10)
-                  .map((provider: any, index: number) => (
+                  .map((provider: ProviderShare, index: number) => (
                     <div
                       key={provider.provider}
                       className="bg-card rounded-lg border p-6"
