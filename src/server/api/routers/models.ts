@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { createTRPCRouter, publicProcedure } from "@/server/api/trpc";
+import { subWeeks, subMonths, startOfDay } from "date-fns";
 
 export const modelsRouter = createTRPCRouter({
   getTopModels: publicProcedure
@@ -17,17 +18,13 @@ export const modelsRouter = createTRPCRouter({
 
       switch (timeframe) {
         case "today":
-          dateFilter = new Date(
-            now.getFullYear(),
-            now.getMonth(),
-            now.getDate(),
-          );
+          dateFilter = startOfDay(now);
           break;
         case "week":
-          dateFilter = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+          dateFilter = subWeeks(startOfDay(now), 1);
           break;
         case "month":
-          dateFilter = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+          dateFilter = subMonths(startOfDay(now), 1);
           break;
         default:
           dateFilter = undefined;
@@ -91,17 +88,13 @@ export const modelsRouter = createTRPCRouter({
 
       switch (timeframe) {
         case "today":
-          dateFilter = new Date(
-            now.getFullYear(),
-            now.getMonth(),
-            now.getDate(),
-          );
+          dateFilter = startOfDay(now);
           break;
         case "week":
-          dateFilter = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+          dateFilter = subWeeks(startOfDay(now), 1);
           break;
         case "month":
-          dateFilter = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+          dateFilter = subMonths(startOfDay(now), 1);
           break;
         default:
           dateFilter = undefined;
@@ -160,17 +153,13 @@ export const modelsRouter = createTRPCRouter({
 
       switch (timeframe) {
         case "today":
-          dateFilter = new Date(
-            now.getFullYear(),
-            now.getMonth(),
-            now.getDate(),
-          );
+          dateFilter = startOfDay(now);
           break;
         case "week":
-          dateFilter = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+          dateFilter = subWeeks(startOfDay(now), 1);
           break;
         case "month":
-          dateFilter = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+          dateFilter = subMonths(startOfDay(now), 1);
           break;
         default:
           dateFilter = undefined;
