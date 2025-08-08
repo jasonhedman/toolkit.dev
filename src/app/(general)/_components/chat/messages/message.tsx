@@ -105,11 +105,11 @@ const PurePreviewMessage: React.FC<Props> = ({
                       contentType?: string;
                       mediaType?: string;
                     };
-                    const url = attachment.url || attachment.data;
-                    const name = attachment.name || "attachment";
+                    const url = attachment.url ?? attachment.data;
+                    const name = attachment.name ?? "attachment";
                     const contentType =
-                      attachment.contentType ||
-                      attachment.mediaType ||
+                      attachment.contentType ??
+                      attachment.mediaType ??
                       "application/octet-stream";
 
                     return (

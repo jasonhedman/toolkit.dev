@@ -52,7 +52,7 @@ const MessageToolComponent: React.FC<Props> = ({ toolInvocation }) => {
   const nameSuffix = toolType.startsWith("tool-")
     ? toolType.substring("tool-".length)
     : toolType === "dynamic-tool"
-      ? (toolInvocation as { toolName?: string }).toolName
+      ? ((toolInvocation as { toolName?: string }).toolName ?? "")
       : "";
   const [server, tool] = nameSuffix.split("_");
 
@@ -254,15 +254,15 @@ const areEqual = (prevProps: Props, nextProps: Props): boolean => {
   if (prev.state !== next.state) return false;
 
   // Deep compare input/args object
-  const prevInput = (prev as any).args ?? prev.input;
-  const nextInput = (next as any).args ?? next.input;
+  const prevInput = (prev as { args?: unknown }).args ?? prev.input;
+  const nextInput = (next as { args?: unknown }).args ?? next.input;
   if (JSON.stringify(prevInput) !== JSON.stringify(nextInput)) return false;
 
   // Deep compare result object (only exists when state is "output-available")
   if (prev.state === "output-available" && next.state === "output-available") {
     // Both have output property, compare them
-    const prevOutput = (prev as any).result ?? prev.output;
-    const nextOutput = (next as any).result ?? next.output;
+    const prevOutput = (prev as { result?: unknown }).result ?? prev.output;
+    const nextOutput = (next as { result?: unknown }).result ?? next.output;
     if (JSON.stringify(prevOutput) !== JSON.stringify(nextOutput)) return false;
   } else if (
     prev.state === "output-available" ||

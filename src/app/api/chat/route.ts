@@ -1,19 +1,23 @@
-import { smoothStream, tool } from "ai";
+import { NextRequest } from "next/server";
+
+import { streamText, tool } from "ai";
+import { openai } from "@ai-sdk/openai";
+
 import { auth } from "@/server/auth";
 import { api } from "@/trpc/server";
 import { createServerOnlyCaller } from "@/server/api/root";
+import { getServerToolkit } from "@/toolkits/toolkits/server";
+import { imageModelRegistry } from "@/ai/image/registry";
+import { generateUUID } from "@/lib/utils";
 
 import { postRequestBodySchema, type PostRequestBody } from "./schema";
 
-import { generateText, streamText } from "@/ai/language/generate";
-import { generateUUID } from "@/lib/utils";
+import { generateText } from "@/ai/language/generate";
 
 import { ChatSDKError } from "@/lib/errors";
 
 import type { UIMessage } from "ai";
 import type { Chat } from "@prisma/client";
-import { openai } from "@ai-sdk/openai";
-import { getServerToolkit } from "@/toolkits/toolkits/server";
 import { languageModels } from "@/ai/language";
 
 export const maxDuration = 60;
@@ -88,8 +92,7 @@ export async function POST(request: Request) {
     const previousMessages = await api.messages.getMessagesForChat({
       chatId: id,
     });
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const messages = [...previousMessages, message] as any[];
+    const messages = [...previousMessages, message];
 
     await api.messages.createMessage({
       chatId: id,
@@ -115,10 +118,8 @@ export async function POST(request: Request) {
         return Object.keys(tools).reduce(
           (acc, toolName) => {
             const serverTool = tools[toolName as keyof typeof tools];
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             (acc as Record<string, unknown>)[`${id}_${toolName}`] = tool({
               description: serverTool.description,
-              // use 'parameters' to satisfy current type definitions
               parameters: (serverTool as { inputSchema: unknown }).inputSchema,
               execute: async (args: unknown) => {
                 try {
@@ -205,10 +206,9 @@ export async function POST(request: Request) {
       `${selectedChatModel}${useNativeSearch ? ":search" : ""}`,
       {
         system: fullSystemPrompt,
-        // v5 accepts UI messages directly
         messages: messages as unknown,
         toolCallStreaming: true,
-        experimental_transform: smoothStream({ chunking: "word" }),
+        experimental_transform: { chunking: "word" },
         experimental_generateMessageId: generateUUID,
         tools: {
           ...tools,
@@ -236,10 +236,10 @@ export async function POST(request: Request) {
         return "An error occurred while processing your request";
       },
       onFinish: async ({
-        response,
+        _response,
         messages,
       }: {
-        response: unknown;
+        _response: unknown;
         messages: unknown[];
       }) => {
         const assistant = messages[messages.length - 1] as {
@@ -250,7 +250,7 @@ export async function POST(request: Request) {
             await api.messages.createMessage({
               chatId: id,
               role: "assistant",
-              parts: (assistant as { parts?: unknown[] }).parts ?? [],
+              parts: assistant.parts ?? [],
             });
           } catch (error) {
             console.error("Failed to persist assistant message:", error);

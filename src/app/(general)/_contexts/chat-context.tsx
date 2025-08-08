@@ -319,7 +319,9 @@ export function ChatProvider({
     handleSubmit,
     stop,
     reload,
-    append,
+    append: async (message, options) => {
+      return await append(message, options);
+    },
     imageGenerationModel,
     setImageGenerationModel,
     toolkits,

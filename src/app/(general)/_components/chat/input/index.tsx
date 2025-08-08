@@ -29,11 +29,14 @@ import { cn } from "@/lib/utils";
 import { ModelSelect } from "./model-select";
 import { useChatContext } from "@/app/(general)/_contexts/chat-context";
 import type { Attachment } from "../types";
-import type { UseChatHelpers } from "@ai-sdk/react";
-import type { UIMessage } from "ai";
-import { ToolsSelect } from "./tools";
+import type { LanguageModel } from "@/ai/language/types";
+import type { ImageModel } from "@/ai/image/types";
+import type { SelectedToolkit } from "@/components/toolkit/types";
+import type { Workbench } from "@prisma/client";
 import type { File as DbFile } from "@prisma/client";
 import { LanguageModelCapability } from "@/ai/language/types";
+import type { UIMessage } from "ai";
+import { ToolsSelect } from "./tools";
 import {
   Tooltip,
   TooltipContent,
@@ -556,7 +559,7 @@ function PureStopButton({
   setMessages,
 }: {
   stop: () => void;
-  setMessages: (messages: any) => void;
+  setMessages: (messages: unknown) => void;
 }) {
   return (
     <Button
@@ -565,7 +568,7 @@ function PureStopButton({
       onClick={(event) => {
         event.preventDefault();
         stop();
-        setMessages((messages: any) => messages);
+        setMessages((messages: unknown) => messages);
       }}
     >
       <Octagon size={14} />
