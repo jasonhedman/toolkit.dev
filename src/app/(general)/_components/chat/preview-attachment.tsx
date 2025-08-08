@@ -1,6 +1,6 @@
 import { FileIcon, LoaderIcon, X } from "lucide-react";
 
-import type { Attachment } from "ai";
+import type { Attachment } from "../chat/types";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 

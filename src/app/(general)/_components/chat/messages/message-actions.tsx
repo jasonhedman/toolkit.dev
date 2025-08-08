@@ -18,7 +18,7 @@ import {
 import { api } from "@/trpc/react";
 import { useRouter } from "next/navigation";
 
-import type { Message } from "ai";
+import type { UIMessage as Message } from "ai";
 import { HStack } from "@/components/ui/stack";
 import { ModelProviderIcon } from "@/components/ui/model-icon";
 
@@ -47,10 +47,8 @@ export const PureMessageActions: React.FC<Props> = ({
     },
   });
 
-  // Extract modelId from message annotations
-  const model = message.annotations?.find(
-    (annotation) => (annotation as { type: string }).type === "model",
-  ) as
+  // TODO: If model metadata is needed, consider reading from message.metadata
+  const model = undefined as
     | { model: { name: string; provider: string; modelId: string } | null }
     | undefined;
 

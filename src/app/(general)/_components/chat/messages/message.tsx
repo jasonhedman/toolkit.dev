@@ -28,6 +28,22 @@ import type { UIMessage } from "ai";
 import { MessageTool } from "./message-tool";
 import { AnimatedShinyText } from "@/components/magicui/animated-shiny-text";
 
+type ToolInvocationV5 = {
+  type: string;
+  toolCallId: string;
+  state:
+    | "input-streaming"
+    | "input-available"
+    | "output-available"
+    | "output-error";
+  input?: unknown;
+  output?: unknown;
+  errorText?: string;
+  args?: unknown;
+  result?: unknown;
+  toolName?: string;
+};
+
 interface Props {
   message: UIMessage;
   isLoading: boolean;
@@ -75,20 +91,40 @@ const PurePreviewMessage: React.FC<Props> = ({
               message.role === "assistant" && "w-0 flex-1",
             )}
           >
-            {message.experimental_attachments &&
-              message.experimental_attachments.length > 0 && (
-                <div
-                  data-testid={`message-attachments`}
-                  className="flex flex-row justify-end gap-2"
-                >
-                  {message.experimental_attachments.map((attachment) => (
-                    <PreviewAttachment
-                      key={attachment.url}
-                      attachment={attachment}
-                    />
-                  ))}
-                </div>
-              )}
+            {message.parts?.some(
+              (p) => (p as { type: string }).type === "attachment",
+            ) && (
+              <div className="flex flex-col gap-2">
+                {message.parts
+                  ?.filter((p) => (p as { type: string }).type === "attachment")
+                  .map((part, index) => {
+                    const attachment = part as {
+                      url?: string;
+                      data?: string;
+                      name?: string;
+                      contentType?: string;
+                      mediaType?: string;
+                    };
+                    const url = attachment.url ?? attachment.data;
+                    const name = attachment.name ?? "attachment";
+                    const contentType =
+                      attachment.contentType ??
+                      attachment.mediaType ??
+                      "application/octet-stream";
+
+                    return (
+                      <div key={index} className="flex items-center gap-2">
+                        <span className="text-muted-foreground text-sm">
+                          {name}
+                        </span>
+                        <span className="text-muted-foreground text-xs">
+                          ({contentType})
+                        </span>
+                      </div>
+                    );
+                  })}
+              </div>
+            )}
 
             {message.parts?.map((part, index) => {
               const { type } = part;
@@ -99,16 +135,20 @@ const PurePreviewMessage: React.FC<Props> = ({
                   <MessageReasoning
                     key={key}
                     isLoading={isLoading}
-                    reasoning={part.reasoning}
+                    reasoning={(part as any).text}
                   />
                 );
               }
 
-              if (type === "tool-invocation") {
-                const { toolInvocation } = part;
-
+              if (
+                (type as string) === "dynamic-tool" ||
+                (type as string).startsWith("tool-")
+              ) {
                 return (
-                  <MessageTool key={key} toolInvocation={toolInvocation} />
+                  <MessageTool
+                    key={key}
+                    toolInvocation={part as ToolInvocationV5}
+                  />
                 );
               }
 

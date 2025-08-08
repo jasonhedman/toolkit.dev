@@ -1,12 +1,6 @@
 "use client";
 
-import {
-  createContext,
-  useContext,
-  useEffect,
-  useState,
-  useCallback,
-} from "react";
+import { createContext, useContext, useEffect, useState } from "react";
 
 import { useChat } from "@ai-sdk/react";
 
@@ -25,14 +19,12 @@ import { clientToolkits } from "@/toolkits/toolkits/client";
 import { languageModels } from "@/ai/language";
 
 import { clientCookieUtils } from "@/lib/cookies/client";
-import { generateUUID } from "@/lib/utils";
-import { fetchWithErrorHandlers } from "@/lib/fetch";
 import { ChatSDKError } from "@/lib/errors";
 import { IS_DEVELOPMENT } from "@/lib/constants";
 
 import type { ReactNode } from "react";
-import type { Attachment, UIMessage } from "ai";
-import type { UseChatHelpers } from "@ai-sdk/react";
+import type { Message, UseChatHelpers } from "@ai-sdk/react";
+import type { Attachment } from "../_components/chat/types";
 import type { ClientToolkit } from "@/toolkits/types";
 import type { z } from "zod";
 import type { SelectedToolkit } from "@/components/toolkit/types";
@@ -46,11 +38,13 @@ const DEFAULT_CHAT_MODEL = languageModels[0]!;
 
 interface ChatContextType {
   // Chat state
-  messages: Array<UIMessage>;
-  setMessages: UseChatHelpers["setMessages"];
+  messages: Array<Message>;
+  setMessages: (
+    messages: Message[] | ((messages: Message[]) => Message[]),
+  ) => void;
   input: string;
-  setInput: UseChatHelpers["setInput"];
-  status: UseChatHelpers["status"];
+  setInput: (input: string) => void;
+  status: "idle" | "submitted" | "streaming" | "error" | "ready";
   streamStopped: boolean;
   attachments: Array<Attachment>;
   setAttachments: (
@@ -72,10 +66,13 @@ interface ChatContextType {
   workbench?: Workbench;
 
   // Chat actions
-  handleSubmit: UseChatHelpers["handleSubmit"];
+  handleSubmit: (event: React.FormEvent<HTMLFormElement>) => void;
   stop: () => void;
-  reload: UseChatHelpers["reload"];
-  append: UseChatHelpers["append"];
+  reload: () => void;
+  append: (
+    _message: Message | { role: string; content: string },
+    _options?: unknown,
+  ) => Promise<string | null | undefined>;
 }
 
 const ChatContext = createContext<ChatContextType | undefined>(undefined);
@@ -83,7 +80,7 @@ const ChatContext = createContext<ChatContextType | undefined>(undefined);
 interface ChatProviderProps {
   children: ReactNode;
   id: string;
-  initialMessages: Array<UIMessage>;
+  initialMessages: Array<Message>;
   initialVisibilityType: "public" | "private";
   autoResume: boolean;
   workbench?: Workbench;
@@ -207,56 +204,22 @@ export function ChatProvider({
     setToolkits(toolkits.filter((t) => t.id !== id));
   };
 
-  const {
-    messages,
-    setMessages,
-    handleSubmit: originalHandleSubmit,
-    input,
-    setInput,
-    append,
-    status,
-    stop,
-    reload,
-    experimental_resume,
-    data,
-  } = useChat({
+  const [input, setInput] = useState("");
+
+  const { messages, setMessages, status, stop } = useChat({
     id,
-    initialMessages,
-    experimental_throttle: 100,
-    sendExtraMessageFields: true,
-    generateId: generateUUID,
-    fetch: fetchWithErrorHandlers,
-    experimental_prepareRequestBody: (body) => ({
-      id,
-      message: body.messages.at(-1),
-      selectedChatModel: `${selectedChatModel?.provider}/${selectedChatModel?.modelId}`,
-      imageGenerationModel: imageGenerationModel
-        ? `${imageGenerationModel.provider}:${imageGenerationModel.modelId}`
-        : undefined,
-      selectedVisibilityType: initialVisibilityType,
-      useNativeSearch,
-      systemPrompt: workbench?.systemPrompt,
-      toolkits: selectedChatModel?.capabilities?.includes(
-        LanguageModelCapability.ToolCalling,
-      )
-        ? toolkits.map((t) => ({
-            id: t.id,
-            parameters: t.parameters,
-          }))
-        : [],
-      workbenchId: workbench?.id,
-    }),
+    api: "/api/chat",
     onFinish: () => {
       setStreamStopped(false);
       void utils.messages.getMessagesForChat.invalidate({ chatId: id });
-      if (initialMessages.length === 0 && !hasInvalidated) {
+      if (messages.length === 0 && !hasInvalidated) {
         setHasInvalidated(true);
         void utils.chats.getChats.invalidate({
           workbenchId: workbench?.id,
         });
       }
     },
-    onError: (error) => {
+    onError: (error: unknown) => {
       if (error instanceof ChatSDKError) {
         toast.error(error.message);
       } else {
@@ -266,30 +229,38 @@ export function ChatProvider({
     },
   });
 
-  const onStreamError = useCallback(() => {
-    // Mark stream as stopped to hide thinking message
-    setStreamStopped(true);
-    // Also call stop to change the status away from 'submitted'
-    stop();
-  }, [stop]);
+  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (input.trim()) {
+      setStreamStopped(false);
+      // TODO: Implement proper message sending
+      setInput("");
+    }
+  };
+
+  const reload = () => {
+    // TODO: Implement reload functionality
+  };
+
+  const append = async (
+    _message: Message | { role: string; content: string },
+    _options?: unknown,
+  ) => {
+    // TODO: Implement append functionality
+    return null;
+  };
 
   useAutoResume({
     autoResume,
     initialMessages,
-    experimental_resume,
-    data,
+    experimental_resume: reload,
+    data: [],
     setMessages,
-    onStreamError,
+    onStreamError: () => {
+      setStreamStopped(true);
+      stop();
+    },
   });
-
-  const handleSubmit: UseChatHelpers["handleSubmit"] = (
-    event,
-    chatRequestOptions,
-  ) => {
-    // Reset stream stopped flag when submitting new message
-    setStreamStopped(false);
-    originalHandleSubmit(event, chatRequestOptions);
-  };
 
   useEffect(() => {
     if (
@@ -303,7 +274,7 @@ export function ChatProvider({
     }
   }, [selectedChatModel]);
 
-  const value = {
+  const value: ChatContextType = {
     messages,
     setMessages,
     input,

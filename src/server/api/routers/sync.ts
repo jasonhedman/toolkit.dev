@@ -1,6 +1,6 @@
 import { clientToolkits } from "@/toolkits/toolkits/client";
 import { adminProcedure, createTRPCRouter } from "../trpc";
-import type { Message } from "ai";
+import type { UIMessage as Message } from "ai";
 
 // Define all available tools from each toolkit
 const ALL_TOOLS = Object.entries(clientToolkits).reduce(
@@ -88,19 +88,24 @@ export const syncRouter = createTRPCRouter({
         continue;
       }
 
-      // Look for tool-invocation parts
+      // Look for tool parts in v5: type 'dynamic-tool' or 'tool-*'
       for (const part of parts) {
-        if (part.type === "tool-invocation" && part.toolInvocation) {
-          const { toolName } = part.toolInvocation;
-
-          // Parse toolkit and tool from toolName (format: "toolkit_tool")
-          const [toolkit, tool] = toolName.split("_");
-
+        const type = (part as { type: string }).type;
+        if (type === "dynamic-tool") {
+          const toolName = (part as any).toolName as string | undefined;
+          if (toolName) {
+            const [toolkit, tool] = toolName.split("_");
+            if (toolkit && tool) {
+              const key = `${toolkit}_${tool}`;
+              toolUsageMap.set(key, (toolUsageMap.get(key) ?? 0) + 1);
+            }
+          }
+        } else if (type?.startsWith("tool-")) {
+          const nameSuffix = type.substring("tool-".length);
+          const [toolkit, tool] = nameSuffix.split("_");
           if (toolkit && tool) {
             const key = `${toolkit}_${tool}`;
             toolUsageMap.set(key, (toolUsageMap.get(key) ?? 0) + 1);
-          } else {
-            console.warn(`⚠️  Invalid tool name format: ${toolName}`);
           }
         }
       }

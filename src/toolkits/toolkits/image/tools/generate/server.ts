@@ -25,9 +25,9 @@ export const generateToolConfigServer = (
 
       const file = new File(
         [image.uint8Array],
-        `images/${imageId}.${image.mimeType.split("/")[1]}`,
+        `images/${imageId}.${image.mediaType.split("/")[1]}`,
         {
-          type: image.mimeType,
+          type: image.mediaType,
         },
       );
 
@@ -37,7 +37,7 @@ export const generateToolConfigServer = (
 
       await api.images.createImage({
         url: imageUrl,
-        contentType: image.mimeType,
+        contentType: image.mediaType,
       });
 
       return { url: imageUrl };

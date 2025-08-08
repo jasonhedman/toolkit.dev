@@ -3,15 +3,31 @@ import { Card } from "@/components/ui/card";
 import { HStack } from "@/components/ui/stack";
 import { getClientToolkit } from "@/toolkits/toolkits/client";
 import type { Toolkits, ServerToolkitNames } from "@/toolkits/toolkits/shared";
-import type { CreateMessage, DeepPartial, ToolInvocation } from "ai";
+import type { DeepPartial } from "ai";
 import { Loader2 } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import React from "react";
 import type z from "zod";
 import { useChatContext } from "@/app/(general)/_contexts/chat-context";
 
+type ToolInvocationV5 = {
+  type: string;
+  toolCallId: string;
+  state:
+    | "input-streaming"
+    | "input-available"
+    | "output-available"
+    | "output-error";
+  input?: unknown;
+  output?: unknown;
+  errorText?: string;
+  args?: unknown;
+  result?: unknown;
+  toolName?: string;
+};
+
 interface Props {
-  toolInvocation: ToolInvocation;
+  toolInvocation: ToolInvocationV5;
 }
 
 type ToolResult<T extends z.ZodType> =
@@ -27,12 +43,18 @@ type ToolResult<T extends z.ZodType> =
     };
 
 const MessageToolComponent: React.FC<Props> = ({ toolInvocation }) => {
-  const argsDefined = toolInvocation.args !== undefined;
-  const completeOnFirstMount = toolInvocation.state === "result";
+  const argsDefined =
+    (toolInvocation as { args?: unknown }).args !== undefined ||
+    toolInvocation.input !== undefined;
+  const completeOnFirstMount = toolInvocation.state === "output-available";
 
-  const { toolName } = toolInvocation;
-
-  const [server, tool] = toolName.split("_");
+  const toolType = (toolInvocation as { type: string }).type;
+  const nameSuffix = toolType.startsWith("tool-")
+    ? toolType.substring("tool-".length)
+    : toolType === "dynamic-tool"
+      ? ((toolInvocation as { toolName?: string }).toolName ?? "")
+      : "";
+  const [server, tool] = nameSuffix.split("_");
 
   if (!server || !tool) {
     return (
@@ -79,7 +101,7 @@ const MessageToolComponent: React.FC<Props> = ({ toolInvocation }) => {
       <Card className="gap-0 overflow-hidden p-0">
         <HStack className="border-b p-2">
           <clientToolkit.icon className="size-4" />
-          {toolInvocation.state === "result" ? (
+          {toolInvocation.state === "output-available" ? (
             <span className="text-lg font-medium">
               {clientToolkit.name} Toolkit
             </span>
@@ -89,8 +111,8 @@ const MessageToolComponent: React.FC<Props> = ({ toolInvocation }) => {
             </AnimatedShinyText>
           )}
           <AnimatePresence>
-            {(toolInvocation.state === "call" ||
-              toolInvocation.state === "partial-call") && (
+            {(toolInvocation.state === "input-streaming" ||
+              toolInvocation.state === "input-available") && (
               <motion.div
                 initial={{
                   opacity: argsDefined ? 1 : 0,
@@ -111,8 +133,8 @@ const MessageToolComponent: React.FC<Props> = ({ toolInvocation }) => {
           transition={{ duration: 0.3, ease: "easeInOut" }}
         >
           <AnimatePresence mode="wait">
-            {toolInvocation.state === "call" ||
-            toolInvocation.state === "partial-call" ? (
+            {toolInvocation.state === "input-streaming" ||
+            toolInvocation.state === "input-available" ? (
               <motion.div
                 key="call"
                 initial={{
@@ -128,22 +150,27 @@ const MessageToolComponent: React.FC<Props> = ({ toolInvocation }) => {
                 }}
                 style={{ overflow: "hidden" }}
               >
-                {toolInvocation.args && (
+                {Boolean((toolInvocation as { args?: unknown }).args ??
+                  toolInvocation.input) ? (
                   <toolConfig.CallComponent
                     args={
-                      toolInvocation.args as DeepPartial<
+                      ((toolInvocation as { args?: unknown }).args ??
+                        toolInvocation.input) as DeepPartial<
                         z.infer<typeof toolConfig.inputSchema>
                       >
                     }
-                    isPartial={toolInvocation.state === "partial-call"}
+                    isPartial={toolInvocation.state === "input-streaming"}
                   />
-                )}
+                ) : null}
               </motion.div>
-            ) : toolConfig && toolInvocation.state === "result" ? (
+            ) : toolConfig &&
+              (toolInvocation.state === "output-available" ||
+                toolInvocation.state === "output-error") ? (
               (() => {
-                const result = toolInvocation.result as ToolResult<
-                  typeof toolConfig.outputSchema
-                >;
+                const result = (toolInvocation.result ?? {
+                  isError: false,
+                  result: toolInvocation.output,
+                }) as ToolResult<typeof toolConfig.outputSchema>;
 
                 if (result.isError) {
                   return (
@@ -174,7 +201,8 @@ const MessageToolComponent: React.FC<Props> = ({ toolInvocation }) => {
                       Component={({ append }) => (
                         <toolConfig.ResultComponent
                           args={
-                            toolInvocation.args as z.infer<
+                            (toolInvocation.args ??
+                              toolInvocation.input) as z.infer<
                               typeof toolConfig.inputSchema
                             >
                           }
@@ -223,19 +251,24 @@ const areEqual = (prevProps: Props, nextProps: Props): boolean => {
 
   // Compare all relevant fields of toolInvocation
   if (prev.toolCallId !== next.toolCallId) return false;
-  if (prev.toolName !== next.toolName) return false;
   if (prev.state !== next.state) return false;
 
-  // Deep compare args object
-  if (JSON.stringify(prev.args) !== JSON.stringify(next.args)) return false;
+  // Deep compare input/args object
+  const prevInput = (prev as { args?: unknown }).args ?? prev.input;
+  const nextInput = (next as { args?: unknown }).args ?? next.input;
+  if (JSON.stringify(prevInput) !== JSON.stringify(nextInput)) return false;
 
-  // Deep compare result object (only exists when state is "result")
-  if (prev.state === "result" && next.state === "result") {
-    // Both have result property, compare them
-    if (JSON.stringify(prev.result) !== JSON.stringify(next.result))
-      return false;
-  } else if (prev.state === "result" || next.state === "result") {
-    // Only one has result property, they're different
+  // Deep compare result object (only exists when state is "output-available")
+  if (prev.state === "output-available" && next.state === "output-available") {
+    // Both have output property, compare them
+    const prevOutput = (prev as { result?: unknown }).result ?? prev.output;
+    const nextOutput = (next as { result?: unknown }).result ?? next.output;
+    if (JSON.stringify(prevOutput) !== JSON.stringify(nextOutput)) return false;
+  } else if (
+    prev.state === "output-available" ||
+    next.state === "output-available"
+  ) {
+    // Only one has output property, they're different
     return false;
   }
 
@@ -246,10 +279,14 @@ export const MessageTool = React.memo(MessageToolComponent, areEqual);
 
 const MessageToolResultComponent: React.FC<{
   Component: React.ComponentType<{
-    append: (message: CreateMessage) => void;
+    append: (message: { role: string; content: string }) => void;
   }>;
 }> = ({ Component }) => {
   const { append } = useChatContext();
 
-  return <Component append={append} />;
+  const handleAppend = (message: { role: string; content: string }) => {
+    void append(message);
+  };
+
+  return <Component append={handleAppend} />;
 };
