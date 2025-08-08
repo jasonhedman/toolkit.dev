@@ -13,13 +13,13 @@ export const imageModelRegistry = {
       case "openai":
         return openai.image(modelId);
       case "xai":
-        return xai.image(modelId as any);
+        return xai.image(modelId);
       case "fireworks":
-        return fireworks.image(modelId as any);
+        return fireworks.image(modelId);
       case "fal":
-        return fal.image(modelId as any);
+        return fal.image(modelId);
       case "luma":
-        return luma.image(modelId as any);
+        return luma.image(modelId);
       default:
         throw new Error(`Unknown image provider: ${provider}`);
     }

@@ -28,6 +28,22 @@ import type { UIMessage } from "ai";
 import { MessageTool } from "./message-tool";
 import { AnimatedShinyText } from "@/components/magicui/animated-shiny-text";
 
+type ToolInvocationV5 = {
+  type: string;
+  toolCallId: string;
+  state:
+    | "input-streaming"
+    | "input-available"
+    | "output-available"
+    | "output-error";
+  input?: unknown;
+  output?: unknown;
+  errorText?: string;
+  args?: unknown;
+  result?: unknown;
+  toolName?: string;
+};
+
 interface Props {
   message: UIMessage;
   isLoading: boolean;
@@ -75,25 +91,38 @@ const PurePreviewMessage: React.FC<Props> = ({
               message.role === "assistant" && "w-0 flex-1",
             )}
           >
-            {message.parts?.some((p) => (p as any).type === "attachment") && (
-              <div
-                data-testid={`message-attachments`}
-                className="flex flex-row justify-end gap-2"
-              >
+            {message.parts?.some(
+              (p) => (p as { type: string }).type === "attachment",
+            ) && (
+              <div className="flex flex-col gap-2">
                 {message.parts
-                  ?.filter((p) => (p as any).type === "attachment")
-                  .map((p, idx) => (
-                    <PreviewAttachment
-                      key={`${message.id}-att-${idx}`}
-                      // @ts-expect-error narrow to our view type
-                      attachment={{
-                        url: (p as any).url ?? (p as any).data ?? "",
-                        name: (p as any).name,
-                        contentType:
-                          (p as any).contentType ?? (p as any).mediaType,
-                      }}
-                    />
-                  ))}
+                  ?.filter((p) => (p as { type: string }).type === "attachment")
+                  .map((part, index) => {
+                    const attachment = part as {
+                      url?: string;
+                      data?: string;
+                      name?: string;
+                      contentType?: string;
+                      mediaType?: string;
+                    };
+                    const url = attachment.url || attachment.data;
+                    const name = attachment.name || "attachment";
+                    const contentType =
+                      attachment.contentType ||
+                      attachment.mediaType ||
+                      "application/octet-stream";
+
+                    return (
+                      <div key={index} className="flex items-center gap-2">
+                        <span className="text-muted-foreground text-sm">
+                          {name}
+                        </span>
+                        <span className="text-muted-foreground text-xs">
+                          ({contentType})
+                        </span>
+                      </div>
+                    );
+                  })}
               </div>
             )}
 
@@ -115,7 +144,12 @@ const PurePreviewMessage: React.FC<Props> = ({
                 (type as string) === "dynamic-tool" ||
                 (type as string).startsWith("tool-")
               ) {
-                return <MessageTool key={key} toolInvocation={part as any} />;
+                return (
+                  <MessageTool
+                    key={key}
+                    toolInvocation={part as ToolInvocationV5}
+                  />
+                );
               }
 
               if (type === "text") {

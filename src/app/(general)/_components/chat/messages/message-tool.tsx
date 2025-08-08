@@ -3,7 +3,7 @@ import { Card } from "@/components/ui/card";
 import { HStack } from "@/components/ui/stack";
 import { getClientToolkit } from "@/toolkits/toolkits/client";
 import type { Toolkits, ServerToolkitNames } from "@/toolkits/toolkits/shared";
-import type { CreateMessage, DeepPartial, UIMessage } from "ai";
+import type { DeepPartial } from "ai";
 import { Loader2 } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import React from "react";
@@ -43,17 +43,16 @@ type ToolResult<T extends z.ZodType> =
     };
 
 const MessageToolComponent: React.FC<Props> = ({ toolInvocation }) => {
-  const invocationAny = toolInvocation as any;
   const argsDefined =
-    (toolInvocation as any).args !== undefined ||
+    (toolInvocation as { args?: unknown }).args !== undefined ||
     toolInvocation.input !== undefined;
   const completeOnFirstMount = toolInvocation.state === "output-available";
 
-  const toolType = (toolInvocation as any).type as string;
+  const toolType = (toolInvocation as { type: string }).type;
   const nameSuffix = toolType.startsWith("tool-")
     ? toolType.substring("tool-".length)
     : toolType === "dynamic-tool"
-      ? (toolInvocation as any).toolName
+      ? (toolInvocation as { toolName?: string }).toolName
       : "";
   const [server, tool] = nameSuffix.split("_");
 
@@ -112,8 +111,8 @@ const MessageToolComponent: React.FC<Props> = ({ toolInvocation }) => {
             </AnimatedShinyText>
           )}
           <AnimatePresence>
-            {(invocationAny.state === "input-streaming" ||
-              invocationAny.state === "input-available") && (
+            {(toolInvocation.state === "input-streaming" ||
+              toolInvocation.state === "input-available") && (
               <motion.div
                 initial={{
                   opacity: argsDefined ? 1 : 0,
@@ -134,8 +133,8 @@ const MessageToolComponent: React.FC<Props> = ({ toolInvocation }) => {
           transition={{ duration: 0.3, ease: "easeInOut" }}
         >
           <AnimatePresence mode="wait">
-            {invocationAny.state === "input-streaming" ||
-            invocationAny.state === "input-available" ? (
+            {toolInvocation.state === "input-streaming" ||
+            toolInvocation.state === "input-available" ? (
               <motion.div
                 key="call"
                 initial={{
@@ -151,25 +150,26 @@ const MessageToolComponent: React.FC<Props> = ({ toolInvocation }) => {
                 }}
                 style={{ overflow: "hidden" }}
               >
-                {(invocationAny.args ?? invocationAny.input) && (
+                {((toolInvocation as { args?: unknown }).args ??
+                  toolInvocation.input) && (
                   <toolConfig.CallComponent
                     args={
-                      (invocationAny.args ??
-                        invocationAny.input) as DeepPartial<
+                      ((toolInvocation as { args?: unknown }).args ??
+                        toolInvocation.input) as DeepPartial<
                         z.infer<typeof toolConfig.inputSchema>
                       >
                     }
-                    isPartial={invocationAny.state === "input-streaming"}
+                    isPartial={toolInvocation.state === "input-streaming"}
                   />
                 )}
               </motion.div>
             ) : toolConfig &&
-              (invocationAny.state === "output-available" ||
-                invocationAny.state === "output-error") ? (
+              (toolInvocation.state === "output-available" ||
+                toolInvocation.state === "output-error") ? (
               (() => {
-                const result = (invocationAny.result ?? {
+                const result = (toolInvocation.result ?? {
                   isError: false,
-                  result: invocationAny.output,
+                  result: toolInvocation.output,
                 }) as ToolResult<typeof toolConfig.outputSchema>;
 
                 if (result.isError) {
@@ -201,8 +201,8 @@ const MessageToolComponent: React.FC<Props> = ({ toolInvocation }) => {
                       Component={({ append }) => (
                         <toolConfig.ResultComponent
                           args={
-                            (invocationAny.args ??
-                              invocationAny.input) as z.infer<
+                            (toolInvocation.args ??
+                              toolInvocation.input) as z.infer<
                               typeof toolConfig.inputSchema
                             >
                           }
@@ -279,7 +279,7 @@ export const MessageTool = React.memo(MessageToolComponent, areEqual);
 
 const MessageToolResultComponent: React.FC<{
   Component: React.ComponentType<{
-    append: (message: CreateMessage) => void;
+    append: (message: { role: string; content: string }) => void;
   }>;
 }> = ({ Component }) => {
   const { append } = useChatContext();

@@ -116,14 +116,15 @@ export async function POST(request: Request) {
           (acc, toolName) => {
             const serverTool = tools[toolName as keyof typeof tools];
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            (acc as any)[`${id}_${toolName}`] = tool({
+            (acc as Record<string, unknown>)[`${id}_${toolName}`] = tool({
               description: serverTool.description,
               // use 'parameters' to satisfy current type definitions
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              parameters: (serverTool as any).inputSchema,
+              parameters: (serverTool as { inputSchema: unknown }).inputSchema,
               execute: async (args: unknown) => {
                 try {
-                  const result = await serverTool.callback(args);
+                  const result = await serverTool.callback(
+                    args as Record<string, unknown>,
+                  );
 
                   // Increment tool usage on successful execution
                   try {
@@ -205,14 +206,11 @@ export async function POST(request: Request) {
       {
         system: fullSystemPrompt,
         // v5 accepts UI messages directly
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        messages: messages as any,
-        // @ts-expect-error allow while types catch up
+        messages: messages as unknown,
         toolCallStreaming: true,
         experimental_transform: smoothStream({ chunking: "word" }),
         experimental_generateMessageId: generateUUID,
         tools: {
-          // @ts-expect-error allow record of tools
           ...tools,
           ...(isOpenAi && useNativeSearch
             ? { web_search_preview: openai.tools.webSearchPreview() }
@@ -221,7 +219,9 @@ export async function POST(request: Request) {
       },
     );
 
-    return (result as any).toUIMessageStreamResponse({
+    return (
+      result as { toUIMessageStreamResponse: (options: unknown) => unknown }
+    ).toUIMessageStreamResponse({
       sendReasoning: true,
       onError: (error: unknown) => {
         if (error && typeof error === "object") {
@@ -239,26 +239,22 @@ export async function POST(request: Request) {
         response,
         messages,
       }: {
-        response: { modelId: string };
-        messages: Array<UIMessage>;
+        response: unknown;
+        messages: unknown[];
       }) => {
-        try {
-          const assistant = messages
-            .filter((m: UIMessage) => m.role === "assistant")
-            .at(-1);
-          if (assistant) {
+        const assistant = messages[messages.length - 1] as {
+          parts?: unknown[];
+        };
+        if (assistant) {
+          try {
             await api.messages.createMessage({
               chatId: id,
-              id: assistant.id,
               role: "assistant",
-              // @ts-expect-error model UI parts passthrough
-              parts: (assistant as any).parts ?? [],
-              attachments: [],
-              modelId: response.modelId,
+              parts: (assistant as { parts?: unknown[] }).parts ?? [],
             });
+          } catch (error) {
+            console.error("Failed to persist assistant message:", error);
           }
-        } catch (error) {
-          console.error(error);
         }
       },
     });

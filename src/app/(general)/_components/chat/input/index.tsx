@@ -177,7 +177,9 @@ const PureMultimodalInput: React.FC<Props> = ({
     }
 
     handleSubmit({
-      preventDefault: () => {},
+      preventDefault: () => {
+        // Prevent default form submission
+      },
     } as React.FormEvent<HTMLFormElement>);
 
     setAttachments([]);
@@ -190,7 +192,6 @@ const PureMultimodalInput: React.FC<Props> = ({
   }, [
     selectedChatModel,
     submitDisabledString,
-    attachments,
     handleSubmit,
     setAttachments,
     setLocalStorageInput,
@@ -509,7 +510,7 @@ function PureAttachmentsButton({
   disabledString,
 }: {
   fileInputRef: React.MutableRefObject<HTMLInputElement | null>;
-  status: UseChatHelpers<UIMessage>["status"];
+  status: "idle" | "submitted" | "streaming" | "error" | "ready";
   disabledString: string;
 }) {
   const button = (
@@ -555,7 +556,7 @@ function PureStopButton({
   setMessages,
 }: {
   stop: () => void;
-  setMessages: UseChatHelpers<UIMessage>["setMessages"];
+  setMessages: (messages: any) => void;
 }) {
   return (
     <Button
@@ -564,7 +565,7 @@ function PureStopButton({
       onClick={(event) => {
         event.preventDefault();
         stop();
-        setMessages((messages) => messages);
+        setMessages((messages: any) => messages);
       }}
     >
       <Octagon size={14} />

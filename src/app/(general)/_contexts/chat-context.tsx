@@ -1,12 +1,6 @@
 "use client";
 
-import {
-  createContext,
-  useContext,
-  useEffect,
-  useState,
-  useCallback,
-} from "react";
+import { createContext, useContext, useEffect, useState } from "react";
 
 import { useChat } from "@ai-sdk/react";
 
@@ -25,8 +19,6 @@ import { clientToolkits } from "@/toolkits/toolkits/client";
 import { languageModels } from "@/ai/language";
 
 import { clientCookieUtils } from "@/lib/cookies/client";
-import { generateUUID } from "@/lib/utils";
-import { fetchWithErrorHandlers } from "@/lib/fetch";
 import { ChatSDKError } from "@/lib/errors";
 import { IS_DEVELOPMENT } from "@/lib/constants";
 
@@ -48,7 +40,7 @@ const DEFAULT_CHAT_MODEL = languageModels[0]!;
 interface ChatContextType {
   // Chat state
   messages: Array<UIMessage>;
-  setMessages: (messages: any) => void;
+  setMessages: (messages: unknown) => void;
   input: string;
   setInput: (input: string) => void;
   status: "idle" | "submitted" | "streaming" | "error" | "ready";
@@ -77,8 +69,8 @@ interface ChatContextType {
   stop: () => void;
   reload: () => void;
   append: (
-    message: UIMessage | { role: string; content: string },
-    options?: unknown,
+    _message: UIMessage | { role: string; content: string },
+    _options?: unknown,
   ) => Promise<string | null | undefined>;
 }
 
@@ -280,8 +272,8 @@ export function ChatProvider({
   };
 
   const append = async (
-    message: UIMessage | { role: string; content: string },
-    options?: unknown,
+    _message: UIMessage | { role: string; content: string },
+    _options?: unknown,
   ) => {
     // TODO: Implement append functionality
     return null;
