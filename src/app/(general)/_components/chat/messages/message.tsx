@@ -75,20 +75,27 @@ const PurePreviewMessage: React.FC<Props> = ({
               message.role === "assistant" && "w-0 flex-1",
             )}
           >
-            {message.experimental_attachments &&
-              message.experimental_attachments.length > 0 && (
-                <div
-                  data-testid={`message-attachments`}
-                  className="flex flex-row justify-end gap-2"
-                >
-                  {message.experimental_attachments.map((attachment) => (
+            {message.parts?.some((p) => (p as any).type === "attachment") && (
+              <div
+                data-testid={`message-attachments`}
+                className="flex flex-row justify-end gap-2"
+              >
+                {message.parts
+                  ?.filter((p) => (p as any).type === "attachment")
+                  .map((p, idx) => (
                     <PreviewAttachment
-                      key={attachment.url}
-                      attachment={attachment}
+                      key={`${message.id}-att-${idx}`}
+                      // @ts-expect-error narrow to our view type
+                      attachment={{
+                        url: (p as any).url ?? (p as any).data ?? "",
+                        name: (p as any).name,
+                        contentType:
+                          (p as any).contentType ?? (p as any).mediaType,
+                      }}
                     />
                   ))}
-                </div>
-              )}
+              </div>
+            )}
 
             {message.parts?.map((part, index) => {
               const { type } = part;
@@ -99,17 +106,16 @@ const PurePreviewMessage: React.FC<Props> = ({
                   <MessageReasoning
                     key={key}
                     isLoading={isLoading}
-                    reasoning={part.reasoning}
+                    reasoning={(part as any).text}
                   />
                 );
               }
 
-              if (type === "tool-invocation") {
-                const { toolInvocation } = part;
-
-                return (
-                  <MessageTool key={key} toolInvocation={toolInvocation} />
-                );
+              if (
+                (type as string) === "dynamic-tool" ||
+                (type as string).startsWith("tool-")
+              ) {
+                return <MessageTool key={key} toolInvocation={part as any} />;
               }
 
               if (type === "text") {

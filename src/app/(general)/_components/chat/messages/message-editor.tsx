@@ -9,7 +9,7 @@ import { useDeleteMessagesAfterTimestamp } from "@/app/(general)/_hooks/use-dele
 import { useChatContext } from "@/app/(general)/_contexts/chat-context";
 
 import type { Dispatch, SetStateAction } from "react";
-import type { Message } from "ai";
+import type { UIMessage as Message, UIMessage } from "ai";
 
 export type MessageEditorProps = {
   message: Message;
@@ -36,7 +36,7 @@ export function MessageEditor({
         .trim();
     }
 
-    return message.content || "";
+    return "";
   });
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -61,18 +61,15 @@ export function MessageEditor({
   const onSubmit = async () => {
     setIsSubmitting(true);
 
-    const messageCreatedAt = message.createdAt;
-    const messageTimestamp = messageCreatedAt
-      ? messageCreatedAt.getTime()
-      : Date.now();
+    const messageTimestamp = Date.now();
     const deleteFromTimestamp = new Date(messageTimestamp);
     mutate({
       chatId: chatId,
       timestamp: deleteFromTimestamp,
     });
 
-    setMessages((messages) => {
-      const index = messages.findIndex((m) => m.id === message.id);
+    setMessages((messages: Message[]) => {
+      const index = messages.findIndex((m: Message) => m.id === message.id);
       if (index !== -1) {
         return messages.slice(0, index);
       }
