@@ -23,8 +23,7 @@ import { ChatSDKError } from "@/lib/errors";
 import { IS_DEVELOPMENT } from "@/lib/constants";
 
 import type { ReactNode } from "react";
-import type { UIMessage } from "ai";
-import type { UseChatHelpers } from "@ai-sdk/react";
+import type { Message, UseChatHelpers } from "@ai-sdk/react";
 import type { Attachment } from "../_components/chat/types";
 import type { ClientToolkit } from "@/toolkits/types";
 import type { z } from "zod";
@@ -39,8 +38,10 @@ const DEFAULT_CHAT_MODEL = languageModels[0]!;
 
 interface ChatContextType {
   // Chat state
-  messages: Array<UIMessage>;
-  setMessages: (messages: unknown) => void;
+  messages: Array<Message>;
+  setMessages: (
+    messages: Message[] | ((messages: Message[]) => Message[]),
+  ) => void;
   input: string;
   setInput: (input: string) => void;
   status: "idle" | "submitted" | "streaming" | "error" | "ready";
@@ -69,7 +70,7 @@ interface ChatContextType {
   stop: () => void;
   reload: () => void;
   append: (
-    _message: UIMessage | { role: string; content: string },
+    _message: Message | { role: string; content: string },
     _options?: unknown,
   ) => Promise<string | null | undefined>;
 }
@@ -79,7 +80,7 @@ const ChatContext = createContext<ChatContextType | undefined>(undefined);
 interface ChatProviderProps {
   children: ReactNode;
   id: string;
-  initialMessages: Array<UIMessage>;
+  initialMessages: Array<Message>;
   initialVisibilityType: "public" | "private";
   autoResume: boolean;
   workbench?: Workbench;
@@ -207,41 +208,11 @@ export function ChatProvider({
 
   const { messages, setMessages, status, stop } = useChat({
     id,
-    initialMessages,
     api: "/api/chat",
-    experimental_prepareRequestBody: ({
-      id: chatId,
-      messages,
-    }: {
-      id: string;
-      messages: UIMessage[];
-    }) => {
-      return {
-        id: chatId,
-        message: {
-          ...messages.at(-1)!,
-          experimental_attachments: attachments,
-        },
-        selectedChatModel: `${selectedChatModel?.provider}/${selectedChatModel?.modelId}`,
-        imageGenerationModel: imageGenerationModel
-          ? `${imageGenerationModel.provider}:${imageGenerationModel.modelId}`
-          : undefined,
-        selectedVisibilityType: initialVisibilityType,
-        useNativeSearch,
-        systemPrompt: workbench?.systemPrompt,
-        toolkits: selectedChatModel?.capabilities?.includes(
-          LanguageModelCapability.ToolCalling,
-        )
-          ? toolkits.map((t) => ({ id: t.id, parameters: t.parameters }))
-          : [],
-        workbenchId: workbench?.id,
-      };
-    },
-    experimental_throttle: 100,
     onFinish: () => {
       setStreamStopped(false);
       void utils.messages.getMessagesForChat.invalidate({ chatId: id });
-      if (initialMessages.length === 0 && !hasInvalidated) {
+      if (messages.length === 0 && !hasInvalidated) {
         setHasInvalidated(true);
         void utils.chats.getChats.invalidate({
           workbenchId: workbench?.id,
@@ -272,7 +243,7 @@ export function ChatProvider({
   };
 
   const append = async (
-    _message: UIMessage | { role: string; content: string },
+    _message: Message | { role: string; content: string },
     _options?: unknown,
   ) => {
     // TODO: Implement append functionality
@@ -319,9 +290,7 @@ export function ChatProvider({
     handleSubmit,
     stop,
     reload,
-    append: async (message, options) => {
-      return await append(message, options);
-    },
+    append,
     imageGenerationModel,
     setImageGenerationModel,
     toolkits,

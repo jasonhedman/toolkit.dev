@@ -118,7 +118,7 @@ export async function POST(request: Request) {
         return Object.keys(tools).reduce(
           (acc, toolName) => {
             const serverTool = tools[toolName as keyof typeof tools];
-            (acc as Record<string, unknown>)[`${id}_${toolName}`] = tool({
+            (acc as Record<string, unknown>)[`${id}_${toolName}`] = {
               description: serverTool.description,
               parameters: (serverTool as { inputSchema: unknown }).inputSchema,
               execute: async (args: unknown) => {
@@ -164,7 +164,7 @@ export async function POST(request: Request) {
                   };
                 }
               },
-            });
+            };
             return acc as Record<string, unknown>;
           },
           {} as Record<string, unknown>,
@@ -210,17 +210,14 @@ export async function POST(request: Request) {
         toolCallStreaming: true,
         experimental_transform: { chunking: "word" },
         experimental_generateMessageId: generateUUID,
-        tools: {
-          ...tools,
-          ...(isOpenAi && useNativeSearch
-            ? { web_search_preview: openai.tools.webSearchPreview() }
-            : {}),
-        },
+        tools,
       },
     );
 
     return (
-      result as { toUIMessageStreamResponse: (options: unknown) => unknown }
+      result as unknown as {
+        toUIMessageStreamResponse: (options: unknown) => unknown;
+      }
     ).toUIMessageStreamResponse({
       sendReasoning: true,
       onError: (error: unknown) => {
@@ -250,7 +247,7 @@ export async function POST(request: Request) {
             await api.messages.createMessage({
               chatId: id,
               role: "assistant",
-              parts: assistant.parts ?? [],
+              parts: (assistant.parts ?? []) as any,
             });
           } catch (error) {
             console.error("Failed to persist assistant message:", error);

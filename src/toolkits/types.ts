@@ -1,8 +1,4 @@
-import type {
-  CreateUIMessage as CreateMessage,
-  DeepPartial,
-  UIMessage,
-} from "ai";
+import type { DeepPartial, UIMessage } from "ai";
 import type { z, ZodObject, ZodRawShape } from "zod";
 
 // ------------------------------------------------------------
@@ -111,7 +107,7 @@ export type ClientToolConfig<
   ResultComponent: React.ComponentType<{
     args: z.infer<ZodObject<Args>>;
     result: z.infer<ZodObject<Result>>;
-    append: (message: CreateMessage<UIMessage>) => void;
+    append: (message: { role: string; content: string }) => void;
   }>;
 };
 

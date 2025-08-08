@@ -150,8 +150,8 @@ const MessageToolComponent: React.FC<Props> = ({ toolInvocation }) => {
                 }}
                 style={{ overflow: "hidden" }}
               >
-                {((toolInvocation as { args?: unknown }).args ??
-                  toolInvocation.input) && (
+                {Boolean((toolInvocation as { args?: unknown }).args ??
+                  toolInvocation.input) ? (
                   <toolConfig.CallComponent
                     args={
                       ((toolInvocation as { args?: unknown }).args ??
@@ -161,7 +161,7 @@ const MessageToolComponent: React.FC<Props> = ({ toolInvocation }) => {
                     }
                     isPartial={toolInvocation.state === "input-streaming"}
                   />
-                )}
+                ) : null}
               </motion.div>
             ) : toolConfig &&
               (toolInvocation.state === "output-available" ||
@@ -284,5 +284,9 @@ const MessageToolResultComponent: React.FC<{
 }> = ({ Component }) => {
   const { append } = useChatContext();
 
-  return <Component append={append} />;
+  const handleAppend = (message: { role: string; content: string }) => {
+    void append(message);
+  };
+
+  return <Component append={handleAppend} />;
 };
