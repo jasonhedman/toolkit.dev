@@ -12,11 +12,6 @@ type PostBody = {
   origin?: string;
   experience?: Experience;
   address?: string;
-  blockchains?: string[]; // e.g., ["base"], ["ethereum", "base"]
-  assets?: string[]; // e.g., ["ETH", "USDC"]
-  defaultNetwork?: string;
-  defaultAsset?: string;
-  fiatCurrency?: string;
   partnerUserId?: string;
   redirectUrl?: string;
 };
@@ -64,9 +59,9 @@ export async function POST(request: NextRequest) {
       method: body.method,
       origin: body.origin,
       experience: body.experience ?? Experience.Buy,
-      defaultNetwork: body.defaultNetwork ?? "base",
-      defaultAsset: body.defaultAsset ?? "USDC",
-      fiatCurrency: body.fiatCurrency ?? "USD",
+      defaultNetwork: "base",
+      defaultAsset: "USDC",
+      fiatCurrency: "USD",
       partnerUserId: body.partnerUserId,
       redirectUrl: body.redirectUrl,
     });

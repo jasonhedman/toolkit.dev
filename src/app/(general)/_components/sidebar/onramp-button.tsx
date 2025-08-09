@@ -7,6 +7,11 @@ import { VStack } from "@/components/ui/stack";
 
 const WALLET_ADDRESS = "0xF4c7C335cd03e6af19580AAEA1FFE55eF83C88E2";
 
+interface OnrampResponse {
+  url: string;
+  sessionToken: string;
+}
+
 export function OnrampButton() {
   const [isLoading, setIsLoading] = useState(false);
 
@@ -22,9 +27,6 @@ export function OnrampButton() {
           address: WALLET_ADDRESS,
           amount: 100, // Default $100
           experience: "buy",
-          defaultNetwork: "base",
-          defaultAsset: "USDC",
-          fiatCurrency: "USD",
         }),
       });
 
@@ -32,7 +34,7 @@ export function OnrampButton() {
         throw new Error("Failed to create onramp URL");
       }
 
-      const { url } = await response.json();
+      const { url } = (await response.json()) as OnrampResponse;
 
       // Open the onramp URL in a new tab
       window.open(url, "_blank");
