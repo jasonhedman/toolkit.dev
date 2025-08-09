@@ -31,7 +31,7 @@ export async function POST(request: Request) {
         // Send user operation to fund the repo
         const result = await cdp.evm.sendUserOperation({
             smartAccount,
-            network: "base-sepolia", // or "base-mainnet" for production
+            network: "base-sepolia",
             calls: [
                 {
                     to: MERIT_CONTRACT_ADDRESS,
@@ -44,7 +44,7 @@ export async function POST(request: Request) {
                             BigInt(repoInstanceId),
                             tokenAddress,
                             amountBigInt,
-                            "0x" // empty bytes data
+                            "0x"
                         ],
                     })
                 }
