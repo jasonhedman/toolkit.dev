@@ -21,7 +21,7 @@ export async function POST(request: Request) {
             });
         }
 
-        const repoId = env.GITHUB_REPO_ID;
+        const repoId = env.GITHUB_REPO_ID as string;
         const repoInstanceId = 0;
         const cdp = new CdpClient();
 
@@ -41,11 +41,16 @@ export async function POST(request: Request) {
             ]
         });
 
-        // Create owner account
-        const owner = await cdp.evm.createAccount();
+        // Get or create owner account with a specific name
+        const owner = await cdp.evm.getOrCreateAccount({
+            name: "toolkit-fund-owner"
+        });
         
-        // Create smart account
-        const smartAccount = await cdp.evm.createSmartAccount({ owner });
+        // Get or create smart account with a specific name
+        const smartAccount = await cdp.evm.getOrCreateSmartAccount({
+            name: "toolkit-fund-smart-account",
+            owner
+        });
 
         // Send user operation
         const result = await cdp.evm.sendUserOperation({
