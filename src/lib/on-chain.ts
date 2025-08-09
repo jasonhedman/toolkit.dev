@@ -38,3 +38,5 @@ export const MERIT_ABI = [
   ];
 
 export const MERIT_CONTRACT_ADDRESS = env.MERIT_CONTRACT_ADDRESS as `0x${string}`;
+export const USDC_ADDRESS = env.USDC_ADDRESS as `0x${string}`;
+export const GITHUB_REPO_ID = env.GITHUB_REPO_ID as string;

@@ -1,11 +1,10 @@
-import { env } from "@/env";
-import { MERIT_ABI, MERIT_CONTRACT_ADDRESS } from "@/lib/on-chain";
+import { MERIT_ABI, MERIT_CONTRACT_ADDRESS, USDC_ADDRESS, GITHUB_REPO_ID } from "@/lib/on-chain";
 import { CdpClient } from "@coinbase/cdp-sdk";
 import { encodeFunctionData } from "viem";
 
 export async function POST(request: Request) {
     try {
-        const { amount, tokenAddress = "0x0000000000000000000000000000000000000000" } = await request.json() as { amount: number; tokenAddress?: string };
+        const { amount } = await request.json() as { amount: number };
         
         if (!amount || typeof amount !== "number") {
             return new Response(JSON.stringify({ error: "Invalid amount provided" }), {
@@ -14,32 +13,15 @@ export async function POST(request: Request) {
             });
         }
 
-        if (!env.GITHUB_REPO_ID) {
-            return new Response(JSON.stringify({ error: "GitHub repo ID not configured" }), {
-                status: 500,
-                headers: { "Content-Type": "application/json" }
-            });
-        }
-
-        const repoId = env.GITHUB_REPO_ID as string;
+        const repoId = GITHUB_REPO_ID;
+        const tokenAddress = USDC_ADDRESS;
         const repoInstanceId = 0;
         const cdp = new CdpClient();
 
-        // Convert amount to wei (assuming amount is in ETH)
-        const amountInWei = BigInt(amount * 10 ** 18);
+        // Convert amount to wei (assuming amount is in USDC - 6 decimals)
+        const amountBigInt = BigInt(amount * 10 ** 6);
 
-        // Encode the function call data
-        const encodedData = encodeFunctionData({
-            abi: MERIT_ABI,
-            functionName: "fundRepo",
-            args: [
-                BigInt(repoId),
-                BigInt(repoInstanceId),
-                tokenAddress as `0x${string}`,
-                amountInWei,
-                "0x" // empty bytes data
-            ]
-        });
+        
 
         // Get or create owner account with a specific name
         const owner = await cdp.evm.getOrCreateAccount({
@@ -60,7 +42,17 @@ export async function POST(request: Request) {
                 {
                     to: MERIT_CONTRACT_ADDRESS,
                     value: 0n,
-                    data: encodedData
+                    data: encodeFunctionData({
+                        abi: MERIT_ABI,
+                        functionName: "fundRepo",
+                        args: [
+                            BigInt(repoId),
+                            BigInt(repoInstanceId),
+                            tokenAddress,
+                            amountBigInt,
+                            "0x" // empty bytes data
+                        ],
+                    })
                 }
             ]
         });
@@ -76,7 +68,8 @@ export async function POST(request: Request) {
             userOpHash: result.userOpHash,
             smartAccountAddress: smartAccount.address,
             amount: amount,
-            repoId: repoId
+            repoId: repoId,
+            tokenAddress: tokenAddress
         }), {
             status: 200,
             headers: { "Content-Type": "application/json" }
