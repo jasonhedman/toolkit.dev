@@ -1,5 +1,9 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { buildOnrampUrl, type PaymentMethod, Experience } from "./build-onramp-url";
+import {
+  buildOnrampUrl,
+  type PaymentMethod,
+  Experience,
+} from "./build-onramp-url";
 import { createSessionToken } from "./cdp-lib";
 
 type PostBody = {

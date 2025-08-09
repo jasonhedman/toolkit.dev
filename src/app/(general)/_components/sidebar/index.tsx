@@ -21,6 +21,7 @@ import { HStack, VStack } from "@/components/ui/stack";
 import { SiGithub } from "@icons-pack/react-simple-icons";
 import { WorkbenchSelect } from "./workbench-select";
 import { InstallPrompt } from "./install-prompt";
+import { OnrampButton } from "./onramp-button";
 
 export async function AppSidebar({
   ...props
@@ -64,6 +65,7 @@ export async function AppSidebar({
           <div className="group-data-[collapsible=icon]:hidden">
             <InstallPrompt />
           </div>
+          <OnrampButton />
           <SidebarMenuButton
             asChild
             className="hover:bg-sidebar-accent/50 h-fit w-full rounded-lg p-2 transition-colors group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:p-2"
