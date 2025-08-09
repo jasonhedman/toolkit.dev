@@ -1,5 +1,5 @@
-import { NextResponse, NextRequest } from "next/server";
-import { buildOnrampUrl, PaymentMethod, Experience } from "./build-onramp-url";
+import { NextResponse, type NextRequest } from "next/server";
+import { buildOnrampUrl, type PaymentMethod, Experience } from "./build-onramp-url";
 import { createSessionToken } from "./cdp-lib";
 
 type PostBody = {
@@ -71,49 +71,6 @@ export async function POST(request: NextRequest) {
       url,
       sessionToken,
     });
-  } catch (error) {
-    console.error("Onramp API error:", error);
-    return NextResponse.json(
-      {
-        error: "Unexpected error",
-        details: error instanceof Error ? error.message : String(error),
-      },
-      { status: 500 },
-    );
-  }
-}
-
-// GET endpoint to retrieve onramp URL for existing session
-export async function GET(request: NextRequest) {
-  try {
-    const searchParams = request.nextUrl.searchParams;
-    const sessionToken = searchParams.get("sessionToken");
-
-    if (!sessionToken) {
-      return NextResponse.json(
-        { error: "sessionToken is required" },
-        { status: 400 },
-      );
-    }
-
-    // Build URL with query parameters
-    const url = buildOnrampUrl({
-      sessionToken,
-      amount: searchParams.get("amount")
-        ? Number(searchParams.get("amount"))
-        : undefined,
-      method: searchParams.get("method") as PaymentMethod | undefined,
-      origin: searchParams.get("origin") ?? undefined,
-      experience:
-        (searchParams.get("experience") as Experience) ?? Experience.Buy,
-      defaultNetwork: searchParams.get("defaultNetwork") ?? "base",
-      defaultAsset: searchParams.get("defaultAsset") ?? "USDC",
-      fiatCurrency: searchParams.get("fiatCurrency") ?? "USD",
-      partnerUserId: searchParams.get("partnerUserId") ?? undefined,
-      redirectUrl: searchParams.get("redirectUrl") ?? undefined,
-    });
-
-    return NextResponse.json({ url });
   } catch (error) {
     console.error("Onramp API error:", error);
     return NextResponse.json(
