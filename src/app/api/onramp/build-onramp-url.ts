@@ -39,7 +39,7 @@ export const buildOnrampUrl = ({
   const url = new URL("https://pay.coinbase.com/buy/select-asset");
 
   const params: Record<string, string> = {
-    appId: process.env.CDP_APP_ID || "",
+    appId: process.env.CDP_APP_ID ?? "",
     sessionToken,
     defaultNetwork,
     defaultAsset,
