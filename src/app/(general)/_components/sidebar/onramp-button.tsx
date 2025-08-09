@@ -26,7 +26,6 @@ export function OnrampButton() {
         body: JSON.stringify({
           address: WALLET_ADDRESS,
           amount: 100, // Default $100
-          experience: "buy",
         }),
       });
 

@@ -10,7 +10,6 @@ type PostBody = {
   amount?: number;
   method?: PaymentMethod;
   origin?: string;
-  experience?: Experience;
   address?: string;
   partnerUserId?: string;
   redirectUrl?: string;
@@ -58,7 +57,7 @@ export async function POST(request: NextRequest) {
       amount: body.amount,
       method: body.method,
       origin: body.origin,
-      experience: body.experience ?? Experience.Buy,
+      experience: Experience.Buy,
       defaultNetwork: "base",
       defaultAsset: "USDC",
       fiatCurrency: "USD",
