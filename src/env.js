@@ -100,6 +100,8 @@ export const env = createEnv({
       .default("development"),
     PRISMA_LOG_QUERIES: z.string().optional(),
     GITHUB_TOKEN: z.string().optional(),
+    MERIT_CONTRACT_ADDRESS: z.string().optional(),
+    GITHUB_REPO_ID: z.string().optional(),
   },
 
   /**

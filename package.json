@@ -118,6 +118,7 @@
     "usehooks-ts": "^3.1.1",
     "uuid": "^11.1.0",
     "vaul": "^1.1.2",
+    "viem": "^2.33.3",
     "zod": "^3.25.56"
   },
   "devDependencies": {

@@ -6,11 +6,11 @@ dotenv.config();
 
 let walletAccount: EvmServerAccount | null = null;
 
-const getWalletAccount = async () => {
+export const getWalletAccount = async () => {
     if (!walletAccount) {
         const cdp = new CdpClient();
         const account = await cdp.evm.getOrCreateAccount({
-            name: "toolkit-wallet"
+            name: "toolkit-wallet-dev"
         });
         walletAccount = account;
     }
