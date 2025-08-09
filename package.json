@@ -36,6 +36,7 @@
     "@ai-sdk/react": "^1.2.12",
     "@ai-sdk/xai": "^1.2.16",
     "@auth/prisma-adapter": "^2.7.2",
+    "@coinbase/cdp-sdk": "^1.34.0",
     "@discordjs/rest": "^2.5.1",
     "@e2b/code-interpreter": "^1.5.1",
     "@hookform/resolvers": "^5.2.0",
