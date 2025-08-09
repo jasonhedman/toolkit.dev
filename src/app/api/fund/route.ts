@@ -16,25 +16,19 @@ export async function POST(request: Request) {
         const repoId = GITHUB_REPO_ID;
         const tokenAddress = USDC_ADDRESS;
         const repoInstanceId = 0;
-        const cdp = new CdpClient();
-
-        // Convert amount to wei (assuming amount is in USDC - 6 decimals)
         const amountBigInt = BigInt(amount * 10 ** 6);
 
-        
-
-        // Get or create owner account with a specific name
+        // CDP wallets
+        const cdp = new CdpClient();
         const owner = await cdp.evm.getOrCreateAccount({
             name: "toolkit-fund-owner"
         });
-        
-        // Get or create smart account with a specific name
         const smartAccount = await cdp.evm.getOrCreateSmartAccount({
             name: "toolkit-fund-smart-account",
             owner
         });
 
-        // Send user operation
+        // Send user operation to fund the repo
         const result = await cdp.evm.sendUserOperation({
             smartAccount,
             network: "base-sepolia", // or "base-mainnet" for production
