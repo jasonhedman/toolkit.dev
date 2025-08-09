@@ -36,6 +36,9 @@
     "@ai-sdk/react": "^1.2.12",
     "@ai-sdk/xai": "^1.2.16",
     "@auth/prisma-adapter": "^2.7.2",
+    "@coinbase/cdp-core": "^0.0.18",
+    "@coinbase/cdp-hooks": "^0.0.18",
+    "@coinbase/cdp-wagmi": "^0.0.18",
     "@discordjs/rest": "^2.5.1",
     "@e2b/code-interpreter": "^1.5.1",
     "@hookform/resolvers": "^5.2.0",
@@ -109,6 +112,7 @@
     "resumable-stream": "^2.2.0",
     "server-only": "^0.0.1",
     "shiki": "^3.9.2",
+    "siwe": "^3.0.0",
     "sonner": "^2.0.5",
     "strava": "^2.3.0",
     "superjson": "^2.2.1",
@@ -116,6 +120,8 @@
     "usehooks-ts": "^3.1.1",
     "uuid": "^11.1.0",
     "vaul": "^1.1.2",
+    "viem": "^2.33.3",
+    "wagmi": "^2.16.2",
     "zod": "^3.25.56"
   },
   "devDependencies": {

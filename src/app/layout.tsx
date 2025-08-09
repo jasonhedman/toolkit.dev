@@ -15,6 +15,7 @@ import { env } from "@/env";
 import type { Metadata, Viewport } from "next";
 
 import "@/styles/globals.css";
+import { CDPHooksProvider } from "@/contexts/cdp-hooks";
 
 export const metadata: Metadata = {
   title: "Toolkit.dev",
@@ -63,16 +64,18 @@ export default async function RootLayout({
         <SpeedInsights />
 
         <TRPCReactProvider>
-          <EnvProvider>
-            <ThemeProvider
-              attribute="class"
-              defaultTheme="system"
-              enableSystem
-              disableTransitionOnChange
-            >
-              {children}
-            </ThemeProvider>
-          </EnvProvider>
+          <CDPHooksProvider>
+            <EnvProvider>
+              <ThemeProvider
+                attribute="class"
+                defaultTheme="system"
+                enableSystem
+                disableTransitionOnChange
+              >
+                {children}
+              </ThemeProvider>
+            </EnvProvider>
+          </CDPHooksProvider>
         </TRPCReactProvider>
         <Toaster />
       </body>

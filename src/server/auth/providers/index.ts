@@ -21,7 +21,8 @@ import type {
   OAuthConfig,
 } from "next-auth/providers";
 import { IS_DEVELOPMENT } from "@/lib/constants";
-import { db } from "../db";
+import { db } from "../../db";
+import SiweProvider from "./siwe/provider";
 
 export const providers: (
   | OAuthConfig<DiscordProfile>
@@ -121,6 +122,7 @@ export const providers: (
         }),
       ]
     : []),
+  ...("NEXT_PUBLIC_CDP_PROJECT_ID" in env ? [SiweProvider()] : []),
   ...(IS_DEVELOPMENT
     ? [
         CredentialsProvider({

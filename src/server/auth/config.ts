@@ -81,46 +81,41 @@ export const authConfig = {
       }
       return true;
     },
-    ...(IS_DEVELOPMENT
-      ? {
-          async jwt({ token, account }) {
-            if (account?.provider === "guest") {
-              token.credentials = true;
-            }
-            return token;
-          },
-        }
-      : {}),
-  },
-  ...(IS_DEVELOPMENT
-    ? {
-        jwt: {
-          encode: async function (params) {
-            if (params.token?.credentials) {
-              const sessionToken = uuid();
-
-              if (!params.token.sub) {
-                throw new Error("No user ID found in token");
-              }
-
-              const createdSession = await db.session.create({
-                data: {
-                  id: sessionToken,
-                  sessionToken: sessionToken,
-                  userId: params.token.sub,
-                  expires: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
-                },
-              });
-
-              if (!createdSession) {
-                throw new Error("Failed to create session");
-              }
-
-              return sessionToken;
-            }
-            return defaultEncode(params);
-          },
-        },
+    async jwt({ token, account }) {
+      if (
+        account?.provider === "siwe-csrf" ||
+        (account?.provider === "guest" && IS_DEVELOPMENT)
+      ) {
+        token.credentials = true;
       }
-    : {}),
+      return token;
+    },
+  },
+  jwt: {
+    encode: async function (params) {
+      if (params.token?.credentials) {
+        const sessionToken = uuid();
+
+        if (!params.token.sub) {
+          throw new Error("No user ID found in token");
+        }
+
+        const createdSession = await db.session.create({
+          data: {
+            id: sessionToken,
+            sessionToken: sessionToken,
+            userId: params.token.sub,
+            expires: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
+          },
+        });
+
+        if (!createdSession) {
+          throw new Error("Failed to create session");
+        }
+
+        return sessionToken;
+      }
+      return defaultEncode(params);
+    },
+  },
 } satisfies NextAuthConfig;
