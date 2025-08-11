@@ -30,6 +30,7 @@ export enum Toolkits {
   E2B = "e2b",
   Strava = "strava",
   Spotify = "spotify",
+  Etsy = "etsy",
 }
 
 export type ServerToolkitNames = {
