@@ -31,5 +31,6 @@ export const getListingServerConfig: ServerToolConfig<
         fullUrl: image.url_fullxfull,
       })),
     };
-  }
+  },
+  message: (result) => 'Tool completed'
 }
