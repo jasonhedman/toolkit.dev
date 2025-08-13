@@ -9,6 +9,8 @@ import { notionToolkitServer } from "./notion/server";
 import { e2bToolkitServer } from "./e2b/server";
 import { stravaToolkitServer } from "./strava/server";
 import { spotifyToolkitServer } from "./spotify/server";
+import { etsyToolkitServer } from "./Etsy/server";
+
 import {
   Toolkits,
   type ServerToolkitNames,
@@ -33,6 +35,7 @@ export const serverToolkits: ServerToolkits = {
   [Toolkits.E2B]: e2bToolkitServer,
   [Toolkits.Strava]: stravaToolkitServer,
   [Toolkits.Spotify]: spotifyToolkitServer,
+  [Toolkits.Etsy]: etsyToolkitServer,
 };
 
 export function getServerToolkit<T extends Toolkits>(

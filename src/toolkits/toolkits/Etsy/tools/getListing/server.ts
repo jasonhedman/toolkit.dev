@@ -1,36 +1,39 @@
 import type { ServerToolConfig } from "@/toolkits/types";
 import type { getListing } from "./base";
+import type { Etsy } from "etsy-ts";
+import { api } from "@/trpc/server";
 
-export const getListingServerConfig: ServerToolConfig<
-  typeof getListing.inputSchema.shape
-  > = {
-  callback: async ({ tokens, listingId }: { tokens: { access_tokens: string }, listingId: string }) => {
-    const response = await fetch(
-      `https://openapi.etsy.com/v3/application/listings/${listingId}`,
-      {
-        headers: {
-          "x-api-key": process.env.AUTH_ETSY_ID || "",
-          Authorization: `Bearer ${tokens.access_tokens}`
-        },
-      },
-    );
 
-    if (!response.ok) {
-      throw new Error(`Failed to fetch listing: ${response.statusText}`);
-    }
+export const getListingServerConfig = (
+  etsy: Etsy
+  ): ServerToolConfig<
+  typeof getListing.inputSchema.shape,
+  typeof getListing.outputSchema.shape
+> => {
+  return {
+    callback: async () => {
+      try {
+        const account = await api.accounts.getAccountByProvider("etsy");
+        const userID = account?.providerAccountId;
+        const etsyUserId = Number(userID);
 
-    const data = await response.json();
 
-    return {
-      title: data.title,
-      description: data.description,
-      price: data.price,
-      currencyCode: data.currency_code,
-      images: data.images.map((image: any) => ({
-        url: image.url_170x135,
-        fullUrl: image.url_fullxfull,
-      })),
-    };
-  },
-  message: (result) => 'Tool completed'
-}
+        const shop = await etsy.Shop.getShopByOwnerUserId(etsyUserId, {etsyUserId});
+        const shopId = shop.data.shop_id;
+        if (typeof shopId !== "number") {
+          throw new Error("shop_id is undefined");
+        }
+        const listings = await etsy.ShopListing.getListingsByShop({ shopId: shopId }, { etsyUserId });
+        return {
+          listings: listings.data,
+        };
+      } catch (error) {
+        console.error("Etsy API error:", error);
+        throw new Error("Failed to fetch listings from Etsy");
+      }
+    },
+    message:
+      "Successfully retrieved the Etsy listing. The user is shown the responses in the UI. Do not reiterate them. The user is shown the responses in the UI. " +
+      "If you called this tool because the user asked a question, answer the question.",
+  };
+};
