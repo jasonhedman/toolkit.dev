@@ -20,19 +20,15 @@ export const EtsyWrapper: ClientToolkitWrapper = ({ Item }) => {
   const { data: hasAccount, isLoading } =
     api.accounts.hasProviderAccount.useQuery("etsy");
 
-  const { data: hasAccess, isLoading: isLoadingAccess } =
-    api.features.hasFeature.useQuery({
-      feature: "etsy",
-    });
 
   const [isAuthRequiredDialogOpen, setIsAuthRequiredDialogOpen] =
     useState(false);
 
-  if (isLoading || isLoadingAccess) {
+  if (isLoading) {
     return <Item isLoading={true} />;
   }
 
-  if (!hasAccount || !hasAccess) {
+  if (!hasAccount) {
     return (
       <>
         <Item

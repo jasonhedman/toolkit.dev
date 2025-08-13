@@ -19,6 +19,9 @@ import type { StravaTools } from "./strava/tools";
 
 import type { spotifyParameters } from "./spotify/base";
 import type { SpotifyTools } from "./spotify/tools";
+
+import type { etsyParameters } from "./Etsy/base";
+import type { EtsyTools } from "./Etsy/tools/tools";
 export enum Toolkits {
   Exa = "exa",
   Image = "image",
@@ -44,6 +47,7 @@ export type ServerToolkitNames = {
   [Toolkits.E2B]: E2BTools;
   [Toolkits.Strava]: StravaTools;
   [Toolkits.Spotify]: SpotifyTools;
+  [Toolkits.Etsy]: EtsyTools;
 };
 
 export type ServerToolkitParameters = {
@@ -57,4 +61,5 @@ export type ServerToolkitParameters = {
   [Toolkits.E2B]: typeof e2bParameters.shape;
   [Toolkits.Strava]: typeof stravaParameters.shape;
   [Toolkits.Spotify]: typeof spotifyParameters.shape;
+  [Toolkits.Etsy]: typeof etsyParameters.shape;
 };
