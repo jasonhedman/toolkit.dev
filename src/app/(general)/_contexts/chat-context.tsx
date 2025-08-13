@@ -87,6 +87,7 @@ interface ChatProviderProps {
   initialVisibilityType: "public" | "private";
   autoResume: boolean;
   workbench?: Workbench;
+  initialInput?: string;
   initialPreferences?: {
     selectedChatModel?: LanguageModel;
     imageGenerationModel?: ImageModel;
@@ -102,6 +103,7 @@ export function ChatProvider({
   initialVisibilityType,
   autoResume,
   workbench,
+  initialInput,
   initialPreferences,
 }: ChatProviderProps) {
   const utils = api.useUtils();
@@ -222,6 +224,7 @@ export function ChatProvider({
   } = useChat({
     id,
     initialMessages,
+    initialInput,
     experimental_throttle: 100,
     sendExtraMessageFields: true,
     generateId: generateUUID,
