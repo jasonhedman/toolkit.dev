@@ -22,6 +22,7 @@ const config = {
   experimental: {
     authInterrupts: true,
   },
+  serverExternalPackages: ["twitter-api-v2"],
 };
 
 export default config;
