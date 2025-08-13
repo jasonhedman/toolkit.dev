@@ -8,7 +8,7 @@ import { Etsy } from 'etsy-ts'
 export const etsyToolkitServer = createServerToolkit(
   baseEtsyToolkitConfig,
   'You have access to the Etsy toolkit for general account management. Currently, this toolkit provides:\n' +
-  '- **Get Listing**: Retrieve detailed information about a specific Etsy listing using its ID.\n\n',
+  '- **Get Listings**: Retrieves all listings associated with the shop associated with the signed-in user.\n\n',
   async () => {
     const account = await api.accounts.getAccountByProvider("etsy");
 
@@ -19,8 +19,13 @@ export const etsyToolkitServer = createServerToolkit(
       throw new Error("No Etsy access token found");
     }
 
+    const etsy = new Etsy({
+      apiKey: env.AUTH_ETSY_ID,
+      // TODO:: workaround for ISecurityDataStorage
+    });
+
     return {
-      [EtsyTools.getListing]: getListingServerConfig
+      [EtsyTools.getListing]: getListingServerConfig(etsy)
       };
     }
 );
