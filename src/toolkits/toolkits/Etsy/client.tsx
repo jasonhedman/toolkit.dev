@@ -7,7 +7,7 @@ import { Link } from "../components/link";
 import { EtsyTools } from "./tools/tools";
 import { getListingClientConfig } from "./tools/getListing/client";
 
-export const EtsyClientToolkit = createClientToolkit(
+export const etsyClientToolkit = createClientToolkit(
   baseEtsyToolkitConfig,
   {
     name: "Etsy Toolkit",

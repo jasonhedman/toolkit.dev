@@ -4,7 +4,7 @@ import { EtsyTools } from "./tools/tools";
 import { getListingServerConfig } from "./tools/getListing/server";
 import { api } from "@/trpc/server";
 import { env } from "@/env";
-
+import { Etsy } from 'etsy-ts'
 export const etsyToolkitServer = createServerToolkit(
   baseEtsyToolkitConfig,
   'You have access to the Etsy toolkit for general account management. Currently, this toolkit provides:\n' +
@@ -18,5 +18,9 @@ export const etsyToolkitServer = createServerToolkit(
     if (!account.access_token) {
       throw new Error("No Etsy access token found");
     }
-  }
+
+    return {
+      [EtsyTools.getListing]: getListingServerConfig
+      };
+    }
 );
