@@ -16,6 +16,7 @@ export const getListingClientConfig: ClientToolConfig<
     <div className="border rounded p-4">
       <h3>Search Results for: {args.listingId}</h3>
       <p>{result.title}</p>
+      <p>{result.price}</p>
     </div>
   )
 };
