@@ -465,7 +465,7 @@ const PureMultimodalInput: React.FC<Props> = ({
           </div>
 
           <div className="flex items-center">
-            {status === "submitted" ? (
+            {status === "submitted" || status === "streaming" ? (
               <StopButton stop={stop} setMessages={setMessages} />
             ) : (
               <SendButton
