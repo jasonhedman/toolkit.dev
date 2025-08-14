@@ -287,14 +287,14 @@ export function ChatProvider({
     onStreamError,
   });
 
-  const handleSubmit: UseChatHelpers["handleSubmit"] = (
-    event,
-    chatRequestOptions,
-  ) => {
-    // Reset stream stopped flag when submitting new message
-    setStreamStopped(false);
-    originalHandleSubmit(event, chatRequestOptions);
-  };
+  const handleSubmit: UseChatHelpers["handleSubmit"] = useCallback(
+    (event, chatRequestOptions) => {
+      // Reset stream stopped flag when submitting new message
+      setStreamStopped(false);
+      originalHandleSubmit(event, chatRequestOptions);
+    },
+    [originalHandleSubmit, setStreamStopped],
+  );
 
   useEffect(() => {
     if (
@@ -316,7 +316,7 @@ export function ChatProvider({
       messages.length === 0
     ) {
       const timer = setTimeout(() => {
-        handleSubmit(new Event("submit") as any);
+        handleSubmit();
       }, 100);
       return () => clearTimeout(timer);
     }
