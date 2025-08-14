@@ -88,6 +88,7 @@ interface ChatProviderProps {
   autoResume: boolean;
   workbench?: Workbench;
   initialInput?: string;
+  autoSubmitInitialInput?: boolean;
   initialPreferences?: {
     selectedChatModel?: LanguageModel;
     imageGenerationModel?: ImageModel;
@@ -104,6 +105,7 @@ export function ChatProvider({
   autoResume,
   workbench,
   initialInput,
+  autoSubmitInitialInput,
   initialPreferences,
 }: ChatProviderProps) {
   const utils = api.useUtils();
@@ -305,6 +307,26 @@ export function ChatProvider({
       setUseNativeSearch(false);
     }
   }, [selectedChatModel]);
+
+  useEffect(() => {
+    if (
+      autoSubmitInitialInput &&
+      initialInput &&
+      input === initialInput &&
+      messages.length === 0
+    ) {
+      const timer = setTimeout(() => {
+        handleSubmit(new Event("submit") as any);
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [
+    autoSubmitInitialInput,
+    initialInput,
+    input,
+    messages.length,
+    handleSubmit,
+  ]);
 
   const value = {
     messages,

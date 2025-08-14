@@ -33,6 +33,7 @@ export default async function NewChatPage(props: NewChatPageProps) {
       isReadonly={false}
       isNew={true}
       prefillQuery={q}
+      autoSubmitQuery={q ? true : false}
     />
   );
 }

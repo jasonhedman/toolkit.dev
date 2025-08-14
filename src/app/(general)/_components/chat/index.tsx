@@ -18,6 +18,7 @@ interface Props {
   isNew: boolean;
   workbench?: Workbench;
   prefillQuery?: string;
+  autoSubmitQuery?: boolean;
 }
 
 export const Chat = async ({
@@ -27,6 +28,7 @@ export const Chat = async ({
   isNew,
   workbench,
   prefillQuery,
+  autoSubmitQuery,
 }: Props) => {
   const initialMessages = isNew
     ? []
@@ -115,6 +117,7 @@ export const Chat = async ({
         autoResume={!isNew}
         workbench={workbench}
         initialInput={prefillQuery}
+        autoSubmitInitialInput={autoSubmitQuery}
         initialPreferences={initialPreferences}
       >
         <ChatContent
