@@ -15,13 +15,17 @@ import SpotifyProvider, {
 import StravaProvider, { type StravaProfile } from "next-auth/providers/strava";
 import CredentialsProvider from "next-auth/providers/credentials";
 
+import type { EtsyProfile } from "./custom-providers/etsy";
+
+import { IS_DEVELOPMENT } from "@/lib/constants";
+import { db } from "../db";
+
 import type {
   CredentialInput,
   CredentialsConfig,
   OAuthConfig,
 } from "next-auth/providers";
-import { IS_DEVELOPMENT } from "@/lib/constants";
-import { db } from "../db";
+import EtsyProvider from "./custom-providers/etsy";
 
 export const providers: (
   | OAuthConfig<DiscordProfile>
@@ -31,6 +35,7 @@ export const providers: (
   | OAuthConfig<NotionProfile>
   | OAuthConfig<StravaProfile>
   | OAuthConfig<SpotifyProfile>
+  | OAuthConfig<EtsyProfile>
   | CredentialsConfig<Record<string, CredentialInput>>
 )[] = [
   ...("AUTH_GOOGLE_ID" in env && "AUTH_GOOGLE_SECRET" in env
@@ -118,6 +123,13 @@ export const providers: (
           redirectProxyUrl: IS_DEVELOPMENT
             ? `http://127.0.0.1:3000/api/auth`
             : undefined,
+        }),
+      ]
+    : []),
+  ...("AUTH_ETSY_ID" in env
+    ? [
+        EtsyProvider({
+          clientId: env.AUTH_ETSY_ID,
         }),
       ]
     : []),

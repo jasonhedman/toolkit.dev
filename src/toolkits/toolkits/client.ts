@@ -16,6 +16,7 @@ import { e2bClientToolkit } from "./e2b/client";
 import { discordClientToolkit } from "./discord/client";
 import { stravaClientToolkit } from "./strava/client";
 import { spotifyClientToolkit } from "./spotify/client";
+import { etsyClientToolkit } from "./Etsy/client";
 import { videoClientToolkit } from "./video/client";
 import { twitterClientToolkit } from "./twitter/client";
 
@@ -38,6 +39,7 @@ export const clientToolkits: ClientToolkits = {
   [Toolkits.Discord]: discordClientToolkit,
   [Toolkits.Strava]: stravaClientToolkit,
   [Toolkits.Spotify]: spotifyClientToolkit,
+  [Toolkits.Etsy]: etsyClientToolkit,
   [Toolkits.Video]: videoClientToolkit,
   [Toolkits.Twitter]: twitterClientToolkit,
 };

@@ -10,6 +10,7 @@ import { e2bToolkitServer } from "./e2b/server";
 import { discordToolkitServer } from "./discord/server";
 import { stravaToolkitServer } from "./strava/server";
 import { spotifyToolkitServer } from "./spotify/server";
+import { etsyToolkitServer } from "./Etsy/server";
 import { videoToolkitServer } from "./video/server";
 import { twitterToolkitServer } from "./twitter/server";
 import {
@@ -37,6 +38,7 @@ export const serverToolkits: ServerToolkits = {
   [Toolkits.Discord]: discordToolkitServer,
   [Toolkits.Strava]: stravaToolkitServer,
   [Toolkits.Spotify]: spotifyToolkitServer,
+  [Toolkits.Etsy]: etsyToolkitServer,
   [Toolkits.Video]: videoToolkitServer,
   [Toolkits.Twitter]: twitterToolkitServer,
 };
