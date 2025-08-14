@@ -1,6 +1,6 @@
 import { generateText as generateTextAi, streamText as streamTextAi } from "ai";
 
-import { openrouter } from "@openrouter/ai-sdk-provider";
+import { openrouter } from "./provider";
 
 export const generateText = (
   model: `${string}/${string}`,

@@ -14,14 +14,20 @@ import type { notionParameters } from "./notion/base";
 import type { NotionTools } from "./notion/tools";
 import type { e2bParameters } from "./e2b/base";
 import type { E2BTools } from "./e2b/tools/tools";
+import type { discordParameters } from "./discord/base";
+import type { DiscordTools } from "./discord/tools";
 import type { stravaParameters } from "./strava/base";
 import type { StravaTools } from "./strava/tools";
-
 import type { spotifyParameters } from "./spotify/base";
 import type { SpotifyTools } from "./spotify/tools";
-
 import type { etsyParameters } from "./Etsy/base";
 import type { EtsyTools } from "./Etsy/tools/tools";
+import type { VideoTools } from "./video/tools";
+import type { videoParameters } from "./video/base";
+import type { TwitterTools } from "./twitter/tools";
+import type { twitterParameters } from "./twitter/base";
+
+
 export enum Toolkits {
   Exa = "exa",
   Image = "image",
@@ -31,9 +37,12 @@ export enum Toolkits {
   Memory = "memory",
   Notion = "notion",
   E2B = "e2b",
+  Discord = "discord",
   Strava = "strava",
   Spotify = "spotify",
   Etsy = "etsy",
+  Video = "video",
+  Twitter = "twitter",
 }
 
 export type ServerToolkitNames = {
@@ -45,9 +54,12 @@ export type ServerToolkitNames = {
   [Toolkits.Memory]: Mem0Tools;
   [Toolkits.Notion]: NotionTools;
   [Toolkits.E2B]: E2BTools;
+  [Toolkits.Discord]: DiscordTools;
   [Toolkits.Strava]: StravaTools;
   [Toolkits.Spotify]: SpotifyTools;
   [Toolkits.Etsy]: EtsyTools;
+  [Toolkits.Video]: VideoTools;
+  [Toolkits.Twitter]: TwitterTools;
 };
 
 export type ServerToolkitParameters = {
@@ -59,7 +71,10 @@ export type ServerToolkitParameters = {
   [Toolkits.Memory]: typeof mem0Parameters.shape;
   [Toolkits.Notion]: typeof notionParameters.shape;
   [Toolkits.E2B]: typeof e2bParameters.shape;
+  [Toolkits.Discord]: typeof discordParameters.shape;
   [Toolkits.Strava]: typeof stravaParameters.shape;
   [Toolkits.Spotify]: typeof spotifyParameters.shape;
   [Toolkits.Etsy]: typeof etsyParameters.shape;
+  [Toolkits.Video]: typeof videoParameters.shape;
+  [Toolkits.Twitter]: typeof twitterParameters.shape;
 };

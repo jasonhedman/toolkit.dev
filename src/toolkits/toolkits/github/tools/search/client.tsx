@@ -1,12 +1,5 @@
 import React from "react";
 
-import type { ClientToolConfig } from "@/toolkits/types";
-import type {
-  searchRepositoriesTool,
-  searchCodeTool,
-  searchUsersTool,
-} from "./base";
-import { HStack, VStack } from "@/components/ui/stack";
 import {
   Search,
   Star,
@@ -17,9 +10,21 @@ import {
   BookMarked,
   Users,
 } from "lucide-react";
-import { GithubAvatar } from "../../components/user-avatar";
+
+import { HStack, VStack } from "@/components/ui/stack";
+
 import { Badge } from "@/components/ui/badge";
 import { CodeBlock } from "@/components/ui/code-block";
+
+import { GithubAvatar } from "../../components/user-avatar";
+
+import type { ClientToolConfig } from "@/toolkits/types";
+import type { BundledLanguage } from "@/components/ui/code/shiki.bundle";
+import type {
+  searchRepositoriesTool,
+  searchCodeTool,
+  searchUsersTool,
+} from "./base";
 
 export const githubSearchRepositoriesToolConfigClient: ClientToolConfig<
   typeof searchRepositoriesTool.inputSchema.shape,
@@ -149,7 +154,7 @@ export const githubSearchCodeToolConfigClient: ClientToolConfig<
               </HStack>
               {item.match && (
                 <CodeBlock
-                  language={item.path.split(".").pop() ?? "plaintext"}
+                  language={item.path.split(".").pop() as BundledLanguage}
                   value={item.match}
                 />
               )}

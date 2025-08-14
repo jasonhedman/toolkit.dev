@@ -14,6 +14,7 @@ async function createHandlerWithParams(
   const handler = createMcpHandler(
     async (mcpServer) => {
       const tools = await serverToolkit.tools({
+        // @ts-expect-error - TODO: fix this
         model: "openai:gpt-image-1",
       });
 

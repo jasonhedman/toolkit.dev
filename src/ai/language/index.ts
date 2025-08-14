@@ -7,6 +7,7 @@ import {
   llamaModels,
   qwenModels,
   deepseekModels,
+  openRouterModels,
 } from "./models";
 
 export const languageModels = [
@@ -15,6 +16,7 @@ export const languageModels = [
   ...openAiLanguageModels,
   ...xaiLanguageModels,
   ...perplexityModels,
+  ...openRouterModels,
   ...llamaModels,
   ...qwenModels,
   ...deepseekModels,

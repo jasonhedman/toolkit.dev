@@ -6,6 +6,7 @@ export enum LanguageModelCapability {
   Reasoning = "reasoning",
   Pdf = "pdf",
   ToolCalling = "tool-calling",
+  Free = "free",
 }
 
 export type LanguageModel = {

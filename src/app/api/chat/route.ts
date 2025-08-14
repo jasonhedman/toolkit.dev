@@ -279,23 +279,29 @@ export async function POST(request: Request) {
               // Don't throw - just let the stream end naturally after sending error data
             },
             onFinish: async ({ response }) => {
+              // Get the actual model used from OpenRouter's response
+              const [provider, modelId] = response.modelId.split("/");
+
+              // Try to find the model in our list first
               const model = languageModels.find(
-                (model) => model.modelId === selectedChatModel.split(":")[1],
+                (model) =>
+                  model.provider === provider && model.modelId === modelId,
               );
 
-              if (model) {
-                dataStream.writeMessageAnnotation({
-                  type: "model",
-                  model: {
-                    name: model?.name,
-                    provider: model?.provider,
-                    modelId: model?.modelId,
-                  },
-                });
-              }
+              // Create model info from OpenRouter's response if not in our list
+              const modelInfo = model ?? {
+                name: `${provider}/${modelId}`, // Format nicely for display
+                provider: provider ?? "unknown",
+                modelId: modelId ?? "unknown",
+              };
+
+              // Write the model annotation
+              dataStream.writeMessageAnnotation({
+                type: "model",
+                model: modelInfo,
+              });
 
               // Send modelId as message annotation
-
               if (session.user?.id) {
                 try {
                   const assistantId = getTrailingMessageId({
@@ -333,7 +339,7 @@ export async function POST(request: Request) {
                             | "image/jpeg",
                         }),
                       ) ?? [],
-                    modelId: selectedChatModel,
+                    modelId: response.modelId, // Use the actual model from OpenRouter's response
                   });
                 } catch (error) {
                   console.error(error);

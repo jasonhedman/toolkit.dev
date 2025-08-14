@@ -11,3 +11,5 @@ export { workbenchesRouter } from "./workbenches";
 export { toolkitsRouter } from "./toolkits";
 export { toolsRouter } from "./tools";
 export { creditsRouter } from "./credits";
+export { videosRouter } from "./videos";
+export { syncRouter } from "./sync";

@@ -6,3 +6,4 @@ export { perplexityModels } from "./perplexity";
 export { llamaModels } from "./llama";
 export { qwenModels } from "./qwen";
 export { deepseekModels } from "./deepseek";
+export { openRouterModels } from "./openrouter";

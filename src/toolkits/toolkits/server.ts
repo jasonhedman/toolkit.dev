@@ -7,10 +7,12 @@ import { imageToolkitServer } from "./image/server";
 import { mem0ToolkitServer } from "./mem0/server";
 import { notionToolkitServer } from "./notion/server";
 import { e2bToolkitServer } from "./e2b/server";
+import { discordToolkitServer } from "./discord/server";
 import { stravaToolkitServer } from "./strava/server";
 import { spotifyToolkitServer } from "./spotify/server";
 import { etsyToolkitServer } from "./Etsy/server";
-
+import { videoToolkitServer } from "./video/server";
+import { twitterToolkitServer } from "./twitter/server";
 import {
   Toolkits,
   type ServerToolkitNames,
@@ -33,9 +35,12 @@ export const serverToolkits: ServerToolkits = {
   [Toolkits.Memory]: mem0ToolkitServer,
   [Toolkits.Notion]: notionToolkitServer,
   [Toolkits.E2B]: e2bToolkitServer,
+  [Toolkits.Discord]: discordToolkitServer,
   [Toolkits.Strava]: stravaToolkitServer,
   [Toolkits.Spotify]: spotifyToolkitServer,
   [Toolkits.Etsy]: etsyToolkitServer,
+  [Toolkits.Video]: videoToolkitServer,
+  [Toolkits.Twitter]: twitterToolkitServer,
 };
 
 export function getServerToolkit<T extends Toolkits>(

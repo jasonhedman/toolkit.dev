@@ -7,13 +7,8 @@ import { ThemeProvider } from "next-themes";
 import { TRPCReactProvider } from "@/trpc/react";
 
 import { Toaster } from "@/components/ui/sonner";
-import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 
-import { InstallPromptProvider } from "@/contexts/install-prompt-context";
 import { EnvProvider } from "@/contexts/env";
-
-import { AppSidebar } from "./_components/sidebar";
-import { Navbar } from "./_components/navbar";
 
 import { env } from "@/env";
 
@@ -75,15 +70,7 @@ export default async function RootLayout({
               enableSystem
               disableTransitionOnChange
             >
-              <InstallPromptProvider>
-                <SidebarProvider>
-                  <AppSidebar />
-                  <SidebarInset className="flex h-dvh flex-col">
-                    <Navbar />
-                    {children}
-                  </SidebarInset>
-                </SidebarProvider>
-              </InstallPromptProvider>
+              {children}
             </ThemeProvider>
           </EnvProvider>
         </TRPCReactProvider>

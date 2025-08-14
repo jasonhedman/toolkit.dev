@@ -16,6 +16,8 @@ import {
   toolkitsRouter,
   toolsRouter,
   creditsRouter,
+  videosRouter,
+  syncRouter,
 } from "./routers";
 import { IS_DEVELOPMENT } from "@/lib/constants";
 
@@ -37,6 +39,8 @@ export const appRouter = createTRPCRouter({
   workbenches: workbenchesRouter,
   toolkits: toolkitsRouter,
   tools: toolsRouter,
+  videos: videosRouter,
+  sync: syncRouter,
   ...(IS_DEVELOPMENT ? { credits: creditsRouter } : {}),
 });
 

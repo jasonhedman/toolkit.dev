@@ -4,20 +4,17 @@ import { memo, useState } from "react";
 
 import { Check, Copy } from "lucide-react";
 
-import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
-import {
-  vs,
-  vscDarkPlus,
-} from "react-syntax-highlighter/dist/cjs/styles/prism";
+import { useCopyToClipboard } from "usehooks-ts";
 
+import { Code } from "@/components/ui/code";
 import { Card } from "@/components/ui/card";
 
 import { cn } from "@/lib/utils";
 
-import { useCopyToClipboard } from "usehooks-ts";
+import type { BundledLanguage } from "./code/shiki.bundle";
 
 interface Props {
-  language: string;
+  language: BundledLanguage;
   value: string;
   heading?: string;
   showLineNumbers?: boolean;
@@ -26,91 +23,63 @@ interface Props {
   headingClassName?: string;
 }
 
-type LanguageMap = Record<ProgrammingLanguages, string | undefined>;
-
-export const programmingLanguages: LanguageMap = {
-  javascript: ".js",
-  python: ".py",
-  java: ".java",
-  c: ".c",
-  cpp: ".cpp",
-  "c#": ".cs",
-  ruby: ".rb",
-  php: ".php",
-  swift: ".swift",
-  "objective-c": ".m",
-  kotlin: ".kt",
-  typescript: ".ts",
-  go: ".go",
-  perl: ".pl",
-  rust: ".rs",
-  scala: ".scala",
-  haskell: ".hs",
-  lua: ".lua",
-  shell: ".sh",
-  sql: ".sql",
-  html: ".html",
-  css: ".css",
-  json: ".json",
-  less: ".less",
-  lezer: ".lezer",
-  markdown: ".md",
-  sass: ".sass",
-  xml: ".xml",
-  clj: ".clj",
-};
-
-export const markdownLanguages: Record<string, string> = {
-  js: "JavaScript",
-  jsx: "JavaScript React",
+export const markdownLanguages: Record<BundledLanguage, string> = {
+  typescript: "TypeScript",
   ts: "TypeScript",
-  tsx: "TypeScript React",
+  javascript: "JavaScript",
+  js: "JavaScript",
+  python: "Python",
   py: "Python",
   java: "Java",
   c: "C",
-  cpp: "C++",
+  csharp: "C#",
+  "c#": "C#",
   cs: "C#",
-  rb: "Ruby",
-  php: "PHP",
-  swift: "Swift",
+  cpp: "C++",
+  "c++": "C++",
   go: "Go",
+  rust: "Rust",
   rs: "Rust",
-  scala: "Scala",
+  php: "PHP",
+  ruby: "Ruby",
+  rb: "Ruby",
+  swift: "Swift",
+  kotlin: "Kotlin",
   kt: "Kotlin",
-  perl: "Perl",
-  lua: "Lua",
-  sh: "Shell",
+  kts: "Kotlin",
+  dart: "Dart",
+  scala: "Scala",
+  r: "R",
+  matlab: "MATLAB",
   sql: "SQL",
   html: "HTML",
   css: "CSS",
-  scss: "SCSS",
-  sass: "Sass",
-  less: "Less",
+  vue: "Vue",
+  jsx: "JavaScript React",
+  tsx: "TypeScript React",
   json: "JSON",
-  xml: "XML",
   yaml: "YAML",
+  yml: "YAML",
+  markdown: "Markdown",
   md: "Markdown",
-  graphql: "GraphQL",
-  dockerfile: "Dockerfile",
+  shellscript: "Shell",
   bash: "Bash",
+  sh: "Shell",
+  shell: "Shell",
+  zsh: "Zsh",
   powershell: "PowerShell",
-  r: "R",
-  matlab: "MATLAB",
-  clj: "Clojure",
-  fs: "F#",
-  elm: "Elm",
-  erlang: "Erlang",
-  haskell: "Haskell",
-  ocaml: "OCaml",
-};
-
-export const generateRandomString = (length: number, lowercase = false) => {
-  const chars = "ABCDEFGHJKLMNPQRSTUVWXY3456789"; // excluding similar looking characters like Z, 2, I, 1, O, 0
-  let result = "";
-  for (let i = 0; i < length; i++) {
-    result += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
-  return lowercase ? result.toLowerCase() : result;
+  ps: "PowerShell",
+  ps1: "PowerShell",
+  docker: "Docker",
+  dockerfile: "Dockerfile",
+  terraform: "Terraform",
+  tf: "Terraform",
+  tfvars: "Terraform",
+  graphql: "GraphQL",
+  gql: "GraphQL",
+  solidity: "Solidity",
+  svelte: "Svelte",
+  astro: "Astro",
 };
 
 export const CodeBlock: React.FC<Props> = memo(
@@ -118,7 +87,6 @@ export const CodeBlock: React.FC<Props> = memo(
     language,
     value,
     heading,
-    showLineNumbers = true,
     allowCopy = true,
     headerClassName,
     headingClassName,
@@ -168,60 +136,7 @@ export const CodeBlock: React.FC<Props> = memo(
             )}
           </div>
         </div>
-        <div className="dark:hidden">
-          <SyntaxHighlighter
-            language={language}
-            style={vs}
-            PreTag="div"
-            showLineNumbers={showLineNumbers}
-            customStyle={{
-              margin: 0,
-              width: "100%",
-              background: "transparent",
-              padding: "1rem 1rem",
-              border: "none",
-            }}
-            lineNumberStyle={{
-              userSelect: "none",
-            }}
-            codeTagProps={{
-              style: {
-                fontSize: "0.9rem",
-                fontFamily: "var(--font-mono)",
-              },
-            }}
-            className="rounded-b-md border-0 p-0"
-          >
-            {value}
-          </SyntaxHighlighter>
-        </div>
-        <div className="hidden dark:block">
-          <SyntaxHighlighter
-            language={language}
-            style={vscDarkPlus}
-            PreTag="div"
-            showLineNumbers={showLineNumbers}
-            customStyle={{
-              margin: 0,
-              width: "100%",
-              background: "transparent",
-              padding: "0.5rem 0.5rem",
-              border: "none",
-            }}
-            lineNumberStyle={{
-              userSelect: "none",
-            }}
-            codeTagProps={{
-              style: {
-                fontSize: "0.9rem",
-                fontFamily: "var(--font-mono)",
-              },
-            }}
-            className="rounded-b-md border-0"
-          >
-            {value}
-          </SyntaxHighlighter>
-        </div>
+        <Code value={value} lang={language} />
       </Card>
     );
   },
@@ -234,35 +149,3 @@ export const CodeBlock: React.FC<Props> = memo(
 );
 
 CodeBlock.displayName = "CodeBlock";
-
-enum ProgrammingLanguages {
-  JAVASCRIPT = "javascript",
-  PYTHON = "python",
-  JAVA = "java",
-  C = "c",
-  CPP = "cpp",
-  CSHARP = "c#",
-  RUBY = "ruby",
-  PHP = "php",
-  SWIFT = "swift",
-  OBJECTIVE_C = "objective-c",
-  KOTLIN = "kotlin",
-  TYPESCRIPT = "typescript",
-  GO = "go",
-  PERL = "perl",
-  RUST = "rust",
-  SCALA = "scala",
-  HASKELL = "haskell",
-  LUA = "lua",
-  SHELL = "shell",
-  SQL = "sql",
-  HTML = "html",
-  CSS = "css",
-  JSON = "json",
-  LESS = "less",
-  LEZER = "lezer",
-  MARKDOWN = "markdown",
-  SASS = "sass",
-  XML = "xml",
-  CLJ = "clj",
-}
