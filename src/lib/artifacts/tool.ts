@@ -17,19 +17,24 @@ Do not use for:
 - Basic explanations
 
 The artifact will be rendered in a special interface alongside the chat.`,
-    
+
     parameters: z.object({
       title: z.string().describe("A clear, descriptive title for the artifact"),
-      kind: z.enum(["text", "code", "custom"]).describe("The type of artifact to create"),
+      kind: z
+        .enum(["text", "code", "custom"])
+        .describe("The type of artifact to create"),
       content: z.string().describe("The full content for the artifact"),
-      description: z.string().optional().describe("Optional description of what was created"),
+      description: z
+        .string()
+        .optional()
+        .describe("Optional description of what was created"),
     }),
-    
+
     execute: async ({ title, kind, content, description }) => {
       try {
         // Create the document in the database
         const caller = await createServerOnlyCaller();
-        
+
         const document = await caller.documents.create({
           title,
           kind,
@@ -50,7 +55,8 @@ The artifact will be rendered in a special interface alongside the chat.`,
         return {
           success: false,
           error: "Failed to create artifact",
-          message: "I encountered an error while creating the artifact. Please try again.",
+          message:
+            "I encountered an error while creating the artifact. Please try again.",
         };
       }
     },

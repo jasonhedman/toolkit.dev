@@ -33,127 +33,24 @@ const MessageToolComponent: React.FC<Props> = ({ toolInvocation }) => {
 
   const { toolName } = toolInvocation;
 
-  // Special handling for create_artifact tool
   if (toolName === "create_artifact") {
-    return (
-      <motion.div
-        initial={{
-          opacity: argsDefined ? 1 : 0,
-          y: argsDefined ? 0 : 20,
-          scale: argsDefined ? 1 : 0.95,
-        }}
-        animate={
-          !argsDefined
-            ? {
-                opacity: 1,
-                y: 0,
-                scale: 1,
-              }
-            : undefined
-        }
-        transition={{ duration: 0.4, ease: "easeInOut" }}
-        layout={!argsDefined ? true : undefined}
-      >
-        <Card className="gap-0 overflow-hidden p-0">
-          <HStack className="border-b p-2">
-            <span className="text-lg">✨</span>
-            {toolInvocation.state === "result" ? (
-              <span className="text-lg font-medium">Artifact Created</span>
-            ) : (
-              <AnimatedShinyText className="text-lg font-medium">
-                Creating Artifact
-              </AnimatedShinyText>
-            )}
-            <AnimatePresence>
-              {(toolInvocation.state === "call" ||
-                toolInvocation.state === "partial-call") && (
-                <motion.div
-                  initial={{
-                    opacity: argsDefined ? 1 : 0,
-                    scale: argsDefined ? 1 : 0.8,
-                  }}
-                  animate={{ opacity: 1, scale: argsDefined ? 1 : 1 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  <Loader2 className="size-4 animate-spin opacity-60" />
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </HStack>
-          <motion.div
-            className="p-2"
-            layout={!argsDefined ? true : undefined}
-            transition={{ duration: 0.3, ease: "easeInOut" }}
-          >
-            <AnimatePresence mode="wait">
-              {toolInvocation.state === "result" && toolInvocation.result ? (
-                <motion.div
-                  key="result"
-                  initial={{
-                    opacity: completeOnFirstMount ? 1 : 0,
-                    height: completeOnFirstMount ? "auto" : 0,
-                  }}
-                  animate={{ opacity: 1, height: "auto" }}
-                  transition={{
-                    duration: 0.3,
-                    ease: "easeOut",
-                    height: { duration: 0.4, ease: "easeInOut" },
-                  }}
-                  style={{ overflow: "hidden" }}
-                >
-                  {(() => {
-                    const result = toolInvocation.result as any;
-                    if (result?.success && result?.documentId) {
-                      const args = toolInvocation.args as any;
-                      return (
-                        <ArtifactPreview
-                          documentId={result.documentId}
-                          title={args?.title || "Untitled Artifact"}
-                          kind={args?.kind || "text"}
-                          description={args?.description}
-                        />
-                      );
-                    } else {
-                      return (
-                        <div className="p-4 text-red-600">
-                          Failed to create artifact: {result?.error || "Unknown error"}
-                        </div>
-                      );
-                    }
-                  })()}
-                </motion.div>
-              ) : (
-                <motion.div
-                  key="loading"
-                  initial={{
-                    opacity: argsDefined ? 1 : 0,
-                    height: argsDefined ? "auto" : 0,
-                  }}
-                  animate={{ opacity: 1, height: "auto" }}
-                  transition={{
-                    duration: 0.3,
-                    ease: "easeOut",
-                    height: { duration: 0.4, ease: "easeInOut" },
-                  }}
-                  style={{ overflow: "hidden" }}
-                >
-                  {toolInvocation.args && (
-                    <div className="p-4">
-                      <p className="text-sm text-gray-600">
-                        Creating {(toolInvocation.args as any)?.kind || "artifact"}: 
-                        <span className="font-medium ml-1">
-                          {(toolInvocation.args as any)?.title || "Untitled"}
-                        </span>
-                      </p>
-                    </div>
-                  )}
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </motion.div>
-        </Card>
-      </motion.div>
-    );
+    if (toolInvocation.state === "result" && toolInvocation.result) {
+      const result = toolInvocation.result as any;
+      if (result?.success && result?.documentId) {
+        const args = toolInvocation.args as any;
+        return (
+          <ArtifactPreview
+            documentId={result.documentId}
+            title={args?.title || "Untitled Artifact"}
+            kind={args?.kind || "text"}
+            description={args?.description}
+          />
+        );
+      }
+      return null;
+    }
+
+    return null;
   }
 
   const [server, tool] = toolName.split("_");
@@ -318,10 +215,6 @@ const MessageToolComponent: React.FC<Props> = ({ toolInvocation }) => {
                   height: completeOnFirstMount ? "auto" : 0,
                 }}
                 animate={{ opacity: 1, height: "auto" }}
-                // exit={{
-                //   opacity: 0,
-                //   height: completeOnFirstMount ? "auto" : 0,
-                // }}
                 transition={{
                   duration: 0.3,
                   ease: "easeOut",
@@ -345,21 +238,16 @@ const areEqual = (prevProps: Props, nextProps: Props): boolean => {
   const { toolInvocation: prev } = prevProps;
   const { toolInvocation: next } = nextProps;
 
-  // Compare all relevant fields of toolInvocation
   if (prev.toolCallId !== next.toolCallId) return false;
   if (prev.toolName !== next.toolName) return false;
   if (prev.state !== next.state) return false;
 
-  // Deep compare args object
   if (JSON.stringify(prev.args) !== JSON.stringify(next.args)) return false;
 
-  // Deep compare result object (only exists when state is "result")
   if (prev.state === "result" && next.state === "result") {
-    // Both have result property, compare them
     if (JSON.stringify(prev.result) !== JSON.stringify(next.result))
       return false;
   } else if (prev.state === "result" || next.state === "result") {
-    // Only one has result property, they're different
     return false;
   }
 

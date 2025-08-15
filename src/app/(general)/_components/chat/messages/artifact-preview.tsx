@@ -1,12 +1,16 @@
 "use client";
 
-import { useState } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ExternalLink, Edit3, Copy, Trash2 } from "lucide-react";
+import { Copy, Expand, X } from "lucide-react";
 import { api } from "@/trpc/react";
 import { toast } from "sonner";
+import { CodeBlock } from "@/components/ui/code-block";
+import { Markdown } from "@/components/ui/markdown";
+import { cn } from "@/lib/utils";
+import type { BundledLanguage } from "@/components/ui/code/shiki.bundle";
+import { LLMMarkdown } from "./utils/llm-markdown";
 
 interface Props {
   documentId: string;
@@ -22,10 +26,11 @@ export const ArtifactPreview: React.FC<Props> = ({
   description,
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
-  
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
   const { data: document, isLoading } = api.documents.get.useQuery(
     { id: documentId },
-    { enabled: !!documentId }
+    { enabled: !!documentId },
   );
 
   const deleteDocument = api.documents.delete.useMutation({
@@ -44,130 +49,101 @@ export const ArtifactPreview: React.FC<Props> = ({
     }
   };
 
-  const handleDelete = () => {
-    if (confirm(`Are you sure you want to delete "${title}"?`)) {
-      deleteDocument.mutate({ id: documentId });
-    }
-  };
-
-  const getKindColor = (kind: string) => {
-    switch (kind) {
-      case "text":
-        return "bg-blue-100 text-blue-800";
-      case "code":
-        return "bg-green-100 text-green-800";
-      case "custom":
-        return "bg-purple-100 text-purple-800";
-      default:
-        return "bg-gray-100 text-gray-800";
-    }
-  };
-
-  const getKindIcon = (kind: string) => {
-    switch (kind) {
-      case "text":
-        return "📝";
-      case "code":
-        return "💻";
-      case "custom":
-        return "✨";
-      default:
-        return "📄";
-    }
-  };
-
   if (isLoading) {
     return (
-      <Card className="w-full max-w-2xl">
-        <CardContent className="p-4">
-          <div className="animate-pulse">
-            <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
-            <div className="h-3 bg-gray-200 rounded w-1/2"></div>
-          </div>
-        </CardContent>
-      </Card>
+      <div className="w-full rounded-lg border bg-gray-50 p-4">
+        <div className="animate-pulse">
+          <div className="mb-2 h-4 w-1/3 rounded bg-gray-200"></div>
+          <div className="h-20 rounded bg-gray-200"></div>
+        </div>
+      </div>
     );
   }
 
+  const renderContent = () => {
+    if (!document?.content) return null;
+
+    const content = document.content;
+
+    return (
+      <div className="h-full w-full overflow-auto">
+        <LLMMarkdown llmOutput={content} isStreamFinished={true} />
+      </div>
+    );
+  };
+
   return (
-    <Card className="w-full max-w-2xl border-l-4 border-l-blue-500">
-      <CardHeader className="pb-3">
-        <div className="flex items-start justify-between">
-          <div className="flex items-center space-x-2">
-            <span className="text-lg">{getKindIcon(kind)}</span>
-            <div>
-              <CardTitle className="text-lg">{title}</CardTitle>
-              {description && (
-                <CardDescription className="mt-1">{description}</CardDescription>
-              )}
+    <div className="w-full space-y-2">
+      <div className="flex items-center justify-between rounded-lg border bg-gray-50 p-3">
+        <div className="flex items-center space-x-3">
+          <div className="text-sm font-medium text-gray-900">{title}</div>
+          <Badge variant="secondary" className="text-xs">
+            {kind}
+          </Badge>
+        </div>
+
+        <div className="flex items-center space-x-1">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setIsFullscreen(true)}
+            className="h-8 w-8 p-0"
+            title="View artifact"
+          >
+            <Expand className="h-4 w-4" />
+          </Button>
+        </div>
+      </div>
+
+      {isFullscreen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setIsFullscreen(false);
+            }
+          }}
+        >
+          <div
+            className="flex h-full max-h-[90vh] w-full max-w-6xl flex-col rounded-lg bg-white shadow-xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex flex-shrink-0 items-center justify-between border-b p-4">
+              <div className="flex items-center space-x-3">
+                <div className="text-lg font-semibold text-gray-900">
+                  {title}
+                </div>
+                <Badge variant="secondary" className="text-xs">
+                  {kind}
+                </Badge>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleCopy}
+                  className="h-8 w-8 p-0"
+                  title="Copy content"
+                >
+                  <Copy className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setIsFullscreen(false)}
+                  className="h-8 w-8 p-0"
+                  title="Close"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
-          </div>
-          <div className="flex items-center space-x-2">
-            <Badge className={getKindColor(kind)}>{kind}</Badge>
-            <div className="flex items-center space-x-1">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleCopy}
-                className="h-8 w-8 p-0"
-              >
-                <Copy className="w-3 h-3" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setIsExpanded(!isExpanded)}
-                className="h-8 w-8 p-0"
-              >
-                <ExternalLink className="w-3 h-3" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleDelete}
-                className="h-8 w-8 p-0 text-red-600 hover:text-red-700"
-              >
-                <Trash2 className="w-3 h-3" />
-              </Button>
+            <div className="flex-1 overflow-hidden p-4">
+              <div className="h-full overflow-y-auto">{renderContent()}</div>
             </div>
           </div>
         </div>
-      </CardHeader>
-
-      {document?.content && (
-        <CardContent className="pt-0">
-          <div className="border rounded-lg bg-gray-50">
-            {isExpanded ? (
-              <div className="p-4 max-h-96 overflow-auto">
-                {kind === "code" ? (
-                  <pre className="text-sm font-mono whitespace-pre-wrap">
-                    <code>{document.content}</code>
-                  </pre>
-                ) : (
-                  <div className="text-sm whitespace-pre-wrap">
-                    {document.content}
-                  </div>
-                )}
-              </div>
-            ) : (
-              <div className="p-4">
-                <div className="text-sm text-gray-600 line-clamp-3">
-                  {document.content.substring(0, 200)}
-                  {document.content.length > 200 && "..."}
-                </div>
-                <Button
-                  variant="link"
-                  size="sm"
-                  onClick={() => setIsExpanded(true)}
-                  className="p-0 mt-2 h-auto text-blue-600"
-                >
-                  Show full content
-                </Button>
-              </div>
-            )}
-          </div>
-        </CardContent>
       )}
-    </Card>
+    </div>
   );
 };

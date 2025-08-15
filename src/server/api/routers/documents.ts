@@ -12,7 +12,7 @@ export const documentsRouter = createTRPCRouter({
         kind: z.enum(["text", "code", "custom"]).optional(),
         limit: z.number().min(1).max(100).default(20),
         cursor: z.string().optional(),
-      })
+      }),
     )
     .query(async ({ ctx, input }) => {
       const documents = await ctx.db.document.findMany({
@@ -80,7 +80,7 @@ export const documentsRouter = createTRPCRouter({
         kind: z.enum(["text", "code", "custom"]),
         chatId: z.string().optional(),
         initialContent: z.string().optional(),
-      })
+      }),
     )
     .mutation(async ({ ctx, input }) => {
       const document = await ctx.db.document.create({
@@ -103,7 +103,7 @@ export const documentsRouter = createTRPCRouter({
         id: z.string(),
         content: z.string().optional(),
         title: z.string().optional(),
-      })
+      }),
     )
     .mutation(async ({ ctx, input }) => {
       const document = await ctx.db.document.findFirst({
@@ -158,12 +158,12 @@ export const documentsRouter = createTRPCRouter({
         title: z.string().min(1),
         kind: z.enum(["text", "code", "custom"]),
         chatId: z.string().optional(),
-      })
+      }),
     )
     .mutation(async ({ ctx, input }) => {
       // Find the appropriate document handler
       const handler = documentHandlersByArtifactKind.find(
-        (h) => h.kind === input.kind
+        (h) => h.kind === input.kind,
       );
 
       if (!handler) {
