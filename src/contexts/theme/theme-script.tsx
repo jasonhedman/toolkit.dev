@@ -1,8 +1,6 @@
 "use client";
 
-import { applyThemeToElement, getPreferredColorScheme } from "./apply-theme";
 import { DEFAULT_THEME } from "./default-theme";
-import type { ThemeState } from "./types";
 
 /**
  * Inline script component that runs before React hydration to prevent theme flash.

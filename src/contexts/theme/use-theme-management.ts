@@ -17,8 +17,7 @@ import type { ThemePreset } from "./types";
  * Hook for managing themes including fetching, applying, and custom imports
  */
 export function useThemeManagement() {
-  const { themeState, setThemeState, toggleMode, applyTheme, resetToDefault } =
-    useTheme();
+  const { themeState, toggleMode, applyTheme, resetToDefault } = useTheme();
   const queryClient = useQueryClient();
   const [customThemeUrls, setCustomThemeUrls] = useState<string[]>([]);
 
@@ -92,7 +91,7 @@ export function useThemeManagement() {
       }
       return { theme: fetchedTheme.preset, url, name: fetchedTheme.name };
     },
-    onSuccess: ({ theme, url, name }) => {
+    onSuccess: async ({ theme, url, name }) => {
       applyTheme(theme);
 
       // Add to custom themes if not already there
@@ -101,7 +100,7 @@ export function useThemeManagement() {
       }
 
       // Invalidate queries to refresh the lists
-      queryClient.invalidateQueries({ queryKey: ["themes"] });
+      await queryClient.invalidateQueries({ queryKey: ["themes"] });
 
       toast.success(`Applied theme: ${name}`);
     },
@@ -132,9 +131,9 @@ export function useThemeManagement() {
   };
 
   // Remove custom theme URL
-  const removeCustomTheme = (url: string) => {
+  const removeCustomTheme = async (url: string) => {
     setCustomThemeUrls((prev) => prev.filter((u) => u !== url));
-    queryClient.invalidateQueries({ queryKey: ["themes", "custom"] });
+    await queryClient.invalidateQueries({ queryKey: ["themes", "custom"] });
     toast.success("Removed custom theme");
   };
 
@@ -170,6 +169,6 @@ export function useThemeManagement() {
     getThemePreview,
 
     // Errors
-    error: builtInError || customError,
+    error: builtInError ?? customError,
   };
 }

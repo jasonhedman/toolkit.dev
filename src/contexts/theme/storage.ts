@@ -29,10 +29,9 @@ export function loadThemeFromStorage(): ThemeState {
       parsed &&
       typeof parsed === "object" &&
       parsed.currentMode &&
-      parsed.cssVars &&
-      parsed.cssVars.theme &&
-      parsed.cssVars.light &&
-      parsed.cssVars.dark
+      parsed.cssVars?.theme &&
+      parsed.cssVars?.light &&
+      parsed.cssVars?.dark
     ) {
       return parsed;
     }

@@ -45,12 +45,13 @@ function normalizeThemeUrl(url: string): string {
 /**
  * Gets the theme name from the data or generates a fallback
  */
-function getThemeName(themeData: any): string {
-  return themeData.name
-    ? themeData.name
-        .replace(/[-_]/g, " ")
-        .replace(/\b\w/g, (l: string) => l.toUpperCase())
-    : "Custom Theme";
+function getThemeName(themeData: Record<string, unknown>): string {
+  if (typeof themeData.name === "string") {
+    return themeData.name
+      .replace(/[-_]/g, " ")
+      .replace(/\b\w/g, (l: string) => l.toUpperCase());
+  }
+  return "Custom Theme";
 }
 
 /**
@@ -65,16 +66,26 @@ export async function fetchThemeFromUrl(url: string): Promise<FetchedTheme> {
       throw new Error(`HTTP ${response.status}: ${response.statusText}`);
     }
 
-    const themeData = await response.json();
+    const themeData = (await response.json()) as Record<string, unknown>;
     const themeName = getThemeName(themeData);
     const isBuiltIn = THEME_URLS.includes(url);
+
+    // Type-safe access to cssVars
+    const cssVarsRaw = themeData.cssVars as
+      | Record<string, Record<string, string>>
+      | undefined;
+    const cssVars = {
+      theme: cssVarsRaw?.theme ?? {},
+      light: cssVarsRaw?.light ?? {},
+      dark: cssVarsRaw?.dark ?? {},
+    };
 
     return {
       name: themeName,
       preset: {
         name: themeName,
         isBuiltIn,
-        cssVars: themeData.cssVars || { theme: {}, light: {}, dark: {} },
+        cssVars,
       },
       url,
       type: isBuiltIn ? "built-in" : "custom",

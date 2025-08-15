@@ -1,16 +1,8 @@
 "use client";
 
 import React, { useState } from "react";
-import {
-  Search,
-  Palette,
-  Shuffle,
-  Moon,
-  Sun,
-  Plus,
-  X,
-  ExternalLink,
-} from "lucide-react";
+import type { ThemePreset } from "@/contexts/theme/types";
+import { Search, Palette, Shuffle, Moon, Sun, Plus } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -62,8 +54,8 @@ export function ThemeSwitcher({
   const [showImportDialog, setShowImportDialog] = useState(false);
 
   // Use controlled or uncontrolled state
-  const isOpen = controlledOpen !== undefined ? controlledOpen : internalOpen;
-  const setIsOpen = onOpenChange || setInternalOpen;
+  const isOpen = controlledOpen ?? internalOpen;
+  const setIsOpen = onOpenChange ?? setInternalOpen;
 
   // Filter themes based on search
   const filteredThemes = allThemes.filter((theme) =>
@@ -215,7 +207,7 @@ export function ThemeSwitcher({
               {!isLoading && filteredThemes.length === 0 && searchQuery && (
                 <div className="flex items-center justify-center py-8">
                   <div className="text-muted-foreground text-sm">
-                    No themes found matching "{searchQuery}"
+                    No themes found matching &quot;{searchQuery}&quot;
                   </div>
                 </div>
               )}
@@ -244,7 +236,7 @@ export function ThemeSwitcher({
 }
 
 interface ThemeCardProps {
-  theme: any;
+  theme: ThemePreset;
   onSelect: () => void;
   previewColors: string[];
 }
@@ -262,7 +254,9 @@ function ThemeCard({ theme, onSelect, previewColors }: ThemeCardProps) {
       <div className="space-y-2">
         <div className="flex items-center justify-between">
           <span className="text-sm font-medium">{theme.name}</span>
-          {!theme.isBuiltIn && <Badge variant="secondary">Custom</Badge>}
+          {!(theme.isBuiltIn ?? false) && (
+            <Badge variant="secondary">Custom</Badge>
+          )}
         </div>
 
         {/* Color Preview */}
@@ -298,7 +292,7 @@ function ImportThemeDialog({ open, onOpenChange }: ImportThemeDialogProps) {
 
     try {
       setError("");
-      await importTheme(url.trim());
+      importTheme(url.trim());
       setUrl("");
       onOpenChange(false);
     } catch (err) {
