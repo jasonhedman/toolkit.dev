@@ -35,6 +35,7 @@ import type { Chat } from "@prisma/client";
 import { openai } from "@ai-sdk/openai";
 import { getServerToolkit } from "@/toolkits/toolkits/server";
 import { languageModels } from "@/ai/language";
+import { createArtifactTool } from "@/lib/artifacts/tool";
 
 export const maxDuration = 60;
 
@@ -221,20 +222,53 @@ export async function POST(request: Request) {
       }),
     );
 
-    const tools = toolkitTools.reduce(
-      (acc, toolkitTools) => {
-        return {
-          ...acc,
-          ...toolkitTools,
-        };
-      },
-      {} as Record<string, Tool>,
-    );
+    const tools = {
+      ...toolkitTools.reduce(
+        (acc, toolkitTools) => {
+          return {
+            ...acc,
+            ...toolkitTools,
+          };
+        },
+        {} as Record<string, Tool>,
+      ),
+      // Add the artifact creation tool
+      create_artifact: createArtifactTool(id), // Pass the chat ID
+    };
 
     const isOpenAi = selectedChatModel.startsWith("openai");
 
     // Build comprehensive system prompt
-    const baseSystemPrompt = `You are a helpful assistant. The current date and time is ${new Date().toLocaleString()}. Whenever you are asked to write code, you must include a language with \`\`\``;
+    const baseSystemPrompt = `You are a helpful assistant. The current date and time is ${new Date().toLocaleString()}. Whenever you are asked to write code, you must include a language with \`\`\`.
+
+## Artifacts
+
+You have access to a special artifact creation system. Use the create_artifact tool when users ask for:
+
+**Text Artifacts** - For substantial written content:
+- Essays, articles, or long-form writing
+- Email drafts or formal documents  
+- Creative writing, stories, or scripts
+- Documentation or guides
+
+**Code Artifacts** - For programming content:
+- Complete code examples or scripts
+- Functions or algorithms
+- Configuration files
+- Code tutorials with examples
+
+**Custom Artifacts** - For structured or specialized content:
+- Templates or forms
+- Structured data or lists
+- Custom formats or layouts
+
+**When NOT to use artifacts:**
+- Simple questions or short responses
+- Brief explanations or conversational replies
+- Single sentences or paragraphs
+- Quick code snippets (under 10 lines)
+
+When you create an artifact, it will be displayed in a special workspace interface alongside our conversation, making it easy for the user to view, edit, and work with the content.`;
 
     const toolkitInstructions =
       toolkitSystemPrompts.length > 0
