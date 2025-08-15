@@ -7,6 +7,8 @@ import { Copy, Expand, X } from "lucide-react";
 import { api } from "@/trpc/react";
 import { toast } from "sonner";
 import { LLMMarkdown } from "./utils/llm-markdown";
+import { CodeBlock } from "@/components/ui/code-block";
+import type { BundledLanguage } from "@/components/ui/code/shiki.bundle";
 
 interface Props {
   documentId: string;
@@ -37,10 +39,10 @@ export const ArtifactPreview: React.FC<Props> = ({
 
   if (isLoading) {
     return (
-      <div className="w-full rounded-lg border bg-gray-50 p-4">
+      <div className="bg-background w-full rounded-lg border p-4">
         <div className="animate-pulse">
-          <div className="mb-2 h-4 w-1/3 rounded bg-gray-200"></div>
-          <div className="h-20 rounded bg-gray-200"></div>
+          <div className="bg-muted mb-2 h-4 w-1/3 rounded"></div>
+          <div className="bg-muted h-20 rounded"></div>
         </div>
       </div>
     );
@@ -51,6 +53,59 @@ export const ArtifactPreview: React.FC<Props> = ({
 
     const content = document.content;
 
+    // For code artifacts, use CodeBlock directly with language detection
+    if (kind === "code") {
+      // Try to detect language from the first line if it has a language comment
+      let language: BundledLanguage = "javascript"; // default
+
+      const firstLine = content.split("\n")[0]?.toLowerCase() || "";
+      if (
+        firstLine.includes("// language:") ||
+        firstLine.includes("# language:")
+      ) {
+        const match = firstLine.match(/(?:\/\/|#)\s*language:\s*(\w+)/);
+        if (match && match[1]) {
+          const detectedLang = match[1];
+          // Map common language names to valid BundledLanguage types
+          const langMap: Record<string, BundledLanguage> = {
+            go: "go",
+            golang: "go",
+            javascript: "javascript",
+            js: "javascript",
+            typescript: "typescript",
+            ts: "typescript",
+            python: "python",
+            py: "python",
+            rust: "rust",
+            rs: "rust",
+            java: "java",
+            cpp: "cpp",
+            c: "c",
+            html: "html",
+            css: "css",
+            json: "json",
+            yaml: "yaml",
+            yml: "yaml",
+            xml: "xml",
+            sql: "sql",
+          };
+          language = langMap[detectedLang] || "javascript";
+        }
+      }
+
+      return (
+        <div className="h-full w-full overflow-auto">
+          <CodeBlock
+            value={content}
+            language={language}
+            showLineNumbers={true}
+            allowCopy={true}
+          />
+        </div>
+      );
+    }
+
+    // For text and custom artifacts, use markdown rendering as-is
     return (
       <div className="h-full w-full overflow-auto">
         <LLMMarkdown llmOutput={content} isStreamFinished={true} />
@@ -60,9 +115,9 @@ export const ArtifactPreview: React.FC<Props> = ({
 
   return (
     <div className="w-full space-y-2">
-      <div className="flex items-center justify-between rounded-lg border bg-gray-50 p-3">
+      <div className="bg-background flex items-center justify-between rounded-lg border p-3">
         <div className="flex items-center space-x-3">
-          <div className="text-sm font-medium text-gray-900">{title}</div>
+          <div className="text-sm font-medium">{title}</div>
           <Badge variant="secondary" className="text-xs">
             {kind}
           </Badge>
@@ -91,14 +146,12 @@ export const ArtifactPreview: React.FC<Props> = ({
           }}
         >
           <div
-            className="flex h-full max-h-[90vh] w-full max-w-6xl flex-col rounded-lg bg-white shadow-xl"
+            className="bg-background flex h-full max-h-[90vh] w-full max-w-6xl flex-col rounded-lg border shadow-xl"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex flex-shrink-0 items-center justify-between border-b p-4">
+            <div className="bg-background flex flex-shrink-0 items-center justify-between border-b p-4">
               <div className="flex items-center space-x-3">
-                <div className="text-lg font-semibold text-gray-900">
-                  {title}
-                </div>
+                <div className="text-lg font-semibold">{title}</div>
                 <Badge variant="secondary" className="text-xs">
                   {kind}
                 </Badge>
@@ -124,7 +177,7 @@ export const ArtifactPreview: React.FC<Props> = ({
                 </Button>
               </div>
             </div>
-            <div className="flex-1 overflow-hidden p-4">
+            <div className="bg-background flex-1 overflow-hidden p-4">
               <div className="h-full overflow-y-auto">{renderContent()}</div>
             </div>
           </div>
