@@ -9,6 +9,7 @@ import { TRPCReactProvider } from "@/trpc/react";
 import { Toaster } from "@/components/ui/sonner";
 
 import { EnvProvider } from "@/contexts/env";
+import { ThemeProvider as CustomThemeProvider, ThemeScript } from "@/contexts/theme";
 
 import { env } from "@/env";
 
@@ -57,6 +58,7 @@ export default async function RootLayout({
     >
       <head>
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <ThemeScript />
       </head>
       <body>
         <Analytics />
@@ -64,14 +66,16 @@ export default async function RootLayout({
 
         <TRPCReactProvider>
           <EnvProvider>
-            <ThemeProvider
-              attribute="class"
-              defaultTheme="system"
-              enableSystem
-              disableTransitionOnChange
-            >
-              {children}
-            </ThemeProvider>
+            <CustomThemeProvider>
+              <ThemeProvider
+                attribute="class"
+                defaultTheme="system"
+                enableSystem
+                disableTransitionOnChange
+              >
+                {children}
+              </ThemeProvider>
+            </CustomThemeProvider>
           </EnvProvider>
         </TRPCReactProvider>
         <Toaster />

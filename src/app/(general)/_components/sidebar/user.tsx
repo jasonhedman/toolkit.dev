@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronRight, LogOut, Moon, Sun, User } from "lucide-react";
+import { ChevronRight, LogOut, Moon, Sun, User, Palette } from "lucide-react";
 import Link from "next/link";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -19,7 +19,9 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
+import { ThemeSwitcher } from "@/components/theme";
 import { useTheme } from "next-themes";
+import { useTheme as useCustomTheme } from "@/contexts/theme";
 import { signOut } from "next-auth/react";
 
 export function NavUser({
@@ -33,6 +35,13 @@ export function NavUser({
 }) {
   const { isMobile } = useSidebar();
   const { theme, setTheme } = useTheme();
+  const { currentMode, toggleMode } = useCustomTheme();
+
+  const handleThemeToggle = (e: React.MouseEvent) => {
+    e.preventDefault();
+    setTheme(theme === "light" ? "dark" : "light");
+    toggleMode();
+  };
 
   return (
     <SidebarMenu>
@@ -84,19 +93,23 @@ export function NavUser({
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
-            <DropdownMenuItem
-              onClick={(e) => {
-                e.preventDefault();
-                setTheme(theme === "light" ? "dark" : "light");
-              }}
-            >
-              {theme === "light" ? (
+            <DropdownMenuItem onClick={handleThemeToggle}>
+              {currentMode === "light" ? (
                 <Sun className="size-4" />
               ) : (
                 <Moon className="size-4" />
               )}
-              {theme === "light" ? "Light mode" : "Dark mode"}
+              {currentMode === "light" ? "Light mode" : "Dark mode"}
             </DropdownMenuItem>
+            <ThemeSwitcher>
+              <DropdownMenuItem 
+                onSelect={(e) => e.preventDefault()}
+                onClick={(e) => e.stopPropagation()}
+              >
+                <Palette className="size-4" />
+                Theme Switcher
+              </DropdownMenuItem>
+            </ThemeSwitcher>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={() => signOut()}>
               <LogOut />
