@@ -22,7 +22,7 @@ export function applyThemeToElement(
 
   // Set data attribute for theme mode
   element.setAttribute("data-theme", themeState.currentMode);
-  
+
   // Set classes for compatibility
   element.classList.toggle("light", themeState.currentMode === "light");
   element.classList.toggle("dark", themeState.currentMode === "dark");
@@ -33,8 +33,8 @@ export function applyThemeToElement(
  */
 export function getPreferredColorScheme(): "light" | "dark" {
   if (typeof window === "undefined") return "light";
-  
-  return window.matchMedia("(prefers-color-scheme: dark)").matches 
-    ? "dark" 
+
+  return window.matchMedia("(prefers-color-scheme: dark)").matches
+    ? "dark"
     : "light";
 }

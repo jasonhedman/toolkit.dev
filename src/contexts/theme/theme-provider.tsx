@@ -1,6 +1,12 @@
 "use client";
 
-import React, { createContext, useContext, useEffect, useState, useCallback } from "react";
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  useCallback,
+} from "react";
 import { applyThemeToElement } from "./apply-theme";
 import { DEFAULT_THEME } from "./default-theme";
 import { loadThemeFromStorage, saveThemeToStorage } from "./storage";
@@ -13,7 +19,8 @@ interface ThemeProviderProps {
 }
 
 export function ThemeProvider({ children }: ThemeProviderProps) {
-  const [themeState, setThemeStateInternal] = useState<ThemeState>(DEFAULT_THEME);
+  const [themeState, setThemeStateInternal] =
+    useState<ThemeState>(DEFAULT_THEME);
   const [isInitialized, setIsInitialized] = useState(false);
 
   // Load theme from storage on mount
@@ -70,9 +77,7 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
   };
 
   return (
-    <ThemeContext.Provider value={value}>
-      {children}
-    </ThemeContext.Provider>
+    <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>
   );
 }
 

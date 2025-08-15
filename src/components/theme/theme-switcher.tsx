@@ -1,7 +1,16 @@
 "use client";
 
 import React, { useState } from "react";
-import { Search, Palette, Shuffle, Moon, Sun, Plus, X, ExternalLink } from "lucide-react";
+import {
+  Search,
+  Palette,
+  Shuffle,
+  Moon,
+  Sun,
+  Plus,
+  X,
+  ExternalLink,
+} from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -30,7 +39,11 @@ interface ThemeSwitcherProps {
   onOpenChange?: (open: boolean) => void;
 }
 
-export function ThemeSwitcher({ children, open: controlledOpen, onOpenChange }: ThemeSwitcherProps) {
+export function ThemeSwitcher({
+  children,
+  open: controlledOpen,
+  onOpenChange,
+}: ThemeSwitcherProps) {
   const {
     currentMode,
     allThemes,
@@ -79,7 +92,7 @@ export function ThemeSwitcher({ children, open: controlledOpen, onOpenChange }: 
           {/* Controls */}
           <div className="flex items-center gap-2">
             <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
               <Input
                 placeholder="Search themes..."
                 value={searchQuery}
@@ -87,7 +100,7 @@ export function ThemeSwitcher({ children, open: controlledOpen, onOpenChange }: 
                 className="pl-9"
               />
             </div>
-            
+
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -106,7 +119,11 @@ export function ThemeSwitcher({ children, open: controlledOpen, onOpenChange }: 
 
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Button variant="outline" size="icon" onClick={randomizeTheme}>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={randomizeTheme}
+                  >
                     <Shuffle className="h-4 w-4" />
                   </Button>
                 </TooltipTrigger>
@@ -134,13 +151,15 @@ export function ThemeSwitcher({ children, open: controlledOpen, onOpenChange }: 
               {/* Built-in Themes */}
               {builtInThemes.length > 0 && (
                 <div>
-                  <h3 className="mb-2 text-sm font-medium text-muted-foreground">
+                  <h3 className="text-muted-foreground mb-2 text-sm font-medium">
                     Built-in Themes
                   </h3>
                   <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
                     {builtInThemes
                       .filter((theme) =>
-                        theme.name.toLowerCase().includes(searchQuery.toLowerCase()),
+                        theme.name
+                          .toLowerCase()
+                          .includes(searchQuery.toLowerCase()),
                       )
                       .map((theme) => (
                         <ThemeCard
@@ -160,13 +179,15 @@ export function ThemeSwitcher({ children, open: controlledOpen, onOpenChange }: 
               {/* Custom Themes */}
               {customThemes.length > 0 && (
                 <div>
-                  <h3 className="mb-2 text-sm font-medium text-muted-foreground">
+                  <h3 className="text-muted-foreground mb-2 text-sm font-medium">
                     Custom Themes
                   </h3>
                   <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
                     {customThemes
                       .filter((theme) =>
-                        theme.name.toLowerCase().includes(searchQuery.toLowerCase()),
+                        theme.name
+                          .toLowerCase()
+                          .includes(searchQuery.toLowerCase()),
                       )
                       .map((theme) => (
                         <ThemeCard
@@ -185,13 +206,15 @@ export function ThemeSwitcher({ children, open: controlledOpen, onOpenChange }: 
 
               {isLoading && (
                 <div className="flex items-center justify-center py-8">
-                  <div className="text-sm text-muted-foreground">Loading themes...</div>
+                  <div className="text-muted-foreground text-sm">
+                    Loading themes...
+                  </div>
                 </div>
               )}
 
               {!isLoading && filteredThemes.length === 0 && searchQuery && (
                 <div className="flex items-center justify-center py-8">
-                  <div className="text-sm text-muted-foreground">
+                  <div className="text-muted-foreground text-sm">
                     No themes found matching "{searchQuery}"
                   </div>
                 </div>
@@ -204,8 +227,9 @@ export function ThemeSwitcher({ children, open: controlledOpen, onOpenChange }: 
             <Button variant="outline" onClick={resetToDefault}>
               Reset to Default
             </Button>
-            <div className="text-sm text-muted-foreground">
-              {allThemes.length} theme{allThemes.length !== 1 ? "s" : ""} available
+            <div className="text-muted-foreground text-sm">
+              {allThemes.length} theme{allThemes.length !== 1 ? "s" : ""}{" "}
+              available
             </div>
           </div>
         </div>
@@ -232,7 +256,7 @@ function ThemeCard({ theme, onSelect, previewColors }: ThemeCardProps) {
       className={cn(
         "group relative rounded-lg border p-3 text-left transition-all",
         "hover:border-primary hover:shadow-md",
-        "focus:outline-none focus:ring-1 focus:ring-primary focus:ring-offset-1",
+        "focus:ring-primary focus:ring-1 focus:ring-offset-1 focus:outline-none",
       )}
     >
       <div className="space-y-2">
@@ -240,13 +264,13 @@ function ThemeCard({ theme, onSelect, previewColors }: ThemeCardProps) {
           <span className="text-sm font-medium">{theme.name}</span>
           {!theme.isBuiltIn && <Badge variant="secondary">Custom</Badge>}
         </div>
-        
+
         {/* Color Preview */}
         <div className="flex gap-1">
           {previewColors.slice(0, 4).map((color, index) => (
             <div
               key={index}
-              className="h-3 w-3 rounded-full border border-border"
+              className="border-border h-3 w-3 rounded-full border"
               style={{ backgroundColor: color }}
             />
           ))}
@@ -304,10 +328,10 @@ function ImportThemeDialog({ open, onOpenChange }: ImportThemeDialogProps) {
               }}
               className="mt-1"
             />
-            {error && <p className="mt-1 text-sm text-destructive">{error}</p>}
+            {error && <p className="text-destructive mt-1 text-sm">{error}</p>}
           </div>
 
-          <div className="text-sm text-muted-foreground">
+          <div className="text-muted-foreground text-sm">
             <p>Supported formats:</p>
             <ul className="mt-1 list-inside list-disc">
               <li>tweakcn.com theme URLs</li>

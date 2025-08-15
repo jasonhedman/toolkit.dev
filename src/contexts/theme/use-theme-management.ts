@@ -5,14 +5,20 @@ import { useState } from "react";
 import { toast } from "sonner";
 
 import { useTheme } from "./theme-provider";
-import { fetchThemeFromUrl, THEME_URLS, extractThemeColors, type FetchedTheme } from "./theme-utils";
+import {
+  fetchThemeFromUrl,
+  THEME_URLS,
+  extractThemeColors,
+  type FetchedTheme,
+} from "./theme-utils";
 import type { ThemePreset } from "./types";
 
 /**
  * Hook for managing themes including fetching, applying, and custom imports
  */
 export function useThemeManagement() {
-  const { themeState, setThemeState, toggleMode, applyTheme, resetToDefault } = useTheme();
+  const { themeState, setThemeState, toggleMode, applyTheme, resetToDefault } =
+    useTheme();
   const queryClient = useQueryClient();
   const [customThemeUrls, setCustomThemeUrls] = useState<string[]>([]);
 
@@ -24,17 +30,23 @@ export function useThemeManagement() {
   } = useQuery({
     queryKey: ["themes", "built-in"],
     queryFn: async () => {
-      const results = await Promise.allSettled(THEME_URLS.map(fetchThemeFromUrl));
-      
+      const results = await Promise.allSettled(
+        THEME_URLS.map(fetchThemeFromUrl),
+      );
+
       return results
-        .filter((result): result is PromiseFulfilledResult<FetchedTheme> => 
-          result.status === "fulfilled" && !result.value.error
+        .filter(
+          (result): result is PromiseFulfilledResult<FetchedTheme> =>
+            result.status === "fulfilled" && !result.value.error,
         )
-        .map((result) => ({
-          ...result.value.preset,
-          name: result.value.name,
-          isBuiltIn: true,
-        } as ThemePreset));
+        .map(
+          (result) =>
+            ({
+              ...result.value.preset,
+              name: result.value.name,
+              isBuiltIn: true,
+            }) as ThemePreset,
+        );
     },
     staleTime: 1000 * 60 * 30, // 30 minutes
   });
@@ -49,17 +61,23 @@ export function useThemeManagement() {
     queryFn: async () => {
       if (customThemeUrls.length === 0) return [];
 
-      const results = await Promise.allSettled(customThemeUrls.map(fetchThemeFromUrl));
-      
+      const results = await Promise.allSettled(
+        customThemeUrls.map(fetchThemeFromUrl),
+      );
+
       return results
-        .filter((result): result is PromiseFulfilledResult<FetchedTheme> => 
-          result.status === "fulfilled" && !result.value.error
+        .filter(
+          (result): result is PromiseFulfilledResult<FetchedTheme> =>
+            result.status === "fulfilled" && !result.value.error,
         )
-        .map((result) => ({
-          ...result.value.preset,
-          name: result.value.name,
-          isBuiltIn: false,
-        } as ThemePreset));
+        .map(
+          (result) =>
+            ({
+              ...result.value.preset,
+              name: result.value.name,
+              isBuiltIn: false,
+            }) as ThemePreset,
+        );
     },
     enabled: customThemeUrls.length > 0,
     staleTime: 1000 * 60 * 5, // 5 minutes for custom themes
@@ -76,15 +94,15 @@ export function useThemeManagement() {
     },
     onSuccess: ({ theme, url, name }) => {
       applyTheme(theme);
-      
+
       // Add to custom themes if not already there
       if (!customThemeUrls.includes(url)) {
         setCustomThemeUrls((prev) => [...prev, url]);
       }
-      
+
       // Invalidate queries to refresh the lists
       queryClient.invalidateQueries({ queryKey: ["themes"] });
-      
+
       toast.success(`Applied theme: ${name}`);
     },
     onError: (error) => {
@@ -94,7 +112,8 @@ export function useThemeManagement() {
 
   // Get all themes combined
   const allThemes = [...builtInThemes, ...customThemes];
-  const isLoading = isLoadingBuiltIn || isLoadingCustom || importThemeMutation.isPending;
+  const isLoading =
+    isLoadingBuiltIn || isLoadingCustom || importThemeMutation.isPending;
 
   // Apply a preset theme
   const applyPreset = (preset: ThemePreset) => {
@@ -105,7 +124,7 @@ export function useThemeManagement() {
   // Randomize theme
   const randomizeTheme = () => {
     if (allThemes.length === 0) return;
-    
+
     const randomTheme = allThemes[Math.floor(Math.random() * allThemes.length)];
     if (randomTheme) {
       applyPreset(randomTheme);
@@ -128,28 +147,28 @@ export function useThemeManagement() {
     // State
     currentMode: themeState.currentMode,
     themeState,
-    
+
     // Themes
     builtInThemes,
     customThemes,
     allThemes,
     isLoading,
-    
+
     // Actions
     toggleMode,
     applyPreset,
     randomizeTheme,
     resetToDefault,
-    
+
     // Custom theme management
     importTheme: importThemeMutation.mutate,
     isImporting: importThemeMutation.isPending,
     removeCustomTheme,
     customThemeUrls,
-    
+
     // Utilities
     getThemePreview,
-    
+
     // Errors
     error: builtInError || customError,
   };

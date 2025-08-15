@@ -23,7 +23,7 @@ export function loadThemeFromStorage(): ThemeState {
     }
 
     const parsed = JSON.parse(stored) as ThemeState;
-    
+
     // Validate the structure
     if (
       parsed &&
@@ -36,7 +36,7 @@ export function loadThemeFromStorage(): ThemeState {
     ) {
       return parsed;
     }
-    
+
     // If invalid, return default
     return {
       ...DEFAULT_THEME,

@@ -5,10 +5,10 @@ export { useThemeManagement } from "./use-theme-management";
 
 // Theme utilities
 export { applyThemeToElement, getPreferredColorScheme } from "./apply-theme";
-export { 
-  fetchThemeFromUrl, 
+export {
+  fetchThemeFromUrl,
   extractThemeColors,
-  THEME_URLS 
+  THEME_URLS,
 } from "./theme-utils";
 export { loadThemeFromStorage, saveThemeToStorage } from "./storage";
 

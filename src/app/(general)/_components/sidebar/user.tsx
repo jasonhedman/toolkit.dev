@@ -102,7 +102,7 @@ export function NavUser({
               {currentMode === "light" ? "Light mode" : "Dark mode"}
             </DropdownMenuItem>
             <ThemeSwitcher>
-              <DropdownMenuItem 
+              <DropdownMenuItem
                 onSelect={(e) => e.preventDefault()}
                 onClick={(e) => e.stopPropagation()}
               >

@@ -9,7 +9,10 @@ import { TRPCReactProvider } from "@/trpc/react";
 import { Toaster } from "@/components/ui/sonner";
 
 import { EnvProvider } from "@/contexts/env";
-import { ThemeProvider as CustomThemeProvider, ThemeScript } from "@/contexts/theme";
+import {
+  ThemeProvider as CustomThemeProvider,
+  ThemeScript,
+} from "@/contexts/theme";
 
 import { env } from "@/env";
 

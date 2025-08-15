@@ -33,18 +33,23 @@ export type FetchedTheme = {
 function normalizeThemeUrl(url: string): string {
   const baseUrl = "https://tweakcn.com/r/themes/";
   const isBuiltInUrl = url.includes("editor/theme?theme=");
-  
-  return url
-    .replace("https://tweakcn.com/editor/theme?theme=", baseUrl)
-    .replace("https://tweakcn.com/themes/", baseUrl) + (isBuiltInUrl ? ".json" : "");
+
+  return (
+    url
+      .replace("https://tweakcn.com/editor/theme?theme=", baseUrl)
+      .replace("https://tweakcn.com/themes/", baseUrl) +
+    (isBuiltInUrl ? ".json" : "")
+  );
 }
 
 /**
  * Gets the theme name from the data or generates a fallback
  */
 function getThemeName(themeData: any): string {
-  return themeData.name 
-    ? themeData.name.replace(/[-_]/g, " ").replace(/\b\w/g, (l: string) => l.toUpperCase())
+  return themeData.name
+    ? themeData.name
+        .replace(/[-_]/g, " ")
+        .replace(/\b\w/g, (l: string) => l.toUpperCase())
     : "Custom Theme";
 }
 
@@ -53,38 +58,39 @@ function getThemeName(themeData: any): string {
  */
 export async function fetchThemeFromUrl(url: string): Promise<FetchedTheme> {
   const transformedUrl = normalizeThemeUrl(url);
-  
+
   try {
     const response = await fetch(transformedUrl);
     if (!response.ok) {
       throw new Error(`HTTP ${response.status}: ${response.statusText}`);
     }
-    
+
     const themeData = await response.json();
     const themeName = getThemeName(themeData);
     const isBuiltIn = THEME_URLS.includes(url);
-    
+
     return {
       name: themeName,
       preset: {
         name: themeName,
         isBuiltIn,
-        cssVars: themeData.cssVars || { theme: {}, light: {}, dark: {} }
+        cssVars: themeData.cssVars || { theme: {}, light: {}, dark: {} },
       },
       url,
       type: isBuiltIn ? "built-in" : "custom",
     };
   } catch (err) {
-    const errorMessage = err instanceof Error ? err.message : "Failed to fetch theme";
+    const errorMessage =
+      err instanceof Error ? err.message : "Failed to fetch theme";
     const themeName = getThemeName({});
     const isBuiltIn = THEME_URLS.includes(url);
-    
+
     return {
       name: themeName,
-      preset: { 
+      preset: {
         name: themeName,
         isBuiltIn,
-        cssVars: { theme: {}, light: {}, dark: {} } 
+        cssVars: { theme: {}, light: {}, dark: {} },
       },
       url,
       error: errorMessage,
@@ -96,19 +102,24 @@ export async function fetchThemeFromUrl(url: string): Promise<FetchedTheme> {
 /**
  * Extracts color swatches for theme preview
  */
-export function extractThemeColors(preset: ThemePreset, mode: "light" | "dark" = "light"): string[] {
+export function extractThemeColors(
+  preset: ThemePreset,
+  mode: "light" | "dark" = "light",
+): string[] {
   const { light, dark, theme } = preset.cssVars;
   const currentVars = { ...theme, ...(mode === "light" ? light : dark) };
-  
+
   const colorKeys = ["primary", "accent", "secondary", "background", "muted"];
   const colors: string[] = [];
-  
+
   colorKeys.forEach((key) => {
     const colorValue = currentVars[key];
     if (colorValue && colors.length < 5) {
-      colors.push(colorValue.includes("hsl") ? `hsl(${colorValue})` : colorValue);
+      colors.push(
+        colorValue.includes("hsl") ? `hsl(${colorValue})` : colorValue,
+      );
     }
   });
-  
+
   return colors;
 }
