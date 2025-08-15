@@ -107,7 +107,7 @@ export function NavUser({
                 onClick={(e) => e.stopPropagation()}
               >
                 <Palette className="size-4" />
-                Theme Switcher
+                Appearance
               </DropdownMenuItem>
             </ThemeSwitcher>
             <DropdownMenuSeparator />

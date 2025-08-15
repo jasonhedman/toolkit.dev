@@ -24,7 +24,7 @@ export const ColorModeToggle = () => {
         aria-label={`Switch to ${currentMode === "light" ? "dark" : "light"} mode`}
         size="icon"
         suppressHydrationWarning
-        className="relative size-8"
+        className="relative size-9"
       >
         <Sun className="absolute size-5 rotate-0 opacity-100 transition-all duration-300 dark:-rotate-90 dark:opacity-0" />
         <Moon className="absolute size-5 rotate-90 opacity-0 transition-all duration-300 dark:rotate-0 dark:opacity-100" />

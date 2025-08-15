@@ -71,7 +71,7 @@ export function ThemeSwitcher({ children, open: controlledOpen, onOpenChange }: 
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Palette className="h-5 w-5" />
-            Theme Switcher
+            Appearance
           </DialogTitle>
         </DialogHeader>
 
@@ -130,7 +130,7 @@ export function ThemeSwitcher({ children, open: controlledOpen, onOpenChange }: 
 
           {/* Theme Grid */}
           <ScrollArea className="h-[400px] rounded-md">
-            <div className="space-y-4 pr-4">
+            <div className="space-y-4 pr-4 pl-2">
               {/* Built-in Themes */}
               {builtInThemes.length > 0 && (
                 <div>

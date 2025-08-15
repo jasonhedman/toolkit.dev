@@ -35,7 +35,9 @@ export const Navbar = () => {
             </Button>
           </Link>
           <ThemeSwitcher />
-          <ColorModeToggle />
+          <div className="hidden sm:flex">
+            <ColorModeToggle />
+          </div>
         </HStack>
       </HStack>
     </HStack>
