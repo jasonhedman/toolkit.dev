@@ -57,6 +57,7 @@ model User {
     videos        Video[]
     userFeatures  UserFeature[]
     workbenches   Workbench[]
+    documents     Document[]
 }
 
 enum UserRole {
@@ -92,6 +93,7 @@ model Chat {
     messages     Message[]
     stream       Stream[]
     workbench    Workbench? @relation(fields: [workbenchId], references: [id], onDelete: SetNull)
+    documents    Document[]
 }
 
 model Message {
@@ -190,4 +192,23 @@ model Tool {
     toolkit     Toolkit  @relation(fields: [toolkitId], references: [id], onDelete: Cascade)
 
     @@id([id, toolkitId])
+}
+
+enum ArtifactKind {
+    text
+    code
+    custom
+}
+
+model Document {
+    id        String       @id @default(uuid())
+    createdAt DateTime     @default(now())
+    updatedAt DateTime     @updatedAt
+    title     String
+    content   String?      @db.Text
+    kind      ArtifactKind @default(text)
+    userId    String
+    chatId    String?      // Optional association with a chat
+    user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+    chat      Chat?        @relation(fields: [chatId], references: [id], onDelete: SetNull)
 }
