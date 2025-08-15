@@ -15,7 +15,9 @@ export class Artifact<
 {
   public readonly kind: K;
   public readonly description: string;
-  public readonly initialize?: (props: ArtifactInitializeProps) => Promise<void>;
+  public readonly initialize?: (
+    props: ArtifactInitializeProps,
+  ) => Promise<void>;
   public readonly onStreamPart?: (props: ArtifactStreamPartProps<T>) => void;
   public readonly content: (props: ArtifactRenderProps<T>) => React.ReactNode;
   public readonly actions?: ArtifactAction[];

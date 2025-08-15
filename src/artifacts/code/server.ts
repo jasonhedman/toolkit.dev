@@ -4,10 +4,10 @@ import { openai } from "@ai-sdk/openai";
 
 export const codeDocumentHandler = createDocumentHandler<"code">({
   kind: "code",
-  
+
   onCreateDocument: async ({ title, dataStream }) => {
     let draftContent = "";
-    
+
     const { fullStream } = streamText({
       model: openai("gpt-4o"),
       system: `You are an expert software developer. Generate high-quality, working code based on the user's request.
@@ -28,11 +28,11 @@ Format your response as clean code without markdown code blocks.`,
 
     // Detect language from the first few tokens and send metadata
     let hasDetectedLanguage = false;
-    
+
     for await (const delta of fullStream) {
       if (delta.type === "text-delta") {
         draftContent += delta.textDelta;
-        
+
         // Try to detect language from the beginning of the content
         if (!hasDetectedLanguage && draftContent.length > 20) {
           const language = detectLanguage(draftContent);
@@ -44,7 +44,7 @@ Format your response as clean code without markdown code blocks.`,
             hasDetectedLanguage = true;
           }
         }
-        
+
         dataStream.writeData({
           type: "content-update",
           content: delta.textDelta,
@@ -57,7 +57,7 @@ Format your response as clean code without markdown code blocks.`,
 
   onUpdateDocument: async ({ document, description, dataStream }) => {
     let draftContent = "";
-    
+
     const { fullStream } = streamText({
       model: openai("gpt-4o"),
       system: `You are an expert software developer and code reviewer. You will receive existing code and instructions on how to modify it.
@@ -105,32 +105,48 @@ Format your response as clean code without markdown code blocks.`,
 
 function detectLanguage(code: string): string | null {
   const content = code.toLowerCase().trim();
-  
+
   // Check for explicit language comments
   if (content.includes("// language:")) {
-    const match = content.match(/\/\/ language:\s*(\w+)/);
+    const match = /\/\/ language:\s*(\w+)/.exec(content);
     return match?.[1] ?? null;
   }
-  
+
   // Pattern-based detection
-  if (content.includes("def ") || content.includes("import ") || content.includes("print(")) {
+  if (
+    content.includes("def ") ||
+    content.includes("import ") ||
+    content.includes("print(")
+  ) {
     return "python";
   }
-  if (content.includes("function ") || content.includes("const ") || content.includes("console.log")) {
+  if (
+    content.includes("function ") ||
+    content.includes("const ") ||
+    content.includes("console.log")
+  ) {
     return "javascript";
   }
-  if (content.includes("interface ") || content.includes("type ") || content.includes(": string")) {
+  if (
+    content.includes("interface ") ||
+    content.includes("type ") ||
+    content.includes(": string")
+  ) {
     return "typescript";
   }
   if (content.includes("<!doctype") || content.includes("<html")) {
     return "html";
   }
-  if (content.includes("select ") || content.includes("from ") || content.includes("where ")) {
+  if (
+    content.includes("select ") ||
+    content.includes("from ") ||
+    content.includes("where ")
+  ) {
     return "sql";
   }
   if (content.includes("{") && content.includes(":") && content.includes("}")) {
     return "json";
   }
-  
+
   return null;
 }

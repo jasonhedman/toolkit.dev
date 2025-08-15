@@ -47,7 +47,7 @@ The artifact will be rendered in a special interface alongside the chat.`,
           documentId: document.id,
           title: document.title,
           kind: document.kind,
-          description: description || `Created ${kind} artifact: ${title}`,
+          description: description ?? `Created ${kind} artifact: ${title}`,
           message: `I've created a ${kind} artifact titled "${title}". You can view and edit it in the workspace panel.`,
         };
       } catch (error) {

@@ -35,15 +35,23 @@ const MessageToolComponent: React.FC<Props> = ({ toolInvocation }) => {
 
   if (toolName === "create_artifact") {
     if (toolInvocation.state === "result" && toolInvocation.result) {
-      const result = toolInvocation.result as any;
-      if (result?.success && result?.documentId) {
-        const args = toolInvocation.args as any;
+      const result = toolInvocation.result as {
+        success?: boolean;
+        documentId?: string;
+        error?: string;
+      };
+      if (result.success && result.documentId) {
+        const args = toolInvocation.args as {
+          title?: string;
+          kind?: "text" | "code" | "custom";
+          description?: string;
+        };
         return (
           <ArtifactPreview
             documentId={result.documentId}
-            title={args?.title || "Untitled Artifact"}
-            kind={args?.kind || "text"}
-            description={args?.description}
+            title={args.title ?? "Untitled Artifact"}
+            kind={args.kind ?? "text"}
+            _description={args.description}
           />
         );
       }

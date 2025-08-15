@@ -11,7 +11,7 @@ interface CustomArtifactMetadata extends ArtifactMetadata {
 export const customArtifact = new Artifact<"custom", CustomArtifactMetadata>({
   kind: "custom",
   description: "A custom artifact for demonstrating extensible functionality.",
-  
+
   initialize: async ({ documentId, setMetadata }) => {
     setMetadata({
       info: `Custom document ${documentId} initialized.`,
@@ -26,7 +26,7 @@ export const customArtifact = new Artifact<"custom", CustomArtifactMetadata>({
         info: streamPart.content as string,
       }));
     }
-    
+
     if (streamPart.type === "content-update") {
       setArtifact((draftArtifact) => ({
         ...draftArtifact,
@@ -50,8 +50,10 @@ export const customArtifact = new Artifact<"custom", CustomArtifactMetadata>({
     if (isLoading) {
       return (
         <div className="flex items-center justify-center p-8">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
-          <span className="ml-2 text-sm text-gray-600">Loading custom artifact...</span>
+          <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-purple-600"></div>
+          <span className="ml-2 text-sm text-gray-600">
+            Loading custom artifact...
+          </span>
         </div>
       );
     }
@@ -59,21 +61,25 @@ export const customArtifact = new Artifact<"custom", CustomArtifactMetadata>({
     if (mode === "diff") {
       const oldContent = getDocumentContentById(currentVersionIndex - 1);
       const newContent = getDocumentContentById(currentVersionIndex);
-      
+
       return (
         <div className="space-y-4">
           <h3 className="text-lg font-semibold">Custom Content Comparison</h3>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <h4 className="text-sm font-medium text-gray-600 mb-2">Previous Version</h4>
-              <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-                <pre className="whitespace-pre-wrap text-sm">{oldContent}</pre>
+              <h4 className="mb-2 text-sm font-medium text-gray-600">
+                Previous Version
+              </h4>
+              <div className="rounded-lg border border-red-200 bg-red-50 p-4">
+                <pre className="text-sm whitespace-pre-wrap">{oldContent}</pre>
               </div>
             </div>
             <div>
-              <h4 className="text-sm font-medium text-gray-600 mb-2">Current Version</h4>
-              <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                <pre className="whitespace-pre-wrap text-sm">{newContent}</pre>
+              <h4 className="mb-2 text-sm font-medium text-gray-600">
+                Current Version
+              </h4>
+              <div className="rounded-lg border border-green-200 bg-green-50 p-4">
+                <pre className="text-sm whitespace-pre-wrap">{newContent}</pre>
               </div>
             </div>
           </div>
@@ -83,41 +89,43 @@ export const customArtifact = new Artifact<"custom", CustomArtifactMetadata>({
 
     return (
       <div className="space-y-4">
-        <div className="bg-gradient-to-r from-purple-100 to-pink-100 border border-purple-200 rounded-lg p-4">
+        <div className="rounded-lg border border-purple-200 bg-gradient-to-r from-purple-100 to-pink-100 p-4">
           <div className="flex items-center space-x-2">
-            <Sparkles className="w-5 h-5 text-purple-600" />
-            <h3 className="text-lg font-semibold text-purple-800">Custom Artifact</h3>
+            <Sparkles className="h-5 w-5 text-purple-600" />
+            <h3 className="text-lg font-semibold text-purple-800">
+              Custom Artifact
+            </h3>
           </div>
-          <p className="text-sm text-purple-600 mt-2">{metadata.info}</p>
+          <p className="mt-2 text-sm text-purple-600">{metadata.info}</p>
         </div>
-        
-        <div className="border rounded-lg p-4">
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+
+        <div className="rounded-lg border p-4">
+          <label className="mb-2 block text-sm font-medium text-gray-700">
             Custom Content
           </label>
           <textarea
             value={content}
             onChange={(e) => onSaveContent(e.target.value)}
-            className="w-full h-64 p-3 border rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-purple-500"
+            className="h-64 w-full resize-none rounded-lg border p-3 focus:ring-2 focus:ring-purple-500 focus:outline-none"
             placeholder="Enter your custom content here..."
             disabled={!isCurrentVersion}
           />
         </div>
-        
+
         {status === "streaming" && (
           <div className="flex items-center text-sm text-purple-600">
-            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-purple-600 mr-2"></div>
+            <div className="mr-2 h-4 w-4 animate-spin rounded-full border-b-2 border-purple-600"></div>
             Generating custom content...
           </div>
         )}
-        
+
         <div className="flex space-x-2">
           <button
             onClick={() => {
-              navigator.clipboard.writeText(content);
+              void navigator.clipboard.writeText(content);
               toast.success("Content copied to clipboard!");
             }}
-            className="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700 text-sm"
+            className="rounded bg-purple-600 px-4 py-2 text-sm text-white hover:bg-purple-700"
           >
             Copy Content
           </button>
@@ -125,7 +133,7 @@ export const customArtifact = new Artifact<"custom", CustomArtifactMetadata>({
             onClick={() => {
               toast.info("Custom action triggered!");
             }}
-            className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 text-sm"
+            className="rounded bg-gray-600 px-4 py-2 text-sm text-white hover:bg-gray-700"
           >
             Custom Action
           </button>
@@ -136,7 +144,7 @@ export const customArtifact = new Artifact<"custom", CustomArtifactMetadata>({
 
   actions: [
     {
-      icon: <RefreshCw className="w-4 h-4" />,
+      icon: <RefreshCw className="h-4 w-4" />,
       description: "Refresh custom artifact",
       onClick: ({ appendMessage }) => {
         appendMessage({
@@ -149,12 +157,13 @@ export const customArtifact = new Artifact<"custom", CustomArtifactMetadata>({
 
   toolbar: [
     {
-      icon: <Sparkles className="w-4 h-4" />,
+      icon: <Sparkles className="h-4 w-4" />,
       description: "Enhance with AI",
       onClick: ({ appendMessage }) => {
         appendMessage({
           role: "user",
-          content: "Please enhance this custom artifact with additional features.",
+          content:
+            "Please enhance this custom artifact with additional features.",
         });
       },
     },

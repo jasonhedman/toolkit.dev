@@ -12,9 +12,10 @@ interface CodeArtifactMetadata extends ArtifactMetadata {
 
 export const codeArtifact = new Artifact<"code", CodeArtifactMetadata>({
   kind: "code",
-  description: "A code artifact for writing, editing, and executing code snippets.",
-  
-  initialize: async ({ documentId, setMetadata }) => {
+  description:
+    "A code artifact for writing, editing, and executing code snippets.",
+
+  initialize: async ({ documentId: _documentId, setMetadata }) => {
     setMetadata({
       language: "javascript",
       lineCount: 0,
@@ -29,12 +30,13 @@ export const codeArtifact = new Artifact<"code", CodeArtifactMetadata>({
         language: streamPart.content as string,
       }));
     }
-    
+
     if (streamPart.type === "content-update") {
       setArtifact((draftArtifact) => {
-        const newContent = draftArtifact.content + (streamPart.content as string);
-        const lineCount = newContent.split('\n').length;
-        
+        const newContent =
+          draftArtifact.content + (streamPart.content as string);
+        const lineCount = newContent.split("\n").length;
+
         setMetadata((metadata) => ({
           ...metadata,
           lineCount,
@@ -63,8 +65,10 @@ export const codeArtifact = new Artifact<"code", CodeArtifactMetadata>({
     if (isLoading) {
       return (
         <div className="flex items-center justify-center p-8">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
-          <span className="ml-2 text-sm text-gray-600">Loading code artifact...</span>
+          <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-green-600"></div>
+          <span className="ml-2 text-sm text-gray-600">
+            Loading code artifact...
+          </span>
         </div>
       );
     }
@@ -72,23 +76,27 @@ export const codeArtifact = new Artifact<"code", CodeArtifactMetadata>({
     if (mode === "diff") {
       const oldContent = getDocumentContentById(currentVersionIndex - 1);
       const newContent = getDocumentContentById(currentVersionIndex);
-      
+
       return (
         <div className="space-y-4">
           <h3 className="text-lg font-semibold">Code Comparison</h3>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <h4 className="text-sm font-medium text-gray-600 mb-2">Previous Version</h4>
-              <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-                <pre className="text-sm font-mono overflow-x-auto">
+              <h4 className="mb-2 text-sm font-medium text-gray-600">
+                Previous Version
+              </h4>
+              <div className="rounded-lg border border-red-200 bg-red-50 p-4">
+                <pre className="overflow-x-auto font-mono text-sm">
                   <code>{oldContent}</code>
                 </pre>
               </div>
             </div>
             <div>
-              <h4 className="text-sm font-medium text-gray-600 mb-2">Current Version</h4>
-              <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                <pre className="text-sm font-mono overflow-x-auto">
+              <h4 className="mb-2 text-sm font-medium text-gray-600">
+                Current Version
+              </h4>
+              <div className="rounded-lg border border-green-200 bg-green-50 p-4">
+                <pre className="overflow-x-auto font-mono text-sm">
                   <code>{newContent}</code>
                 </pre>
               </div>
@@ -110,40 +118,44 @@ export const codeArtifact = new Artifact<"code", CodeArtifactMetadata>({
             <span>Language: {metadata.language}</span>
             <span>Lines: {metadata.lineCount}</span>
             {metadata.lastExecuted && (
-              <span>Last executed: {metadata.lastExecuted.toLocaleTimeString()}</span>
+              <span>
+                Last executed: {metadata.lastExecuted.toLocaleTimeString()}
+              </span>
             )}
           </div>
-          
+
           <div className="flex items-center space-x-2">
             <button
               onClick={executeCode}
               disabled={!isCurrentVersion || metadata.isExecuting}
-              className="flex items-center space-x-1 px-3 py-1 bg-green-600 text-white rounded text-sm hover:bg-green-700 disabled:opacity-50"
+              className="flex items-center space-x-1 rounded bg-green-600 px-3 py-1 text-sm text-white hover:bg-green-700 disabled:opacity-50"
             >
-              <Play className="w-3 h-3" />
+              <Play className="h-3 w-3" />
               <span>{metadata.isExecuting ? "Running..." : "Run"}</span>
             </button>
           </div>
         </div>
-        
-        <div className="border rounded-lg bg-gray-900">
-          <div className="flex items-center justify-between px-4 py-2 bg-gray-800 rounded-t-lg">
-            <span className="text-white text-sm">Language: {metadata.language}</span>
+
+        <div className="rounded-lg border bg-gray-900">
+          <div className="flex items-center justify-between rounded-t-lg bg-gray-800 px-4 py-2">
+            <span className="text-sm text-white">
+              Language: {metadata.language}
+            </span>
           </div>
-          
+
           <textarea
             value={content}
             onChange={(e) => onSaveContent(e.target.value)}
-            className="w-full h-96 p-4 bg-gray-900 text-green-400 font-mono text-sm border-0 rounded-b-lg resize-none focus:outline-none focus:ring-2 focus:ring-green-500"
+            className="h-96 w-full resize-none rounded-b-lg border-0 bg-gray-900 p-4 font-mono text-sm text-green-400 focus:ring-2 focus:ring-green-500 focus:outline-none"
             placeholder="// Write your code here..."
             disabled={!isCurrentVersion}
             spellCheck={false}
           />
         </div>
-        
+
         {status === "streaming" && (
           <div className="flex items-center text-sm text-green-600">
-            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-green-600 mr-2"></div>
+            <div className="mr-2 h-4 w-4 animate-spin rounded-full border-b-2 border-green-600"></div>
             Generating code...
           </div>
         )}
@@ -153,7 +165,7 @@ export const codeArtifact = new Artifact<"code", CodeArtifactMetadata>({
 
   actions: [
     {
-      icon: <RefreshCw className="w-4 h-4" />,
+      icon: <RefreshCw className="h-4 w-4" />,
       description: "Regenerate code",
       onClick: ({ appendMessage }) => {
         appendMessage({
@@ -166,14 +178,14 @@ export const codeArtifact = new Artifact<"code", CodeArtifactMetadata>({
 
   toolbar: [
     {
-      icon: <Copy className="w-4 h-4" />,
+      icon: <Copy className="h-4 w-4" />,
       description: "Copy code",
       onClick: () => {
         toast.success("Code copied to clipboard!");
       },
     },
     {
-      icon: <Download className="w-4 h-4" />,
+      icon: <Download className="h-4 w-4" />,
       description: "Download file",
       onClick: () => {
         toast.success("File downloaded!");

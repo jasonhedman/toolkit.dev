@@ -10,9 +10,10 @@ interface TextArtifactMetadata extends ArtifactMetadata {
 
 export const textArtifact = new Artifact<"text", TextArtifactMetadata>({
   kind: "text",
-  description: "A text artifact for drafting essays, emails, and other written content.",
-  
-  initialize: async ({ documentId, setMetadata }) => {
+  description:
+    "A text artifact for drafting essays, emails, and other written content.",
+
+  initialize: async ({ documentId: _documentId, setMetadata }) => {
     setMetadata({
       wordCount: 0,
       lastModified: new Date(),
@@ -22,9 +23,10 @@ export const textArtifact = new Artifact<"text", TextArtifactMetadata>({
   onStreamPart: ({ streamPart, setMetadata, setArtifact }) => {
     if (streamPart.type === "content-update") {
       setArtifact((draftArtifact) => {
-        const newContent = draftArtifact.content + (streamPart.content as string);
+        const newContent =
+          draftArtifact.content + (streamPart.content as string);
         const wordCount = newContent.split(/\s+/).filter(Boolean).length;
-        
+
         setMetadata((metadata) => ({
           ...metadata,
           wordCount,
@@ -54,8 +56,10 @@ export const textArtifact = new Artifact<"text", TextArtifactMetadata>({
     if (isLoading) {
       return (
         <div className="flex items-center justify-center p-8">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-          <span className="ml-2 text-sm text-gray-600">Loading text artifact...</span>
+          <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-blue-600"></div>
+          <span className="ml-2 text-sm text-gray-600">
+            Loading text artifact...
+          </span>
         </div>
       );
     }
@@ -63,21 +67,25 @@ export const textArtifact = new Artifact<"text", TextArtifactMetadata>({
     if (mode === "diff") {
       const oldContent = getDocumentContentById(currentVersionIndex - 1);
       const newContent = getDocumentContentById(currentVersionIndex);
-      
+
       return (
         <div className="space-y-4">
           <h3 className="text-lg font-semibold">Content Comparison</h3>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <h4 className="text-sm font-medium text-gray-600 mb-2">Previous Version</h4>
-              <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-                <pre className="whitespace-pre-wrap text-sm">{oldContent}</pre>
+              <h4 className="mb-2 text-sm font-medium text-gray-600">
+                Previous Version
+              </h4>
+              <div className="rounded-lg border border-red-200 bg-red-50 p-4">
+                <pre className="text-sm whitespace-pre-wrap">{oldContent}</pre>
               </div>
             </div>
             <div>
-              <h4 className="text-sm font-medium text-gray-600 mb-2">Current Version</h4>
-              <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                <pre className="whitespace-pre-wrap text-sm">{newContent}</pre>
+              <h4 className="mb-2 text-sm font-medium text-gray-600">
+                Current Version
+              </h4>
+              <div className="rounded-lg border border-green-200 bg-green-50 p-4">
+                <pre className="text-sm whitespace-pre-wrap">{newContent}</pre>
               </div>
             </div>
           </div>
@@ -89,22 +97,24 @@ export const textArtifact = new Artifact<"text", TextArtifactMetadata>({
       <div className="space-y-4">
         <div className="flex items-center justify-between text-sm text-gray-600">
           <span>Words: {metadata.wordCount}</span>
-          <span>Last modified: {metadata.lastModified.toLocaleTimeString()}</span>
+          <span>
+            Last modified: {metadata.lastModified.toLocaleTimeString()}
+          </span>
         </div>
-        
-        <div className="border rounded-lg">
+
+        <div className="rounded-lg border">
           <textarea
             value={content}
             onChange={(e) => onSaveContent(e.target.value)}
-            className="w-full h-96 p-4 border-0 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="h-96 w-full resize-none rounded-lg border-0 p-4 focus:ring-2 focus:ring-blue-500 focus:outline-none"
             placeholder="Start writing your content here..."
             disabled={!isCurrentVersion}
           />
         </div>
-        
+
         {status === "streaming" && (
           <div className="flex items-center text-sm text-blue-600">
-            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-2"></div>
+            <div className="mr-2 h-4 w-4 animate-spin rounded-full border-b-2 border-blue-600"></div>
             Generating content...
           </div>
         )}
@@ -114,7 +124,7 @@ export const textArtifact = new Artifact<"text", TextArtifactMetadata>({
 
   actions: [
     {
-      icon: <RefreshCw className="w-4 h-4" />,
+      icon: <RefreshCw className="h-4 w-4" />,
       description: "Regenerate content",
       onClick: ({ appendMessage }) => {
         appendMessage({
@@ -127,9 +137,9 @@ export const textArtifact = new Artifact<"text", TextArtifactMetadata>({
 
   toolbar: [
     {
-      icon: <Copy className="w-4 h-4" />,
+      icon: <Copy className="h-4 w-4" />,
       description: "Copy to clipboard",
-      onClick: ({ appendMessage }) => {
+      onClick: ({ appendMessage: _appendMessage }) => {
         // This would be handled by the parent component
         toast.success("Content copied to clipboard!");
       },

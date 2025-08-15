@@ -20,7 +20,9 @@ export interface ArtifactDocument {
   chatId?: string | null;
 }
 
-export interface ArtifactRenderProps<T extends ArtifactMetadata = ArtifactMetadata> {
+export interface ArtifactRenderProps<
+  T extends ArtifactMetadata = ArtifactMetadata,
+> {
   mode: "view" | "diff";
   status: "idle" | "streaming" | "complete";
   content: string;
@@ -33,7 +35,10 @@ export interface ArtifactRenderProps<T extends ArtifactMetadata = ArtifactMetada
 }
 
 export interface ArtifactActionProps {
-  appendMessage: (message: { role: "user" | "assistant"; content: string }) => void;
+  appendMessage: (message: {
+    role: "user" | "assistant";
+    content: string;
+  }) => void;
 }
 
 export interface ArtifactAction {
@@ -47,7 +52,9 @@ export interface ArtifactInitializeProps {
   setMetadata: React.Dispatch<React.SetStateAction<ArtifactMetadata>>;
 }
 
-export interface ArtifactStreamPartProps<T extends ArtifactMetadata = ArtifactMetadata> {
+export interface ArtifactStreamPartProps<
+  T extends ArtifactMetadata = ArtifactMetadata,
+> {
   streamPart: ArtifactStreamPart;
   setMetadata: React.Dispatch<React.SetStateAction<T>>;
   setArtifact: React.Dispatch<React.SetStateAction<Partial<ArtifactDocument>>>;

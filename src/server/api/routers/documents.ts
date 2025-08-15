@@ -1,7 +1,6 @@
 import { z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "@/server/api/trpc";
 import { documentHandlersByArtifactKind } from "@/lib/artifacts/server";
-import { ArtifactKind } from "@prisma/client";
 
 export const documentsRouter = createTRPCRouter({
   // Get all documents for a user
@@ -87,7 +86,7 @@ export const documentsRouter = createTRPCRouter({
         data: {
           title: input.title,
           kind: input.kind,
-          content: input.initialContent || "",
+          content: input.initialContent ?? "",
           userId: ctx.session.user.id,
           chatId: input.chatId,
         },

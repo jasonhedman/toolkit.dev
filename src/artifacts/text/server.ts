@@ -4,10 +4,10 @@ import { openai } from "@ai-sdk/openai";
 
 export const textDocumentHandler = createDocumentHandler<"text">({
   kind: "text",
-  
+
   onCreateDocument: async ({ title, dataStream }) => {
     let draftContent = "";
-    
+
     const { fullStream } = streamText({
       model: openai("gpt-4o"),
       system: `You are a skilled writer assistant. Generate high-quality written content based on the user's request. 
@@ -36,7 +36,7 @@ Key guidelines:
 
   onUpdateDocument: async ({ document, description, dataStream }) => {
     let draftContent = "";
-    
+
     const { fullStream } = streamText({
       model: openai("gpt-4o"),
       system: `You are a skilled editor and writer. You will receive existing content and instructions on how to modify it.

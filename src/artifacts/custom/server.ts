@@ -4,10 +4,10 @@ import { openai } from "@ai-sdk/openai";
 
 export const customDocumentHandler = createDocumentHandler<"custom">({
   kind: "custom",
-  
+
   onCreateDocument: async ({ title, dataStream }) => {
     let draftContent = "";
-    
+
     const { fullStream } = streamText({
       model: openai("gpt-4o"),
       system: `You are a creative AI assistant capable of generating diverse custom content. Generate engaging and unique content based on the user's request.
@@ -38,7 +38,7 @@ Generate content that showcases the flexibility of custom artifacts.`,
     // Send some custom metadata
     dataStream.writeData({
       type: "info-update",
-      content: `Custom artifact created with ${draftContent.split(' ').length} words`,
+      content: `Custom artifact created with ${draftContent.split(" ").length} words`,
     });
 
     return draftContent;
@@ -46,7 +46,7 @@ Generate content that showcases the flexibility of custom artifacts.`,
 
   onUpdateDocument: async ({ document, description, dataStream }) => {
     let draftContent = "";
-    
+
     const { fullStream } = streamText({
       model: openai("gpt-4o"),
       system: `You are a creative AI assistant that specializes in enhancing and modifying custom content. You will receive existing content and instructions on how to modify it.
@@ -86,7 +86,7 @@ ${document.content}`,
     // Send updated metadata
     dataStream.writeData({
       type: "info-update",
-      content: `Custom artifact updated with ${draftContent.split(' ').length} words`,
+      content: `Custom artifact updated with ${draftContent.split(" ").length} words`,
     });
 
     return draftContent;

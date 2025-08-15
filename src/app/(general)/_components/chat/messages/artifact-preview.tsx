@@ -1,46 +1,32 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Copy, Expand, X } from "lucide-react";
 import { api } from "@/trpc/react";
 import { toast } from "sonner";
-import { CodeBlock } from "@/components/ui/code-block";
-import { Markdown } from "@/components/ui/markdown";
-import { cn } from "@/lib/utils";
-import type { BundledLanguage } from "@/components/ui/code/shiki.bundle";
 import { LLMMarkdown } from "./utils/llm-markdown";
 
 interface Props {
   documentId: string;
   title: string;
   kind: "text" | "code" | "custom";
-  description?: string;
+  _description?: string;
 }
 
 export const ArtifactPreview: React.FC<Props> = ({
   documentId,
   title,
   kind,
-  description,
+  _description,
 }) => {
-  const [isExpanded, setIsExpanded] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
 
   const { data: document, isLoading } = api.documents.get.useQuery(
     { id: documentId },
     { enabled: !!documentId },
   );
-
-  const deleteDocument = api.documents.delete.useMutation({
-    onSuccess: () => {
-      toast.success("Artifact deleted");
-    },
-    onError: () => {
-      toast.error("Failed to delete artifact");
-    },
-  });
 
   const handleCopy = async () => {
     if (document?.content) {
