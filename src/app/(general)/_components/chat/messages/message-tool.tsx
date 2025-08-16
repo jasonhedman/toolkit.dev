@@ -9,6 +9,7 @@ import { AnimatePresence, motion } from "motion/react";
 import React from "react";
 import type z from "zod";
 import { useChatContext } from "@/app/(general)/_contexts/chat-context";
+import { ArtifactPreview } from "./artifact-preview";
 
 interface Props {
   toolInvocation: ToolInvocation;
@@ -31,6 +32,34 @@ const MessageToolComponent: React.FC<Props> = ({ toolInvocation }) => {
   const completeOnFirstMount = toolInvocation.state === "result";
 
   const { toolName } = toolInvocation;
+
+  if (toolName === "create_artifact") {
+    if (toolInvocation.state === "result" && toolInvocation.result) {
+      const result = toolInvocation.result as {
+        success?: boolean;
+        documentId?: string;
+        error?: string;
+      };
+      if (result.success && result.documentId) {
+        const args = toolInvocation.args as {
+          title?: string;
+          kind?: "text" | "code" | "custom";
+          description?: string;
+        };
+        return (
+          <ArtifactPreview
+            documentId={result.documentId}
+            title={args.title ?? "Untitled Artifact"}
+            kind={args.kind ?? "text"}
+            _description={args.description}
+          />
+        );
+      }
+      return null;
+    }
+
+    return null;
+  }
 
   const [server, tool] = toolName.split("_");
 
@@ -194,10 +223,6 @@ const MessageToolComponent: React.FC<Props> = ({ toolInvocation }) => {
                   height: completeOnFirstMount ? "auto" : 0,
                 }}
                 animate={{ opacity: 1, height: "auto" }}
-                // exit={{
-                //   opacity: 0,
-                //   height: completeOnFirstMount ? "auto" : 0,
-                // }}
                 transition={{
                   duration: 0.3,
                   ease: "easeOut",
@@ -221,21 +246,16 @@ const areEqual = (prevProps: Props, nextProps: Props): boolean => {
   const { toolInvocation: prev } = prevProps;
   const { toolInvocation: next } = nextProps;
 
-  // Compare all relevant fields of toolInvocation
   if (prev.toolCallId !== next.toolCallId) return false;
   if (prev.toolName !== next.toolName) return false;
   if (prev.state !== next.state) return false;
 
-  // Deep compare args object
   if (JSON.stringify(prev.args) !== JSON.stringify(next.args)) return false;
 
-  // Deep compare result object (only exists when state is "result")
   if (prev.state === "result" && next.state === "result") {
-    // Both have result property, compare them
     if (JSON.stringify(prev.result) !== JSON.stringify(next.result))
       return false;
   } else if (prev.state === "result" || next.state === "result") {
-    // Only one has result property, they're different
     return false;
   }
 
