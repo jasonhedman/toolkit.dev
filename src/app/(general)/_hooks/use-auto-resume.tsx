@@ -48,7 +48,7 @@ export function useAutoResume({
 
     if (dataPart.type === "append-message") {
       const message = JSON.parse(dataPart.message) as UIMessage;
-      setMessages([...initialMessages, message]);
+      setMessages([...initialMessages, message as any]);
     } else if (dataPart.type === "error") {
       toast.error(dataPart.message);
       onStreamError?.();

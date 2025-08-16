@@ -28,10 +28,14 @@ import { cn } from "@/lib/utils";
 
 import { ModelSelect } from "./model-select";
 import { useChatContext } from "@/app/(general)/_contexts/chat-context";
-import type { Attachment } from "ai";
+// Define a simple attachment type since Attachment no longer exists in AI SDK v5
+type SimpleAttachment = {
+  name: string;
+  url: string;
+  contentType: string;
+};
 import type { UseChatHelpers } from "@ai-sdk/react";
 import { ToolsSelect } from "./tools";
-import type { File as DbFile } from "@prisma/client";
 import { LanguageModelCapability } from "@/ai/language/types";
 import {
   Tooltip,
@@ -199,7 +203,7 @@ const PureMultimodalInput: React.FC<Props> = ({
   ]);
 
   const uploadFile = useCallback(
-    async (file: File): Promise<Attachment | undefined> => {
+    async (file: File): Promise<SimpleAttachment | undefined> => {
       const formData = new FormData();
       formData.append("file", file);
 
@@ -210,7 +214,7 @@ const PureMultimodalInput: React.FC<Props> = ({
         });
 
         if (response.ok) {
-          const data = (await response.json()) as DbFile;
+          const data = (await response.json()) as any;
 
           const { url, name, contentType } = data;
 
@@ -242,10 +246,10 @@ const PureMultimodalInput: React.FC<Props> = ({
         const uploadPromises = files.map((file) => uploadFile(file));
         const uploadedAttachments = await Promise.all(uploadPromises);
         const successfullyUploadedAttachments = uploadedAttachments.filter(
-          (attachment): attachment is Attachment => attachment !== undefined,
+          (attachment: any): attachment is SimpleAttachment => attachment !== undefined,
         );
 
-        setAttachments((currentAttachments: Attachment[]) => [
+        setAttachments((currentAttachments: SimpleAttachment[]) => [
           ...currentAttachments,
           ...successfullyUploadedAttachments,
         ]);
@@ -265,8 +269,8 @@ const PureMultimodalInput: React.FC<Props> = ({
   }, [status, scrollToBottom]);
 
   const removeAttachment = useCallback(
-    (attachmentToRemove: Attachment) => {
-      setAttachments((currentAttachments: Attachment[]) =>
+    (attachmentToRemove: SimpleAttachment) => {
+      setAttachments((currentAttachments: SimpleAttachment[]) =>
         currentAttachments.filter(
           (attachment) => attachment.url !== attachmentToRemove.url,
         ),
@@ -308,11 +312,11 @@ const PureMultimodalInput: React.FC<Props> = ({
         Promise.all(imageFiles.map((file) => uploadFile(file)))
           .then((uploadedAttachments) => {
             const successfullyUploadedAttachments = uploadedAttachments.filter(
-              (attachment): attachment is Attachment =>
+              (attachment: any): attachment is SimpleAttachment =>
                 attachment !== undefined,
             );
 
-            setAttachments((currentAttachments: Attachment[]) => [
+            setAttachments((currentAttachments: SimpleAttachment[]) => [
               ...currentAttachments,
               ...successfullyUploadedAttachments,
             ]);

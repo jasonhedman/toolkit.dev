@@ -8,8 +8,12 @@ export const generateImage = async (
   model: `${ImageModelProvider}:${string}`,
   prompt: string,
 ) => {
+  // Get the provider from the registry
+  const [provider] = model.split(':');
+  const providerModel = imageModelRegistry[provider as keyof typeof imageModelRegistry];
+  
   const { image } = await baseGenerateImage({
-    model: imageModelRegistry.imageModel(model),
+    model: providerModel as any,
     prompt,
   });
 

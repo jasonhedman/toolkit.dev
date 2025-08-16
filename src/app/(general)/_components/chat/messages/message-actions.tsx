@@ -18,12 +18,12 @@ import {
 import { api } from "@/trpc/react";
 import { useRouter } from "next/navigation";
 
-import type { Message } from "ai";
+import type { UIMessage } from "ai";
 import { HStack } from "@/components/ui/stack";
 import { ModelProviderIcon } from "@/components/ui/model-icon";
 
 interface Props {
-  message: Message;
+  message: UIMessage;
   isLoading: boolean;
   chatId: string;
 }
@@ -47,9 +47,9 @@ export const PureMessageActions: React.FC<Props> = ({
     },
   });
 
-  // Extract modelId from message annotations
-  const model = message.annotations?.find(
-    (annotation) => (annotation as { type: string }).type === "model",
+  // Extract modelId from message annotations (using type assertion for v5 compatibility)
+  const model = (message as any).annotations?.find(
+    (annotation: any) => annotation.type === "model",
   ) as
     | { model: { name: string; provider: string; modelId: string } | null }
     | undefined;

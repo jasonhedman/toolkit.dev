@@ -1,8 +1,7 @@
 import { db } from "@/server/db";
 import { ChatProvider } from "@/app/(general)/_contexts/chat-context";
-import type { Message, Workbench } from "@prisma/client";
 import { ChatLayout } from "./layout";
-import type { Attachment, UIMessage } from "ai";
+import type { UIMessage } from "ai";
 import { languageModels } from "@/ai/language";
 import { ChatContent } from "./chat";
 import { serverCookieUtils } from "@/lib/cookies/server";
@@ -16,7 +15,7 @@ interface Props {
   initialVisibilityType: "public" | "private";
   isReadonly: boolean;
   isNew: boolean;
-  workbench?: Workbench;
+  workbench?: any; // Replace with proper type later
 }
 
 export const Chat = async ({
@@ -68,7 +67,7 @@ export const Chat = async ({
       ),
   };
 
-  const convertToUIMessages = (messages: Array<Message>): Array<UIMessage> => {
+  const convertToUIMessages = (messages: Array<any>): Array<UIMessage> => {
     return messages.map((message) => ({
       id: message.id,
       parts: message.parts as UIMessage["parts"],
@@ -76,8 +75,7 @@ export const Chat = async ({
       // Note: content will soon be deprecated in @ai-sdk/react
       content: "",
       createdAt: message.createdAt,
-      experimental_attachments:
-        (message.attachments as unknown as Array<Attachment>) ?? [],
+      // Attachments are now handled through parts in v5
       annotations: message.modelId
         ? [
             {

@@ -7,7 +7,7 @@ export const generateText = (
   params: Omit<Parameters<typeof generateTextAi>[0], "model">,
 ) => {
   return generateTextAi({
-    model: openrouter(model),
+    model: openrouter(model) as any,
     ...params,
   });
 };
@@ -17,7 +17,7 @@ export const streamText = (
   params: Omit<Parameters<typeof streamTextAi>[0], "model">,
 ) => {
   return streamTextAi({
-    model: openrouter(model),
+    model: openrouter(model) as any,
     ...params,
   });
 };

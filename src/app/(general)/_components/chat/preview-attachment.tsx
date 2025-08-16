@@ -1,11 +1,16 @@
 import { FileIcon, LoaderIcon, X } from "lucide-react";
 
-import type { Attachment } from "ai";
+// Define a simple attachment type since Attachment no longer exists in AI SDK v5
+type SimpleAttachment = {
+  name: string;
+  url: string;
+  contentType: string;
+};
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 interface Props {
-  attachment: Attachment;
+  attachment: SimpleAttachment;
   isUploading?: boolean;
   onRemove?: () => void;
   isError?: boolean;
