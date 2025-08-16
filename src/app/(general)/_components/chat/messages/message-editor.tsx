@@ -9,10 +9,10 @@ import { useDeleteMessagesAfterTimestamp } from "@/app/(general)/_hooks/use-dele
 import { useChatContext } from "@/app/(general)/_contexts/chat-context";
 
 import type { Dispatch, SetStateAction } from "react";
-import type { Message } from "ai";
+import type { UIMessage } from "ai";
 
 export type MessageEditorProps = {
-  message: Message;
+  message: UIMessage;
   setMode: Dispatch<SetStateAction<"view" | "edit">>;
   chatId: string;
 };
@@ -36,7 +36,8 @@ export function MessageEditor({
         .trim();
     }
 
-    return message.content || "";
+    // Fallback for messages without parts structure
+    return "";
   });
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -61,7 +62,7 @@ export function MessageEditor({
   const onSubmit = async () => {
     setIsSubmitting(true);
 
-    const messageCreatedAt = message.createdAt;
+    const messageCreatedAt = (message as any).createdAt;
     const messageTimestamp = messageCreatedAt
       ? messageCreatedAt.getTime()
       : Date.now();

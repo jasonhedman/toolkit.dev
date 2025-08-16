@@ -75,20 +75,7 @@ const PurePreviewMessage: React.FC<Props> = ({
               message.role === "assistant" && "w-0 flex-1",
             )}
           >
-            {message.experimental_attachments &&
-              message.experimental_attachments.length > 0 && (
-                <div
-                  data-testid={`message-attachments`}
-                  className="flex flex-row justify-end gap-2"
-                >
-                  {message.experimental_attachments.map((attachment) => (
-                    <PreviewAttachment
-                      key={attachment.url}
-                      attachment={attachment}
-                    />
-                  ))}
-                </div>
-              )}
+            {/* Attachments are now handled through parts, but for now skip image parts */}
 
             {message.parts?.map((part, index) => {
               const { type } = part;
@@ -99,16 +86,14 @@ const PurePreviewMessage: React.FC<Props> = ({
                   <MessageReasoning
                     key={key}
                     isLoading={isLoading}
-                    reasoning={part.reasoning}
+                    reasoningText={(part as any).text || ""}
                   />
                 );
               }
 
-              if (type === "tool-invocation") {
-                const { toolInvocation } = part;
-
+              if (type.startsWith("tool-")) {
                 return (
-                  <MessageTool key={key} toolInvocation={toolInvocation} />
+                  <MessageTool key={key} toolInvocation={part as any} />
                 );
               }
 

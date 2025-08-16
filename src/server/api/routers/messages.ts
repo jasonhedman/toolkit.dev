@@ -10,7 +10,7 @@ const messagePartSchema = z.discriminatedUnion("type", [
   }),
   z.object({
     type: z.literal("reasoning"),
-    reasoning: z.string(),
+    reasoningText: z.string(),
     details: z.array(
       z.discriminatedUnion("type", [
         z.object({

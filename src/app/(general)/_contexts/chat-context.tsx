@@ -31,13 +31,18 @@ import { ChatSDKError } from "@/lib/errors";
 import { IS_DEVELOPMENT } from "@/lib/constants";
 
 import type { ReactNode } from "react";
-import type { Attachment, UIMessage } from "ai";
+import type { UIMessage } from "ai";
 import type { UseChatHelpers } from "@ai-sdk/react";
 import type { ClientToolkit } from "@/toolkits/types";
 import type { z } from "zod";
 import type { SelectedToolkit } from "@/components/toolkit/types";
 import type { Toolkits } from "@/toolkits/toolkits/shared";
-import type { Workbench } from "@prisma/client";
+// Define simple types since they're no longer exported from AI SDK v5
+type SimpleAttachment = {
+  name: string;
+  url: string;
+  contentType: string;
+};
 import type { PersistedToolkit } from "@/lib/cookies/types";
 import type { ImageModel } from "@/ai/image/types";
 import type { LanguageModel } from "@/ai/language/types";
@@ -52,11 +57,11 @@ interface ChatContextType {
   setInput: UseChatHelpers["setInput"];
   status: UseChatHelpers["status"];
   streamStopped: boolean;
-  attachments: Array<Attachment>;
+  attachments: Array<SimpleAttachment>;
   setAttachments: (
     attachments:
-      | Array<Attachment>
-      | ((prev: Array<Attachment>) => Array<Attachment>),
+      | Array<SimpleAttachment>
+      | ((prev: Array<SimpleAttachment>) => Array<SimpleAttachment>),
   ) => void;
   selectedChatModel: LanguageModel | undefined;
   setSelectedChatModel: (model: LanguageModel) => void;
@@ -69,7 +74,7 @@ interface ChatContextType {
   addToolkit: (toolkit: SelectedToolkit) => void;
   removeToolkit: (id: Toolkits) => void;
 
-  workbench?: Workbench;
+  workbench?: any;
 
   // Chat actions
   handleSubmit: UseChatHelpers["handleSubmit"];
@@ -86,7 +91,7 @@ interface ChatProviderProps {
   initialMessages: Array<UIMessage>;
   initialVisibilityType: "public" | "private";
   autoResume: boolean;
-  workbench?: Workbench;
+  workbench?: any;
   initialPreferences?: {
     selectedChatModel?: LanguageModel;
     imageGenerationModel?: ImageModel;
@@ -116,12 +121,12 @@ export function ChatProvider({
   const [imageGenerationModel, setImageGenerationModelState] = useState<
     ImageModel | undefined
   >(initialPreferences?.imageGenerationModel);
-  const [attachments, setAttachments] = useState<Array<Attachment>>([]);
+  const [attachments, setAttachments] = useState<Array<SimpleAttachment>>([]);
   const [toolkits, setToolkitsState] = useState<Array<SelectedToolkit>>(() => {
     // If this is a workbench chat, initialize with workbench toolkits
     if (workbench) {
       return workbench.toolkitIds
-        .map((toolkitId) => {
+        .map((toolkitId: any) => {
           const clientToolkit =
             clientToolkits[toolkitId as keyof typeof clientToolkits];
           if (clientToolkit) {
@@ -135,7 +140,7 @@ export function ChatProvider({
         })
         .filter(
           (
-            toolkit,
+            toolkit: any,
           ): toolkit is {
             id: Toolkits;
             toolkit: ClientToolkit;
@@ -221,11 +226,14 @@ export function ChatProvider({
     data,
   } = useChat({
     id,
-    initialMessages,
+    initialMessages: initialMessages.map(msg => ({
+      ...msg,
+      content: msg.parts?.find(part => part.type === 'text')?.text || '',
+    })) as any,
     experimental_throttle: 100,
-    sendExtraMessageFields: true,
     generateId: generateUUID,
     fetch: fetchWithErrorHandlers,
+
     experimental_prepareRequestBody: (body) => ({
       id,
       message: body.messages.at(-1),
@@ -246,6 +254,7 @@ export function ChatProvider({
         : [],
       workbenchId: workbench?.id,
     }),
+
     onFinish: () => {
       setStreamStopped(false);
       void utils.messages.getMessagesForChat.invalidate({ chatId: id });
@@ -256,6 +265,7 @@ export function ChatProvider({
         });
       }
     },
+
     onError: (error) => {
       if (error instanceof ChatSDKError) {
         toast.error(error.message);
@@ -263,7 +273,7 @@ export function ChatProvider({
         console.error(error);
         toast.error("An error occurred while processing your request");
       }
-    },
+    }
   });
 
   const onStreamError = useCallback(() => {
@@ -303,8 +313,8 @@ export function ChatProvider({
     }
   }, [selectedChatModel]);
 
-  const value = {
-    messages,
+  const value: ChatContextType = {
+    messages: messages as any,
     setMessages,
     input,
     setInput,

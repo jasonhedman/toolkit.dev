@@ -3,7 +3,9 @@ import { Card } from "@/components/ui/card";
 import { HStack } from "@/components/ui/stack";
 import { getClientToolkit } from "@/toolkits/toolkits/client";
 import type { Toolkits, ServerToolkitNames } from "@/toolkits/toolkits/shared";
-import type { CreateMessage, DeepPartial, ToolInvocation } from "ai";
+import type { CreateUIMessage, DeepPartial } from "ai";
+// ToolInvocation no longer exists in AI SDK v5, using any for now
+type ToolInvocation = any;
 import { Loader2 } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import React from "react";
@@ -246,7 +248,7 @@ export const MessageTool = React.memo(MessageToolComponent, areEqual);
 
 const MessageToolResultComponent: React.FC<{
   Component: React.ComponentType<{
-    append: (message: CreateMessage) => void;
+    append: (message: any) => void;
   }>;
 }> = ({ Component }) => {
   const { append } = useChatContext();
