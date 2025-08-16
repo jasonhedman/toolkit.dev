@@ -40,7 +40,7 @@ async function main(): Promise<void> {
     for (let i = 0; i < steps.length; i++) {
       const step = steps[i]!;
       logStep(`Step ${i + 1}/${steps.length}`, `${step.name}...`);
-      step.step();
+  await step.step();
     }
   } catch (error) {
     logError("Setup failed: " + (error as Error).message);

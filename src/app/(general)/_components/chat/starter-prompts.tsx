@@ -391,10 +391,7 @@ export const StarterPrompts = () => {
   }, [selectedToolkitIds]);
 
   const handlePromptClick = (prompt: string) => {
-    void append({
-      role: "user",
-      content: prompt,
-    });
+    void append({ text: prompt });
   };
 
   if (relevantPrompts.length === 0) {

@@ -6,6 +6,7 @@ import {
   logInfo,
   logSuccess,
   logError,
+  logWarning,
   getProjectRoot,
   checkDocker,
   dockerDaemonRunning,
@@ -14,16 +15,19 @@ import {
 // Start Docker Compose services
 export function startDockerServices(): void {
   try {
+    // Allow skipping docker setup via env or CI
+    if (process.env.SKIP_DOCKER === "1" || process.env.SKIP_DOCKER === "true" || process.env.CI === "true") {
+      logInfo("Skipping Docker services setup (SKIP_DOCKER/CI detected)");
+      return;
+    }
+
     // Check if Docker is available
     const dockerCommand = checkDocker();
     if (!dockerCommand) {
-      logError(
-        "Docker or Podman is not installed. Please install Docker or Podman first.",
+      logWarning(
+        "Docker/Podman not found. Skipping Docker services. Install Docker if you need local services.",
       );
-      logInfo(
-        "You can install Docker Desktop for free from https://www.docker.com/products/docker-desktop/",
-      );
-      throw new Error("Docker not found");
+      return;
     }
 
     logInfo(`Using ${dockerCommand} as container runtime`);
@@ -33,14 +37,15 @@ export function startDockerServices(): void {
     const dockerComposePath = join(projectRoot, "docker-compose.yml");
 
     if (!existsSync(dockerComposePath)) {
-      logError("docker-compose.yml not found in project root");
-      throw new Error("Docker Compose file not found");
+      logWarning("docker-compose.yml not found. Skipping Docker services.");
+      return;
     }
 
     if (!dockerDaemonRunning(dockerCommand)) {
-      throw new Error(
-        `${dockerCommand} daemon is not running. Please start ${dockerCommand} Desktop.`,
+      logWarning(
+        `${dockerCommand} daemon is not running. Skipping Docker services. Start the daemon and rerun if needed.`,
       );
+      return;
     }
 
     // Start Docker Compose services in detached mode
@@ -52,10 +57,10 @@ export function startDockerServices(): void {
 
     logSuccess("Docker services started successfully");
   } catch (error) {
-    logError("Failed to start Docker services");
+    logWarning("Continuing without Docker services due to an error starting them.");
     if (error instanceof Error) {
-      logError(error.message);
+      logWarning(error.message);
     }
-    throw error;
+    // Do not throw; allow setup to proceed
   }
 }

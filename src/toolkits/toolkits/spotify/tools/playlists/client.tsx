@@ -36,10 +36,7 @@ export const getPlaylistsToolConfigClient: ClientToolConfig<
               key={playlist.id}
               className="hover:bg-muted/50 cursor-pointer rounded-lg border p-4 transition-colors"
               onClick={() => {
-                void append({
-                  role: "user",
-                  content: `Tell me more about the playlist "${playlist.name}"`,
-                });
+                void append({ text: `Tell me more about the playlist "${playlist.name}"` });
               }}
             >
               <div className="flex items-center space-x-3">

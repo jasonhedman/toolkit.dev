@@ -136,6 +136,10 @@ LUMA_API_KEY=
 
 ## Development
 
+### AI SDK v5 Upgrade
+
+This project uses ai v5 and @ai-sdk/react v2. Messages are parts-based (text, file, reasoning, tool-invocation) and server streaming uses result.toUIMessageStream. Client submits files as file parts; experimental_attachments is no longer used.
+
 ### Project Structure
 
 ```

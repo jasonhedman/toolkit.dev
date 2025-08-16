@@ -1,38 +1,22 @@
 "use client";
 
-import {
-  createContext,
-  useContext,
-  useEffect,
-  useState,
-  useCallback,
-} from "react";
-
-import { useChat } from "@ai-sdk/react";
-
+import { createContext, useContext, useEffect, useState, useCallback } from "react";
+import { useChat, type UseChatHelpers } from "@ai-sdk/react";
+import { DefaultChatTransport, type UIMessage } from "ai";
 import { toast } from "sonner";
 
 import { OpenRouterChecks } from "./openrouter-checks";
-
 import { api } from "@/trpc/react";
-
 import { useAutoResume } from "@/app/(general)/_hooks/use-auto-resume";
-
-import { LanguageModelCapability } from "@/ai/language/types";
-
+import { LanguageModelCapability, type LanguageModel } from "@/ai/language/types";
 import { clientToolkits } from "@/toolkits/toolkits/client";
-
 import { languageModels } from "@/ai/language";
-
 import { clientCookieUtils } from "@/lib/cookies/client";
-import { generateUUID } from "@/lib/utils";
 import { fetchWithErrorHandlers } from "@/lib/fetch";
 import { ChatSDKError } from "@/lib/errors";
 import { IS_DEVELOPMENT } from "@/lib/constants";
 
 import type { ReactNode } from "react";
-import type { Attachment, UIMessage } from "ai";
-import type { UseChatHelpers } from "@ai-sdk/react";
 import type { ClientToolkit } from "@/toolkits/types";
 import type { z } from "zod";
 import type { SelectedToolkit } from "@/components/toolkit/types";
@@ -40,23 +24,22 @@ import type { Toolkits } from "@/toolkits/toolkits/shared";
 import type { Workbench } from "@prisma/client";
 import type { PersistedToolkit } from "@/lib/cookies/types";
 import type { ImageModel } from "@/ai/image/types";
-import type { LanguageModel } from "@/ai/language/types";
 
 const DEFAULT_CHAT_MODEL = languageModels[0]!;
+
+type Attachment = { url: string; name?: string; contentType?: string };
 
 interface ChatContextType {
   // Chat state
   messages: Array<UIMessage>;
-  setMessages: UseChatHelpers["setMessages"];
+  setMessages: UseChatHelpers<UIMessage>["setMessages"];
   input: string;
-  setInput: UseChatHelpers["setInput"];
-  status: UseChatHelpers["status"];
+  setInput: (value: string | ((prev: string) => string)) => void;
+  status: UseChatHelpers<UIMessage>["status"];
   streamStopped: boolean;
   attachments: Array<Attachment>;
   setAttachments: (
-    attachments:
-      | Array<Attachment>
-      | ((prev: Array<Attachment>) => Array<Attachment>),
+    attachments: Array<Attachment> | ((prev: Array<Attachment>) => Array<Attachment>),
   ) => void;
   selectedChatModel: LanguageModel | undefined;
   setSelectedChatModel: (model: LanguageModel) => void;
@@ -72,10 +55,10 @@ interface ChatContextType {
   workbench?: Workbench;
 
   // Chat actions
-  handleSubmit: UseChatHelpers["handleSubmit"];
+  handleSubmit: (event?: { preventDefault?: () => void }) => void;
   stop: () => void;
-  reload: UseChatHelpers["reload"];
-  append: UseChatHelpers["append"];
+  reload: () => Promise<void>;
+  append: UseChatHelpers<UIMessage>["sendMessage"];
 }
 
 const ChatContext = createContext<ChatContextType | undefined>(undefined);
@@ -106,77 +89,39 @@ export function ChatProvider({
 }: ChatProviderProps) {
   const utils = api.useUtils();
 
-  const [selectedChatModel, setSelectedChatModelState] =
-    useState<LanguageModel>(
-      initialPreferences?.selectedChatModel ?? DEFAULT_CHAT_MODEL,
-    );
-  const [useNativeSearch, setUseNativeSearchState] = useState(
-    initialPreferences?.useNativeSearch ?? false,
-  );
-  const [imageGenerationModel, setImageGenerationModelState] = useState<
-    ImageModel | undefined
-  >(initialPreferences?.imageGenerationModel);
   const [attachments, setAttachments] = useState<Array<Attachment>>([]);
+  const [selectedChatModelState, setSelectedChatModelState] = useState<LanguageModel>(
+    initialPreferences?.selectedChatModel ?? DEFAULT_CHAT_MODEL,
+  );
+  const [useNativeSearchState, setUseNativeSearchState] = useState<boolean>(
+    initialPreferences?.useNativeSearch ??
+      !!selectedChatModelState?.capabilities?.includes(LanguageModelCapability.WebSearch),
+  );
+  const [imageGenerationModelState, setImageGenerationModelState] = useState<ImageModel | undefined>(
+    initialPreferences?.imageGenerationModel,
+  );
   const [toolkits, setToolkitsState] = useState<Array<SelectedToolkit>>(() => {
-    // If this is a workbench chat, initialize with workbench toolkits
-    if (workbench) {
-      return workbench.toolkitIds
-        .map((toolkitId) => {
-          const clientToolkit =
-            clientToolkits[toolkitId as keyof typeof clientToolkits];
-          if (clientToolkit) {
-            return {
-              id: toolkitId,
-              toolkit: clientToolkit,
-              parameters: {}, // Use default parameters for workbench toolkits
-            };
-          }
-          return null;
-        })
-        .filter(
-          (
-            toolkit,
-          ): toolkit is {
-            id: Toolkits;
-            toolkit: ClientToolkit;
-            parameters: z.infer<ClientToolkit["parameters"]>;
-          } => toolkit !== null,
-        );
-    }
-
     // Restore toolkits by matching persisted ones with available client toolkits
-    if (
-      initialPreferences?.toolkits &&
-      initialPreferences.toolkits.length > 0
-    ) {
+  if (initialPreferences?.toolkits?.length) {
       return initialPreferences.toolkits
         .map((persistedToolkit) => {
-          const clientToolkit =
-            clientToolkits[persistedToolkit.id as keyof typeof clientToolkits];
+          const clientToolkit = clientToolkits[persistedToolkit.id as keyof typeof clientToolkits];
           if (clientToolkit) {
             return {
-              id: persistedToolkit.id,
+              id: persistedToolkit.id as Toolkits,
               toolkit: clientToolkit,
-              parameters: persistedToolkit.parameters,
+              parameters: persistedToolkit.parameters as z.infer<ClientToolkit["parameters"]>,
             };
           }
           return null;
         })
-        .filter(
-          (
-            toolkit,
-          ): toolkit is {
-            id: Toolkits;
-            toolkit: ClientToolkit;
-            parameters: z.infer<ClientToolkit["parameters"]>;
-          } => toolkit !== null,
-        );
+        .filter((t): t is SelectedToolkit => t !== null);
     }
-
     return [];
   });
   const [hasInvalidated, setHasInvalidated] = useState(false);
   const [streamStopped, setStreamStopped] = useState(false);
+  const [input, setInput] = useState("");
 
   // Wrapper functions that also save to cookies
   const setSelectedChatModel = (model: LanguageModel) => {
@@ -207,44 +152,34 @@ export function ChatProvider({
     setToolkits(toolkits.filter((t) => t.id !== id));
   };
 
-  const {
-    messages,
-    setMessages,
-    handleSubmit: originalHandleSubmit,
-    input,
-    setInput,
-    append,
-    status,
-    stop,
-    reload,
-    experimental_resume,
-    data,
-  } = useChat({
+  const chat = useChat<UIMessage>({
     id,
-    initialMessages,
     experimental_throttle: 100,
-    sendExtraMessageFields: true,
-    generateId: generateUUID,
-    fetch: fetchWithErrorHandlers,
-    experimental_prepareRequestBody: (body) => ({
-      id,
-      message: body.messages.at(-1),
-      selectedChatModel: `${selectedChatModel?.provider}/${selectedChatModel?.modelId}`,
-      imageGenerationModel: imageGenerationModel
-        ? `${imageGenerationModel.provider}:${imageGenerationModel.modelId}`
-        : undefined,
-      selectedVisibilityType: initialVisibilityType,
-      useNativeSearch,
-      systemPrompt: workbench?.systemPrompt,
-      toolkits: selectedChatModel?.capabilities?.includes(
-        LanguageModelCapability.ToolCalling,
-      )
-        ? toolkits.map((t) => ({
-            id: t.id,
-            parameters: t.parameters,
-          }))
-        : [],
-      workbenchId: workbench?.id,
+  transport: new DefaultChatTransport<UIMessage>({
+      api: "/api/chat",
+      fetch: fetchWithErrorHandlers,
+      prepareSendMessagesRequest: ({ messages, trigger }) => {
+        const last = messages.at(-1);
+        return {
+          body: {
+            id,
+      message: trigger === "submit-message" && last ? last : undefined,
+            selectedChatModel: `${selectedChatModelState?.provider}/${selectedChatModelState?.modelId}`,
+            imageGenerationModel: imageGenerationModelState
+              ? `${imageGenerationModelState.provider}:${imageGenerationModelState.modelId}`
+              : undefined,
+            selectedVisibilityType: initialVisibilityType,
+            useNativeSearch: useNativeSearchState,
+            systemPrompt: workbench?.systemPrompt,
+            toolkits: selectedChatModelState?.capabilities?.includes(
+              LanguageModelCapability.ToolCalling,
+            )
+              ? toolkits.map((t) => ({ id: t.id, parameters: t.parameters }))
+              : [],
+            workbenchId: workbench?.id,
+          },
+        };
+      },
     }),
     onFinish: () => {
       setStreamStopped(false);
@@ -266,6 +201,8 @@ export function ChatProvider({
     },
   });
 
+  const { messages, setMessages, sendMessage: append, status, stop, regenerate: reload, resumeStream } = chat;
+
   const onStreamError = useCallback(() => {
     // Mark stream as stopped to hide thinking message
     setStreamStopped(true);
@@ -273,35 +210,30 @@ export function ChatProvider({
     stop();
   }, [stop]);
 
-  useAutoResume({
-    autoResume,
-    initialMessages,
-    experimental_resume,
-    data,
-    setMessages,
-    onStreamError,
-  });
+  useAutoResume({ autoResume, initialMessages, resumeStream, setMessages, onStreamError });
 
-  const handleSubmit: UseChatHelpers["handleSubmit"] = (
-    event,
-    chatRequestOptions,
-  ) => {
+  const handleSubmit = (event?: { preventDefault?: () => void }) => {
+    event?.preventDefault?.();
     // Reset stream stopped flag when submitting new message
     setStreamStopped(false);
-    originalHandleSubmit(event, chatRequestOptions);
+    const files = attachments.map((a) => ({
+      type: "file" as const,
+      mediaType: a.contentType ?? "application/octet-stream",
+      url: a.url,
+      filename: a.name,
+    }));
+  void append({ text: input, files });
+    setAttachments([]);
+    setInput("");
   };
 
   useEffect(() => {
-    if (
-      selectedChatModel?.capabilities?.includes(
-        LanguageModelCapability.WebSearch,
-      )
-    ) {
+    if (selectedChatModelState?.capabilities?.includes(LanguageModelCapability.WebSearch)) {
       setUseNativeSearch(true);
     } else {
       setUseNativeSearch(false);
     }
-  }, [selectedChatModel]);
+  }, [selectedChatModelState]);
 
   const value = {
     messages,
@@ -312,21 +244,21 @@ export function ChatProvider({
     streamStopped,
     attachments,
     setAttachments,
-    selectedChatModel,
+    selectedChatModel: selectedChatModelState,
     setSelectedChatModel,
-    useNativeSearch,
+    useNativeSearch: useNativeSearchState,
     setUseNativeSearch,
     handleSubmit,
     stop,
     reload,
     append,
-    imageGenerationModel,
+    imageGenerationModel: imageGenerationModelState,
     setImageGenerationModel,
     toolkits,
     addToolkit,
     removeToolkit,
     workbench,
-  };
+  } satisfies ChatContextType;
 
   return (
     <ChatContext.Provider value={value}>

@@ -1,30 +1,28 @@
 "use client";
 
 import { useEffect } from "react";
-import { toast } from "sonner";
 
 import type { UIMessage } from "ai";
 import type { UseChatHelpers } from "@ai-sdk/react";
 
-type DataPart =
-  | { type: "append-message"; message: string }
-  | { type: "error"; message: string };
+type ChatHelpers = UseChatHelpers<UIMessage>;
 
 export interface UseAutoResumeParams {
   autoResume: boolean;
   initialMessages: UIMessage[];
-  experimental_resume: UseChatHelpers["experimental_resume"];
-  data: UseChatHelpers["data"];
-  setMessages: UseChatHelpers["setMessages"];
+  resumeStream: ChatHelpers["resumeStream"];
+  // kept for future use; not currently used
+  setMessages: ChatHelpers["setMessages"];
   onStreamError?: () => void;
 }
 
 export function useAutoResume({
   autoResume,
   initialMessages,
-  experimental_resume,
-  data,
+  resumeStream,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   setMessages,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   onStreamError,
 }: UseAutoResumeParams) {
   useEffect(() => {
@@ -33,25 +31,11 @@ export function useAutoResume({
     const mostRecentMessage = initialMessages.at(-1);
 
     if (mostRecentMessage?.role === "user") {
-      experimental_resume();
+      // Attempt to resume an ongoing streaming response for this chat
+      void resumeStream();
     }
 
     // we intentionally run this once
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  useEffect(() => {
-    if (!data) return;
-    if (data.length === 0) return;
-
-    const dataPart = data[0] as DataPart;
-
-    if (dataPart.type === "append-message") {
-      const message = JSON.parse(dataPart.message) as UIMessage;
-      setMessages([...initialMessages, message]);
-    } else if (dataPart.type === "error") {
-      toast.error(dataPart.message);
-      onStreamError?.();
-    }
-  }, [data, initialMessages, setMessages, onStreamError]);
 }

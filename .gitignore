@@ -32,6 +32,9 @@ yarn-error.log*
 .pnpm-debug.log*
 pnpm-workspace.yaml
 
+# pnpm store (cache) - don't commit
+.pnpm-store/
+
 # local env files
 # do not commit any .env files to git, except for the .env.example file. https://create.t3.gg/en/usage/env-variables#using-environment-variables
 .env
