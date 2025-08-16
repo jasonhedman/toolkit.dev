@@ -9,10 +9,10 @@ import { useDeleteMessagesAfterTimestamp } from "@/app/(general)/_hooks/use-dele
 import { useChatContext } from "@/app/(general)/_contexts/chat-context";
 
 import type { Dispatch, SetStateAction } from "react";
-import type { Message } from "ai";
+import type { UIMessage } from "ai";
 
 export type MessageEditorProps = {
-  message: Message;
+  message: UIMessage;
   setMode: Dispatch<SetStateAction<"view" | "edit">>;
   chatId: string;
 };
@@ -29,14 +29,12 @@ export function MessageEditor({
 
   const [draftContent, setDraftContent] = useState<string>(() => {
     if (message.parts && message.parts.length > 0) {
-      return message.parts
-        .filter((part) => part.type === "text")
-        .map((part) => part.text)
-        .join("\n")
-        .trim();
+      const textPart = message.parts?.find((p) => p.type === "text") as
+        | { type: "text"; text: string }
+        | undefined;
+      return textPart?.text ?? "";
     }
-
-    return message.content || "";
+    return "";
   });
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -61,10 +59,7 @@ export function MessageEditor({
   const onSubmit = async () => {
     setIsSubmitting(true);
 
-    const messageCreatedAt = message.createdAt;
-    const messageTimestamp = messageCreatedAt
-      ? messageCreatedAt.getTime()
-      : Date.now();
+  const messageTimestamp = Date.now();
     const deleteFromTimestamp = new Date(messageTimestamp);
     mutate({
       chatId: chatId,
@@ -81,10 +76,7 @@ export function MessageEditor({
 
     setMode("view");
 
-    await append({
-      role: "user",
-      content: draftContent,
-    });
+  await append({ text: draftContent });
 
     setIsSubmitting(false);
   };

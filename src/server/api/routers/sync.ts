@@ -1,6 +1,6 @@
 import { clientToolkits } from "@/toolkits/toolkits/client";
 import { adminProcedure, createTRPCRouter } from "../trpc";
-import type { Message } from "ai";
+import type { UIMessage } from "ai";
 
 // Define all available tools from each toolkit
 const ALL_TOOLS = Object.entries(clientToolkits).reduce(
@@ -81,8 +81,8 @@ export const syncRouter = createTRPCRouter({
 
     // Process each message
     for (const message of messages) {
-      const parts: Message["parts"] =
-        message.parts as unknown as Message["parts"];
+      const parts: UIMessage["parts"] =
+        message.parts as unknown as UIMessage["parts"];
 
       if (!parts) {
         continue;
@@ -90,8 +90,10 @@ export const syncRouter = createTRPCRouter({
 
       // Look for tool-invocation parts
       for (const part of parts) {
-        if (part.type === "tool-invocation" && part.toolInvocation) {
-          const { toolName } = part.toolInvocation;
+        if (part.type === "tool-invocation") {
+          const maybeInvocation = (part as unknown as { toolInvocation?: { toolName?: string } }).toolInvocation;
+          if (!maybeInvocation?.toolName) continue;
+          const { toolName } = maybeInvocation as { toolName: string };
 
           // Parse toolkit and tool from toolName (format: "toolkit_tool")
           const [toolkit, tool] = toolName.split("_");

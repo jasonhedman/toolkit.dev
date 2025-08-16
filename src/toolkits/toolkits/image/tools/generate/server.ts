@@ -4,7 +4,7 @@ import { put } from "@vercel/blob";
 import { api } from "@/trpc/server";
 import type { imageParameters } from "../../base";
 import type z from "zod";
-import { generateImage } from "@/ai/image/generate";
+import { generateImage, type GeneratedImage } from "@/ai/image/generate";
 
 export const generateToolConfigServer = (
   parameters: z.infer<typeof imageParameters>,
@@ -14,7 +14,7 @@ export const generateToolConfigServer = (
 > => {
   return {
     callback: async ({ prompt }) => {
-      const image = await generateImage(parameters.model, prompt);
+  const image: GeneratedImage = await generateImage(parameters.model, prompt);
 
       if (!image) {
         console.error("No image generated");
@@ -23,13 +23,8 @@ export const generateToolConfigServer = (
 
       const imageId = crypto.randomUUID();
 
-      const file = new File(
-        [image.uint8Array],
-        `images/${imageId}.${image.mimeType.split("/")[1]}`,
-        {
-          type: image.mimeType,
-        },
-      );
+  const fileName = `images/${imageId}.${image.mimeType.split("/")[1]}`;
+  const file = new File([image.uint8Array], fileName, { type: image.mimeType });
 
       const { url: imageUrl } = await put(file.name, file, {
         access: "public",

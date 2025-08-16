@@ -8,7 +8,7 @@ export function useMessages({
   scrollToBottom,
 }: {
   chatId: string;
-  status: UseChatHelpers["status"];
+  status: UseChatHelpers<any>["status"];
   scrollToBottom: (behavior: ScrollBehavior) => void;
 }) {
   const [hasSentMessage, setHasSentMessage] = useState(false);

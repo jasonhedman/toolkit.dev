@@ -28,8 +28,9 @@ import { cn } from "@/lib/utils";
 
 import { ModelSelect } from "./model-select";
 import { useChatContext } from "@/app/(general)/_contexts/chat-context";
-import type { Attachment } from "ai";
+type Attachment = { url: string; name?: string; contentType?: string };
 import type { UseChatHelpers } from "@ai-sdk/react";
+import type { UIMessage } from "ai";
 import { ToolsSelect } from "./tools";
 import type { File as DbFile } from "@prisma/client";
 import { LanguageModelCapability } from "@/ai/language/types";
@@ -175,9 +176,7 @@ const PureMultimodalInput: React.FC<Props> = ({
       window.history.replaceState({}, "", `/${chatId}`);
     }
 
-    handleSubmit(undefined, {
-      experimental_attachments: attachments,
-    });
+  handleSubmit();
 
     setAttachments([]);
     setLocalStorageInput("");
@@ -189,7 +188,6 @@ const PureMultimodalInput: React.FC<Props> = ({
   }, [
     selectedChatModel,
     submitDisabledString,
-    attachments,
     handleSubmit,
     setAttachments,
     setLocalStorageInput,
@@ -199,7 +197,7 @@ const PureMultimodalInput: React.FC<Props> = ({
   ]);
 
   const uploadFile = useCallback(
-    async (file: File): Promise<Attachment | undefined> => {
+  async (file: File): Promise<Attachment | undefined> => {
       const formData = new FormData();
       formData.append("file", file);
 
@@ -508,7 +506,7 @@ function PureAttachmentsButton({
   disabledString,
 }: {
   fileInputRef: React.MutableRefObject<HTMLInputElement | null>;
-  status: UseChatHelpers["status"];
+  status: UseChatHelpers<UIMessage>["status"];
   disabledString: string;
 }) {
   const button = (
@@ -554,7 +552,7 @@ function PureStopButton({
   setMessages,
 }: {
   stop: () => void;
-  setMessages: UseChatHelpers["setMessages"];
+  setMessages: UseChatHelpers<UIMessage>["setMessages"];
 }) {
   return (
     <Button

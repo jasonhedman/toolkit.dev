@@ -2,7 +2,7 @@ import { db } from "@/server/db";
 import { ChatProvider } from "@/app/(general)/_contexts/chat-context";
 import type { Message, Workbench } from "@prisma/client";
 import { ChatLayout } from "./layout";
-import type { Attachment, UIMessage } from "ai";
+import type { UIMessage } from "ai";
 import { languageModels } from "@/ai/language";
 import { ChatContent } from "./chat";
 import { serverCookieUtils } from "@/lib/cookies/server";
@@ -76,8 +76,7 @@ export const Chat = async ({
       // Note: content will soon be deprecated in @ai-sdk/react
       content: "",
       createdAt: message.createdAt,
-      experimental_attachments:
-        (message.attachments as unknown as Array<Attachment>) ?? [],
+  // attachments are represented via file parts in v5; no experimental_attachments
       annotations: message.modelId
         ? [
             {

@@ -1,17 +1,10 @@
 import { after } from "next/server";
 
-import {
-  appendClientMessage,
-  appendResponseMessages,
-  convertToCoreMessages,
-  createDataStream,
-  smoothStream,
-  tool,
-} from "ai";
+import { convertToModelMessages, stepCountIs, tool } from "ai";
 
 import { createResumableStreamContext } from "resumable-stream";
 
-import { differenceInSeconds } from "date-fns";
+// import { differenceInSeconds } from "date-fns";
 
 import { auth } from "@/server/auth";
 import { api } from "@/trpc/server";
@@ -25,16 +18,11 @@ import { generateUUID } from "@/lib/utils";
 import { ChatSDKError } from "@/lib/errors";
 
 import type { ResumableStreamContext } from "resumable-stream";
-import type {
-  CoreAssistantMessage,
-  CoreToolMessage,
-  Tool,
-  UIMessage,
-} from "ai";
+import type { CoreAssistantMessage, CoreToolMessage, Tool, UIMessage } from "ai";
 import type { Chat } from "@prisma/client";
 import { openai } from "@ai-sdk/openai";
 import { getServerToolkit } from "@/toolkits/toolkits/server";
-import { languageModels } from "@/ai/language";
+// import { languageModels } from "@/ai/language";
 
 export const maxDuration = 60;
 
@@ -98,7 +86,9 @@ export async function POST(request: Request) {
 
     if (!chat) {
       // Start title generation in parallel (don't await)
-      const titlePromise = generateTitleFromUserMessage(message);
+      const titlePromise = generateTitleFromUserMessage(
+        extractTextFromParts(message.parts as Array<IncomingTextPart | IncomingFilePart>),
+      );
 
       // Create chat with temporary title immediately
       await api.chats.createChat({
@@ -127,15 +117,29 @@ export async function POST(request: Request) {
       }
     }
 
-    const previousMessages = await api.messages.getMessagesForChat({
-      chatId: id,
-    });
+  const previousMessages = await api.messages.getMessagesForChat({ chatId: id });
+    // Normalize incoming message into a UIMessage with required fields
+    const uiUserMessage: UIMessage = {
+      id: message.id,
+      createdAt: message.createdAt,
+      role: "user",
+      parts: message.parts.map((p) =>
+        p.type === "file"
+          ? ({
+              type: "file",
+              url: p.url,
+              filename: p.filename,
+              mediaType: p.mediaType ?? "application/octet-stream",
+            } as const)
+          : p,
+      ),
+    } as UIMessage;
 
-    const messages = appendClientMessage({
-      // @ts-expect-error: todo add type conversion from DBMessage[] to UIMessage[]
-      messages: previousMessages,
-      message,
-    });
+    // v5: previousMessages are already stored as UIMessage parts; append the normalized incoming UI message
+    const messages: UIMessage[] = [
+      ...((previousMessages as unknown) as UIMessage[]),
+      uiUserMessage,
+    ];
 
     await api.messages.createMessage({
       chatId: id,
@@ -143,11 +147,13 @@ export async function POST(request: Request) {
       role: "user",
       parts: message.parts,
       attachments:
-        message.experimental_attachments?.map((attachment) => ({
-          url: attachment.url,
-          name: attachment.name,
-          contentType: attachment.contentType,
-        })) ?? [],
+        message.parts
+          ?.filter((p): p is Extract<PostRequestBody["message"]["parts"][number], { type: "file" }> => p.type === "file")
+          .map((p) => ({
+            url: p.url,
+            name: p.filename ?? "",
+            contentType: p.mediaType,
+          })) ?? [],
       modelId: "user",
     });
 
@@ -163,7 +169,7 @@ export async function POST(request: Request) {
             const serverTool = tools[toolName as keyof typeof tools];
             acc[`${id}_${toolName}`] = tool({
               description: serverTool.description,
-              parameters: serverTool.inputSchema,
+              inputSchema: serverTool.inputSchema,
               execute: async (args) => {
                 try {
                   const result = await serverTool.callback(args);
@@ -243,135 +249,82 @@ export async function POST(request: Request) {
 
     const fullSystemPrompt = baseSystemPrompt + toolkitInstructions;
 
-    const stream = createDataStream({
-      execute: (dataStream) => {
-        const result = streamText(
-          `${selectedChatModel}${useNativeSearch ? ":search" : ""}`,
-          {
-            system: fullSystemPrompt,
-            messages: convertToCoreMessages(messages),
-            maxSteps: 15,
-            toolCallStreaming: true,
-            experimental_transform: smoothStream({ chunking: "word" }),
-            experimental_generateMessageId: generateUUID,
-            onError: (error) => {
-              console.error("Stream error occurred:", error);
-
-              // Check if it's a 402 error and log it specifically
-              if (error && typeof error === "object") {
-                const errorStr = JSON.stringify(error);
-                if (
-                  errorStr.includes("402") ||
-                  errorStr.includes("requires more credits")
-                ) {
-                  console.error(
-                    "OpenRouter credits exhausted - 402 error detected",
-                  );
-                }
-              }
-
-              // Send error to frontend - this will trigger onStreamError which calls stop()
-              dataStream.writeData({
-                type: "error",
-                message: "An error occurred while processing your request",
-              });
-
-              // Don't throw - just let the stream end naturally after sending error data
-            },
-            onFinish: async ({ response }) => {
-              // Get the actual model used from OpenRouter's response
-              const [provider, modelId] = response.modelId.split("/");
-
-              // Try to find the model in our list first
-              const model = languageModels.find(
-                (model) =>
-                  model.provider === provider && model.modelId === modelId,
+    const result = streamText(
+      `${selectedChatModel}${useNativeSearch ? ":search" : ""}`,
+      {
+        system: fullSystemPrompt,
+        messages: convertToModelMessages(
+          messages.map(({ id: _id, ...rest }) => rest as Omit<UIMessage, "id">),
+        ),
+        stopWhen: stepCountIs(15),
+        onError: (error) => {
+          console.error("Stream error occurred:", error);
+          if (error && typeof error === "object") {
+            const errorStr = JSON.stringify(error);
+            if (
+              errorStr.includes("402") ||
+              errorStr.includes("requires more credits")
+            ) {
+              console.error("OpenRouter credits exhausted - 402 error detected");
+            }
+          }
+        },
+  onFinish: async ({ response }) => {
+          if (session.user?.id) {
+            try {
+              const assistantMessages = response.messages.filter(
+                (m) => m.role === "assistant",
               );
-
-              // Create model info from OpenRouter's response if not in our list
-              const modelInfo = model ?? {
-                name: `${provider}/${modelId}`, // Format nicely for display
-                provider: provider ?? "unknown",
-                modelId: modelId ?? "unknown",
-              };
-
-              // Write the model annotation
-              dataStream.writeMessageAnnotation({
-                type: "model",
-                model: modelInfo,
+              const assistantId = getTrailingMessageId({
+                messages: assistantMessages as any,
               });
 
-              // Send modelId as message annotation
-              if (session.user?.id) {
-                try {
-                  const assistantId = getTrailingMessageId({
-                    messages: response.messages.filter(
-                      (message) => message.role === "assistant",
-                    ),
-                  });
-
-                  if (!assistantId) {
-                    throw new Error("No assistant message found!");
-                  }
-
-                  const [, assistantMessage] = appendResponseMessages({
-                    messages: [message],
-                    responseMessages: response.messages,
-                  });
-
-                  if (!assistantMessage) {
-                    throw new Error("No assistant message found!");
-                  }
-
-                  await api.messages.createMessage({
-                    chatId: id,
-                    id: assistantId,
-                    role: "assistant",
-                    parts: assistantMessage.parts ?? [],
-                    attachments:
-                      assistantMessage.experimental_attachments?.map(
-                        (attachment) => ({
-                          url: attachment.url,
-                          name: attachment.name ?? "",
-                          contentType: attachment.contentType as
-                            | "image/png"
-                            | "image/jpg"
-                            | "image/jpeg",
-                        }),
-                      ) ?? [],
-                    modelId: response.modelId, // Use the actual model from OpenRouter's response
-                  });
-                } catch (error) {
-                  console.error(error);
-                }
+              if (!assistantId) {
+                throw new Error("No assistant message found!");
               }
-            },
-            tools: {
-              ...tools,
-              ...(isOpenAi && useNativeSearch
-                ? { web_search_preview: openai.tools.webSearchPreview() }
-                : {}),
-            },
-          },
-        );
 
-        void result.consumeStream();
+              const assistantMessage = assistantMessages.at(-1);
 
-        result.mergeIntoDataStream(dataStream, {
-          sendReasoning: true,
-        });
+              if (!assistantMessage) {
+                throw new Error("No assistant message found!");
+              }
+
+              await api.messages.createMessage({
+                chatId: id,
+                id: assistantId,
+                role: "assistant",
+                // Persist the final assistant text as a single text part
+                parts: response && typeof (response as any).text === "string"
+                  ? [{ type: "text", text: (response as any).text }]
+                  : [],
+                attachments: [],
+                modelId: response.modelId,
+              });
+            } catch (error) {
+              console.error(error);
+            }
+          }
+        },
+        tools: {
+          ...tools,
+          ...(isOpenAi && useNativeSearch
+            ? { web_search_preview: openai.tools.webSearchPreview({}) }
+            : {}),
+        },
       },
-      onError: (error) => {
-        console.error("Data stream error:", error);
-        throw new ChatSDKError("bad_request:api");
-      },
+    );
+
+    const stream = result.toUIMessageStream({
+      originalMessages: messages,
+      generateMessageId: generateUUID,
+      sendReasoning: true,
     });
 
     const streamContext = getStreamContext();
 
     if (streamContext) {
       return new Response(
-        await streamContext.resumableStream(streamId, () => stream),
+  await streamContext.resumableStream(streamId, () => stream as unknown as ReadableStream<string>),
       );
     } else {
       return new Response(stream);
@@ -385,7 +338,32 @@ export async function POST(request: Request) {
   }
 }
 
-async function generateTitleFromUserMessage(message: UIMessage) {
+type IncomingTextPart = { type: "text"; text: string };
+type IncomingFilePart = {
+  type: "file";
+  url: string;
+  filename?: string;
+  mediaType?: string;
+};
+
+function extractTextFromParts(
+  parts: Array<IncomingTextPart | IncomingFilePart>,
+): string {
+  try {
+    return parts
+      .filter(
+        (p): p is IncomingTextPart =>
+          !!p && p.type === "text" && typeof (p as IncomingTextPart).text === "string",
+      )
+      .map((p) => p.text)
+      .join("\n")
+      .slice(0, 2000); // limit prompt size
+  } catch {
+    return "";
+  }
+}
+
+async function generateTitleFromUserMessage(text: string) {
   const { text: title } = await generateText("openai/gpt-4o-mini", {
     system: `\n
       - you will generate a short title based on the first message a user begins a conversation with
@@ -397,8 +375,7 @@ async function generateTitleFromUserMessage(message: UIMessage) {
     messages: [
       {
         role: "user",
-        content: message.content,
-        experimental_attachments: message.experimental_attachments,
+        content: text ?? "",
       },
     ],
   });
@@ -422,7 +399,6 @@ function getTrailingMessageId({
 
 export async function GET(request: Request) {
   const streamContext = getStreamContext();
-  const resumeRequestedAt = new Date();
 
   if (!streamContext) {
     return new Response(null, { status: 204 });
@@ -475,9 +451,10 @@ export async function GET(request: Request) {
     return new ChatSDKError("not_found:stream").toResponse();
   }
 
-  const emptyDataStream = createDataStream({
-    execute: () => {
-      return;
+  // eslint-disable-next-line @typescript-eslint/consistent-generic-constructors
+  const emptyDataStream: ReadableStream<string> = new ReadableStream({
+    start(controller) {
+      controller.close();
     },
   });
 
@@ -486,38 +463,9 @@ export async function GET(request: Request) {
     () => emptyDataStream,
   );
 
-  /*
-   * For when the generation is streaming during SSR
-   * but the resumable stream has concluded at this point.
-   */
+  // If no resumable stream is available, return an empty stream to signal completion
   if (!stream) {
-    const messages = await api.messages.getMessagesForChat({ chatId });
-    const mostRecentMessage = messages.at(-1);
-
-    if (!mostRecentMessage) {
-      return new Response(emptyDataStream, { status: 200 });
-    }
-
-    if (mostRecentMessage.role !== "assistant") {
-      return new Response(emptyDataStream, { status: 200 });
-    }
-
-    const messageCreatedAt = new Date(mostRecentMessage.createdAt);
-
-    if (differenceInSeconds(resumeRequestedAt, messageCreatedAt) > 15) {
-      return new Response(emptyDataStream, { status: 200 });
-    }
-
-    const restoredStream = createDataStream({
-      execute: (buffer) => {
-        buffer.writeData({
-          type: "append-message",
-          message: JSON.stringify(mostRecentMessage),
-        });
-      },
-    });
-
-    return new Response(restoredStream, { status: 200 });
+    return new Response(emptyDataStream, { status: 200 });
   }
 
   return new Response(stream, { status: 200 });
