@@ -58,13 +58,13 @@ export const ArtifactPreview: React.FC<Props> = ({
       // Try to detect language from the first line if it has a language comment
       let language: BundledLanguage = "javascript"; // default
 
-      const firstLine = content.split("\n")[0]?.toLowerCase() || "";
+      const firstLine = content.split("\n")[0]?.toLowerCase() ?? "";
       if (
         firstLine.includes("// language:") ||
         firstLine.includes("# language:")
       ) {
-        const match = firstLine.match(/(?:\/\/|#)\s*language:\s*(\w+)/);
-        if (match && match[1]) {
+        const match = /(?:\/\/|#)\s*language:\s*(\w+)/.exec(firstLine);
+        if (match?.[1]) {
           const detectedLang = match[1];
           // Map common language names to valid BundledLanguage types
           const langMap: Record<string, BundledLanguage> = {
@@ -86,10 +86,9 @@ export const ArtifactPreview: React.FC<Props> = ({
             json: "json",
             yaml: "yaml",
             yml: "yaml",
-            xml: "xml",
             sql: "sql",
           };
-          language = langMap[detectedLang] || "javascript";
+          language = langMap[detectedLang] ?? "javascript";
         }
       }
 
