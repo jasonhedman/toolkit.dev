@@ -1,15 +1,20 @@
 import { db } from "@/server/db";
-import { ChatProvider } from "@/app/(general)/_contexts/chat-context";
-import type { Message, Workbench } from "@prisma/client";
+
 import { ChatLayout } from "./layout";
-import type { UIMessage } from "ai";
-import { languageModels } from "@/ai/language";
 import { ChatContent } from "./chat";
+
+import { ChatProvider } from "@/app/(general)/_contexts/chat-context";
+import { DataStreamProvider } from "@/app/(general)/_contexts/data-stream-provider";
+
 import { serverCookieUtils } from "@/lib/cookies/server";
+
 import { clientToolkits } from "@/toolkits/toolkits/client";
+
+import type { ChatMessage } from "@/ai/types";
 import type { ClientToolkit } from "@/toolkits/types";
 import type { z } from "zod";
 import type { PersistedToolkit } from "@/lib/cookies/types";
+import type { Message, Workbench } from "@prisma/client";
 
 interface Props {
   id: string;
@@ -68,57 +73,40 @@ export const Chat = async ({
       ),
   };
 
-  const convertToUIMessages = (messages: Array<Message>): Array<UIMessage> => {
+  const convertToUIMessages = (
+    messages: Array<Message>,
+  ): Array<ChatMessage> => {
     return messages.map((message) => ({
       id: message.id,
-      parts: message.parts as UIMessage["parts"],
-      role: message.role as UIMessage["role"],
+      parts: message.parts as ChatMessage["parts"],
+      role: message.role as ChatMessage["role"],
       // Note: content will soon be deprecated in @ai-sdk/react
       content: "",
       createdAt: message.createdAt,
-      // attachments are represented via file parts in v5; no experimental_attachments
-      annotations: message.modelId
-        ? [
-            {
-              type: "model",
-              model: (() => {
-                const [provider, modelId] = message.modelId.split("/");
-                const model = languageModels.find(
-                  (model) =>
-                    model.provider === provider && model.modelId === modelId,
-                );
-
-                // If model not in our list, create a display version
-                return (
-                  model ?? {
-                    name: `${provider}/${modelId}`,
-                    provider: provider ?? "unknown",
-                    modelId: modelId ?? "unknown",
-                  }
-                );
-              })(),
-            },
-          ]
-        : undefined,
+      metadata: {
+        model: message.modelId,
+      },
     }));
   };
 
   return (
     <ChatLayout>
-      <ChatProvider
-        id={id}
-        initialMessages={convertToUIMessages(initialMessages)}
-        initialVisibilityType={initialVisibilityType}
-        autoResume={!isNew}
-        workbench={workbench}
-        initialPreferences={initialPreferences}
-      >
-        <ChatContent
+      <DataStreamProvider>
+        <ChatProvider
           id={id}
-          isReadonly={isReadonly}
-          hasInitialMessages={initialMessages.length > 0}
-        />
-      </ChatProvider>
+          initialMessages={convertToUIMessages(initialMessages)}
+          initialVisibilityType={initialVisibilityType}
+          autoResume={!isNew}
+          workbench={workbench}
+          initialPreferences={initialPreferences}
+        >
+          <ChatContent
+            id={id}
+            isReadonly={isReadonly}
+            hasInitialMessages={initialMessages.length > 0}
+          />
+        </ChatProvider>
+      </DataStreamProvider>
     </ChatLayout>
   );
 };

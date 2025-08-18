@@ -4,7 +4,8 @@ export type ErrorType =
   | "forbidden"
   | "not_found"
   | "rate_limit"
-  | "offline";
+  | "offline"
+  | "payment_required";
 
 export type Surface =
   | "chat"
@@ -97,6 +98,8 @@ export function getMessageByErrorCode(errorCode: ErrorCode): string {
       return "You need to sign in to view this chat. Please sign in and try again.";
     case "offline:chat":
       return "We're having trouble sending your message. Please check your internet connection and try again.";
+    case "payment_required:chat":
+      return "You need to upgrade to a paid plan to use this feature. Please upgrade and try again.";
 
     case "not_found:document":
       return "The requested document was not found. Please check the document ID and try again.";
@@ -118,6 +121,8 @@ function getStatusCodeByType(type: ErrorType) {
       return 400;
     case "unauthorized":
       return 401;
+    case "payment_required":
+      return 402;
     case "forbidden":
       return 403;
     case "not_found":

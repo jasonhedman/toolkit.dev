@@ -3,46 +3,70 @@ import { z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "@/server/api/trpc";
 import { FILE_NAME_MAX_LENGTH } from "@/lib/constants";
 
+import { type Prisma } from "@prisma/client";
+
 const messagePartSchema = z.discriminatedUnion("type", [
+  // TextUIPart
   z.object({
     type: z.literal("text"),
     text: z.string(),
+    state: z.enum(["streaming", "done"]).optional(),
   }),
+  // ReasoningUIPart
   z.object({
     type: z.literal("reasoning"),
-    reasoningText: z.string(),
-    details: z.array(
-      z.discriminatedUnion("type", [
-        z.object({
-          type: z.literal("text"),
-          text: z.string(),
-          signature: z.string().optional(),
-        }),
-        z.object({
-          type: z.literal("redacted"),
-          data: z.string(),
-        }),
-      ]),
-    ),
+    text: z.string(),
+    state: z.enum(["streaming", "done"]).optional(),
+    providerMetadata: z.record(z.any()).optional(),
   }),
+  // SourceUrlUIPart
   z.object({
-    type: z.literal("tool-invocation"),
-    toolInvocation: z.any(), // TODO: Add proper tool invocation schema
+    type: z.literal("source-url"),
+    sourceId: z.string(),
+    url: z.string().url(),
+    title: z.string().optional(),
+    providerMetadata: z.record(z.any()).optional(),
   }),
+  // SourceDocumentUIPart
   z.object({
-    type: z.literal("source"),
-    source: z.any(), // TODO: Add proper source schema
+    type: z.literal("source-document"),
+    sourceId: z.string(),
+    mediaType: z.string(),
+    title: z.string(),
+    filename: z.string().optional(),
+    providerMetadata: z.record(z.any()).optional(),
   }),
+  // FileUIPart
   z.object({
     type: z.literal("file"),
-    url: z.string().url(),
+    mediaType: z.string(),
     filename: z.string().optional(),
-    mediaType: z
-      .enum(["image/png", "image/jpg", "image/jpeg", "application/pdf"])
-      .optional(),
+    url: z.string(),
   }),
+  // StepStartUIPart
   z.object({
     type: z.literal("step-start"),
+  }),
+  // ToolUIPart: Accepts any "tool-*" type, with required fields and state-specific fields.
+  z.object({
+    type: z.string().regex(/^tool-.+/),
+    toolCallId: z.string(),
+    state: z.enum([
+      "input-streaming",
+      "input-available",
+      "output-available",
+      "output-error",
+    ]),
+    input: z.unknown(),
+    output: z.unknown().optional(),
+    errorText: z.string().optional(),
+    providerExecuted: z.boolean().optional(),
+  }),
+  // DataUIPart: Used for streaming data events (e.g., appendMessage, error, etc.)
+  z.object({
+    type: z.string().regex(/^data-.+/),
+    id: z.string().optional(),
+    data: z.unknown(),
   }),
 ]);
 export const messagesRouter = createTRPCRouter({
@@ -113,7 +137,7 @@ export const messagesRouter = createTRPCRouter({
           id: input.id,
           chatId: input.chatId,
           role: input.role,
-          parts: input.parts,
+          parts: input.parts as Prisma.InputJsonValue,
           attachments: input.attachments,
           modelId: input.modelId,
         },

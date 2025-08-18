@@ -21,24 +21,27 @@ import equal from "fast-deep-equal";
 
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-
-import { PreviewAttachment } from "../preview-attachment";
-
-import { cn } from "@/lib/utils";
-
-import { ModelSelect } from "./model-select";
-import { useChatContext } from "@/app/(general)/_contexts/chat-context";
-import type { UseChatHelpers } from "@ai-sdk/react";
-import type { FileUIPart, UIMessage } from "ai";
-import { ToolsSelect } from "./tools";
-import type { File as DbFile } from "@prisma/client";
-import { LanguageModelCapability } from "@/ai/language/types";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+
+import { PreviewAttachment } from "../preview-attachment";
+
+import { ModelSelect } from "./model-select";
+import { ToolsSelect } from "./tools";
+
+import { cn } from "@/lib/utils";
+
+import { useChatContext } from "@/app/(general)/_contexts/chat-context";
+
+import { LanguageModelCapability } from "@/ai/language/types";
+
+import type { FileUIPart } from "ai";
+import type { File as DbFile } from "@prisma/client";
+import type { ChatHelpers } from "@/ai/types";
 
 interface Props {
   chatId: string;
@@ -501,8 +504,8 @@ function PureAttachmentsButton({
   status,
   disabledString,
 }: {
-  fileInputRef: React.MutableRefObject<HTMLInputElement | null>;
-  status: UseChatHelpers<UIMessage>["status"];
+  fileInputRef: React.RefObject<HTMLInputElement | null>;
+  status: ChatHelpers["status"];
   disabledString: string;
 }) {
   const button = (
@@ -548,7 +551,7 @@ function PureStopButton({
   setMessages,
 }: {
   stop: () => void;
-  setMessages: UseChatHelpers<UIMessage>["setMessages"];
+  setMessages: ChatHelpers["setMessages"];
 }) {
   return (
     <Button

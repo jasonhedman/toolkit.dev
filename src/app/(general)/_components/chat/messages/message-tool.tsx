@@ -1,23 +1,24 @@
-import { AnimatedShinyText } from "@/components/magicui/animated-shiny-text";
+import React from "react";
+
+import { Loader2 } from "lucide-react";
+
+import { AnimatePresence, motion } from "motion/react";
+
 import { Card } from "@/components/ui/card";
 import { HStack } from "@/components/ui/stack";
+
+import { AnimatedShinyText } from "@/components/magicui/animated-shiny-text";
+
 import { getClientToolkit } from "@/toolkits/toolkits/client";
-import type { Toolkits, ServerToolkitNames } from "@/toolkits/toolkits/shared";
-import type { DeepPartial } from "ai";
-import { Loader2 } from "lucide-react";
-import { AnimatePresence, motion } from "motion/react";
-import React from "react";
-import type z from "zod";
+
 import { useChatContext } from "@/app/(general)/_contexts/chat-context";
 
+import type z from "zod";
+import type { Toolkits, ServerToolkitNames } from "@/toolkits/toolkits/shared";
+import type { DeepPartial, ToolUIPart } from "ai";
+
 interface Props {
-  toolInvocation: {
-    args?: unknown;
-    state?: string;
-    result?: unknown;
-    toolName?: string;
-    toolCallId?: string;
-  };
+  toolInvocation: ToolUIPart;
 }
 
 type ToolResult<T extends z.ZodType> =
@@ -33,10 +34,10 @@ type ToolResult<T extends z.ZodType> =
     };
 
 const MessageToolComponent: React.FC<Props> = ({ toolInvocation }) => {
-  const argsDefined = toolInvocation.args !== undefined;
-  const completeOnFirstMount = toolInvocation.state === "result";
+  const argsDefined = toolInvocation.input !== undefined;
+  const completeOnFirstMount = toolInvocation.state === "output-available";
 
-  const { toolName } = toolInvocation;
+  const toolName = toolInvocation.type.slice(5) as `${Toolkits}_${string}`;
 
   if (!toolName) {
     return (
@@ -93,7 +94,7 @@ const MessageToolComponent: React.FC<Props> = ({ toolInvocation }) => {
       <Card className="gap-0 overflow-hidden p-0">
         <HStack className="border-b p-2">
           <clientToolkit.icon className="size-4" />
-          {toolInvocation.state === "result" ? (
+          {toolInvocation.state === "output-available" ? (
             <span className="text-lg font-medium">
               {clientToolkit.name} Toolkit
             </span>
@@ -103,8 +104,8 @@ const MessageToolComponent: React.FC<Props> = ({ toolInvocation }) => {
             </AnimatedShinyText>
           )}
           <AnimatePresence>
-            {(toolInvocation.state === "call" ||
-              toolInvocation.state === "partial-call") && (
+            {toolInvocation.state === "input-streaming" ||
+            toolInvocation.state === "input-available" ? (
               <motion.div
                 initial={{
                   opacity: argsDefined ? 1 : 0,
@@ -116,7 +117,7 @@ const MessageToolComponent: React.FC<Props> = ({ toolInvocation }) => {
               >
                 <Loader2 className="size-4 animate-spin opacity-60" />
               </motion.div>
-            )}
+            ) : null}
           </AnimatePresence>
         </HStack>
         <motion.div
@@ -125,8 +126,8 @@ const MessageToolComponent: React.FC<Props> = ({ toolInvocation }) => {
           transition={{ duration: 0.3, ease: "easeInOut" }}
         >
           <AnimatePresence mode="wait">
-            {toolInvocation.state === "call" ||
-            toolInvocation.state === "partial-call" ? (
+            {toolInvocation.state === "input-streaming" ||
+            toolInvocation.state === "input-available" ? (
               <motion.div
                 key="call"
                 initial={{
@@ -142,20 +143,20 @@ const MessageToolComponent: React.FC<Props> = ({ toolInvocation }) => {
                 }}
                 style={{ overflow: "hidden" }}
               >
-                {toolInvocation.args !== undefined ? (
+                {toolInvocation.input !== undefined ? (
                   <toolConfig.CallComponent
                     args={
-                      toolInvocation.args as DeepPartial<
+                      toolInvocation.input as DeepPartial<
                         z.infer<typeof toolConfig.inputSchema>
                       >
                     }
-                    isPartial={toolInvocation.state === "partial-call"}
+                    isPartial={toolInvocation.state === "input-available"}
                   />
                 ) : null}
               </motion.div>
-            ) : toolConfig && toolInvocation.state === "result" ? (
+            ) : toolConfig && toolInvocation.state === "output-available" ? (
               (() => {
-                const result = toolInvocation.result as ToolResult<
+                const result = toolInvocation.output as ToolResult<
                   typeof toolConfig.outputSchema
                 >;
 
@@ -188,7 +189,7 @@ const MessageToolComponent: React.FC<Props> = ({ toolInvocation }) => {
                       Component={({ append }) => (
                         <toolConfig.ResultComponent
                           args={
-                            toolInvocation.args as z.infer<
+                            toolInvocation.input as z.infer<
                               typeof toolConfig.inputSchema
                             >
                           }
@@ -237,18 +238,21 @@ const areEqual = (prevProps: Props, nextProps: Props): boolean => {
 
   // Compare all relevant fields of toolInvocation
   if (prev.toolCallId !== next.toolCallId) return false;
-  if (prev.toolName !== next.toolName) return false;
+  if (prev.type !== next.type) return false;
   if (prev.state !== next.state) return false;
 
   // Deep compare args object
-  if (JSON.stringify(prev.args) !== JSON.stringify(next.args)) return false;
+  if (JSON.stringify(prev.input) !== JSON.stringify(next.input)) return false;
 
   // Deep compare result object (only exists when state is "result")
-  if (prev.state === "result" && next.state === "result") {
+  if (prev.state === "output-available" && next.state === "output-available") {
     // Both have result property, compare them
-    if (JSON.stringify(prev.result) !== JSON.stringify(next.result))
+    if (JSON.stringify(prev.output) !== JSON.stringify(next.output))
       return false;
-  } else if (prev.state === "result" || next.state === "result") {
+  } else if (
+    prev.state === "output-available" ||
+    next.state === "output-available"
+  ) {
     // Only one has result property, they're different
     return false;
   }

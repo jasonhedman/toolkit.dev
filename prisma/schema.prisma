@@ -98,13 +98,20 @@ model Chat {
 model Message {
     id          String       @id @default(uuid())
     chatId      String
-    role        String
+    role        MessageRole
     parts       Json
     attachments Json[]
     modelId     String      @default("openai:gpt-4o") // For tracking which model generated the message
     createdAt   DateTime     @default(now())
     chat        Chat         @relation(fields: [chatId], references: [id], onDelete: Cascade)
 }
+
+enum MessageRole {
+    user
+    assistant
+    system
+}
+
 
 model Video {
     id          String   @id @default(uuid())

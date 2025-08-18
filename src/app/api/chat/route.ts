@@ -1,10 +1,14 @@
 import { after } from "next/server";
 
-import { convertToModelMessages, stepCountIs, tool } from "ai";
+import {
+  convertToModelMessages,
+  createUIMessageStream,
+  JsonToSseTransformStream,
+  stepCountIs,
+  tool,
+} from "ai";
 
 import { createResumableStreamContext } from "resumable-stream";
-
-// import { differenceInSeconds } from "date-fns";
 
 import { auth } from "@/server/auth";
 import { api } from "@/trpc/server";
@@ -13,21 +17,16 @@ import { createServerOnlyCaller } from "@/server/api/root";
 import { postRequestBodySchema, type PostRequestBody } from "./schema";
 
 import { generateText, streamText } from "@/ai/language/generate";
-import { generateUUID } from "@/lib/utils";
 
+import { getServerToolkit } from "@/toolkits/toolkits/server";
+
+import { generateUUID } from "@/lib/utils";
 import { ChatSDKError } from "@/lib/errors";
 
 import type { ResumableStreamContext } from "resumable-stream";
-import type {
-  CoreAssistantMessage,
-  CoreToolMessage,
-  Tool,
-  UIMessage,
-} from "ai";
+import type { Tool, UIMessage } from "ai";
 import type { Chat } from "@prisma/client";
-import { openai } from "@ai-sdk/openai";
-import { getServerToolkit } from "@/toolkits/toolkits/server";
-// import { languageModels } from "@/ai/language";
+import type { ChatMessage } from "@/ai/types";
 
 export const maxDuration = 60;
 
@@ -81,21 +80,17 @@ export async function POST(request: Request) {
       return new ChatSDKError("unauthorized:chat").toResponse();
     }
 
-    // const messageCount = await api.messages.getMessageCountByUserId();
+    const messageCount = await api.messages.getMessageCountByUserId();
 
-    // if (messageCount > 100) {
-    //   return new ChatSDKError("rate_limit:chat").toResponse();
-    // }
+    if (messageCount > 100 && process.env.NODE_ENV === "production") {
+      return new ChatSDKError("rate_limit:chat").toResponse();
+    }
 
     const chat = await api.chats.getChat(id);
 
     if (!chat) {
       // Start title generation in parallel (don't await)
-      const titlePromise = generateTitleFromUserMessage(
-        extractTextFromParts(
-          message.parts as Array<IncomingTextPart | IncomingFilePart>,
-        ),
-      );
+      const titlePromise = generateTitleFromUserMessage(message);
 
       // Create chat with temporary title immediately
       await api.chats.createChat({
@@ -127,28 +122,8 @@ export async function POST(request: Request) {
     const previousMessages = await api.messages.getMessagesForChat({
       chatId: id,
     });
-    // Normalize incoming message into a UIMessage with required fields
-    const uiUserMessage: UIMessage = {
-      id: message.id,
-      createdAt: message.createdAt,
-      role: "user",
-      parts: message.parts.map((p) =>
-        p.type === "file"
-          ? ({
-              type: "file",
-              url: p.url,
-              filename: p.filename,
-              mediaType: p.mediaType ?? "application/octet-stream",
-            } as const)
-          : p,
-      ),
-    } as UIMessage;
 
-    // v5: previousMessages are already stored as UIMessage parts; append the normalized incoming UI message
-    const messages: UIMessage[] = [
-      ...(previousMessages as unknown as UIMessage[]),
-      uiUserMessage,
-    ];
+    const messages = [...previousMessages, message];
 
     await api.messages.createMessage({
       chatId: id,
@@ -253,8 +228,6 @@ export async function POST(request: Request) {
       {} as Record<string, Tool>,
     );
 
-    const isOpenAi = selectedChatModel.startsWith("openai");
-
     // Build comprehensive system prompt
     const baseSystemPrompt = `You are a helpful assistant. The current date and time is ${new Date().toLocaleString()}. Whenever you are asked to write code, you must include a language with \`\`\``;
 
@@ -265,91 +238,68 @@ export async function POST(request: Request) {
 
     const fullSystemPrompt = baseSystemPrompt + toolkitInstructions;
 
-    const result = streamText(
-      `${selectedChatModel}${useNativeSearch ? ":search" : ""}`,
-      {
-        system: fullSystemPrompt,
-        messages: convertToModelMessages(
-          messages.map(({ id: _id, ...rest }) => rest as Omit<UIMessage, "id">),
-        ),
-        stopWhen: stepCountIs(15),
-        onError: (error) => {
-          console.error("Stream error occurred:", error);
-          if (error && typeof error === "object") {
-            const errorStr = JSON.stringify(error);
-            if (
-              errorStr.includes("402") ||
-              errorStr.includes("requires more credits")
-            ) {
-              console.error(
-                "OpenRouter credits exhausted - 402 error detected",
-              );
-            }
-          }
-        },
-        onFinish: async ({ response }) => {
-          if (session.user?.id) {
-            try {
-              const assistantMessages = response.messages.filter(
-                (m) => m.role === "assistant",
-              );
-              const assistantId = getTrailingMessageId({
-                messages: assistantMessages as any,
-              });
-
-              if (!assistantId) {
-                throw new Error("No assistant message found!");
+    const stream = createUIMessageStream<ChatMessage>({
+      execute: ({ writer: dataStream }) => {
+        const result = streamText(
+          `${selectedChatModel}${useNativeSearch ? ":search" : ""}`,
+          {
+            system: fullSystemPrompt,
+            messages: convertToModelMessages(messages as UIMessage[]),
+            stopWhen: stepCountIs(15),
+            onError: (error) => {
+              console.error("Stream error occurred:", error);
+              if (error && typeof error === "object") {
+                const errorStr = JSON.stringify(error);
+                if (
+                  errorStr.includes("402") ||
+                  errorStr.includes("requires more credits")
+                ) {
+                  console.error(
+                    "OpenRouter credits exhausted - 402 error detected",
+                  );
+                  throw new ChatSDKError("payment_required:chat");
+                }
               }
+            },
+            tools,
+          },
+        );
 
-              const assistantMessage = assistantMessages.at(-1);
+        void result.consumeStream();
 
-              if (!assistantMessage) {
-                throw new Error("No assistant message found!");
-              }
-
-              await api.messages.createMessage({
-                chatId: id,
-                id: assistantId,
-                role: "assistant",
-                // Persist the final assistant text as a single text part
-                parts:
-                  response && typeof (response as any).text === "string"
-                    ? [{ type: "text", text: (response as any).text }]
-                    : [],
-                attachments: [],
-                modelId: response.modelId,
-              });
-            } catch (error) {
-              console.error(error);
-            }
-          }
-        },
-        tools: {
-          ...tools,
-          ...(isOpenAi && useNativeSearch
-            ? { web_search_preview: openai.tools.webSearchPreview({}) }
-            : {}),
-        },
+        dataStream.merge(
+          result.toUIMessageStream({
+            sendReasoning: true,
+          }),
+        );
       },
-    );
-
-    const stream = result.toUIMessageStream({
-      originalMessages: messages,
-      generateMessageId: generateUUID,
-      sendReasoning: true,
+      generateId: generateUUID,
+      onFinish: async ({ messages }) => {
+        for (const message of messages) {
+          if (message.role !== "system") {
+            await api.messages.createMessage({
+              chatId: id,
+              id: message.id,
+              role: message.role,
+              parts: message.parts,
+              modelId: message.metadata?.model,
+              attachments: [],
+            });
+          }
+        }
+      },
     });
 
     const streamContext = getStreamContext();
 
     if (streamContext) {
       return new Response(
-        await streamContext.resumableStream(
-          streamId,
-          () => stream as unknown as ReadableStream<string>,
+        await streamContext.resumableStream(streamId, () =>
+          stream.pipeThrough(new JsonToSseTransformStream()),
         ),
       );
     } else {
-      return new Response(stream);
+      return new Response(stream.pipeThrough(new JsonToSseTransformStream()));
     }
   } catch (error) {
     if (error instanceof ChatSDKError) {
@@ -360,34 +310,7 @@ export async function POST(request: Request) {
   }
 }
 
-type IncomingTextPart = { type: "text"; text: string };
-type IncomingFilePart = {
-  type: "file";
-  url: string;
-  filename?: string;
-  mediaType?: string;
-};
-
-function extractTextFromParts(
-  parts: Array<IncomingTextPart | IncomingFilePart>,
-): string {
-  try {
-    return parts
-      .filter(
-        (p): p is IncomingTextPart =>
-          !!p &&
-          p.type === "text" &&
-          typeof (p as IncomingTextPart).text === "string",
-      )
-      .map((p) => p.text)
-      .join("\n")
-      .slice(0, 2000); // limit prompt size
-  } catch {
-    return "";
-  }
-}
-
-async function generateTitleFromUserMessage(text: string) {
+async function generateTitleFromUserMessage(uiMessage: UIMessage) {
   const { text: title } = await generateText("openai/gpt-4o-mini", {
     system: `\n
       - you will generate a short title based on the first message a user begins a conversation with
@@ -396,29 +319,10 @@ async function generateTitleFromUserMessage(text: string) {
       - the title should be in the same language as the user's message
       - the title does not need to be a full sentence, try to pack in the most important information in a few words
       - do not use quotes or colons`,
-    messages: [
-      {
-        role: "user",
-        content: text ?? "",
-      },
-    ],
+    messages: convertToModelMessages([uiMessage]),
   });
 
   return title;
-}
-
-type ResponseMessageWithoutId = CoreToolMessage | CoreAssistantMessage;
-type ResponseMessage = ResponseMessageWithoutId & { id: string };
-function getTrailingMessageId({
-  messages,
-}: {
-  messages: Array<ResponseMessage>;
-}): string | null {
-  const trailingMessage = messages.at(-1);
-
-  if (!trailingMessage) return null;
-
-  return trailingMessage.id;
 }
 
 export async function GET(request: Request) {

@@ -25,13 +25,13 @@ import { MessageReasoning } from "./message-reasoning";
 
 import { cn, sanitizeText } from "@/lib/utils";
 
-import type { UIMessage } from "ai";
+import type { ChatMessage } from "@/ai/types";
 
 import { MessageTool } from "./message-tool";
 import { AnimatedShinyText } from "@/components/magicui/animated-shiny-text";
 
 interface Props {
-  message: UIMessage;
+  message: ChatMessage;
   isLoading: boolean;
   isReadonly: boolean;
   requiresScrollPadding: boolean;
@@ -47,8 +47,7 @@ const PurePreviewMessage: React.FC<Props> = ({
 }) => {
   const [mode, setMode] = useState<"view" | "edit">("view");
   const { selectedChatModel } = useChatContext();
-  const annotations = (message as unknown as { annotations?: unknown })
-    .annotations;
+  const annotations = message.metadata?.model;
   const hasModelAnnotation = Array.isArray(annotations)
     ? annotations.some(
         (a: unknown) =>
@@ -96,30 +95,17 @@ const PurePreviewMessage: React.FC<Props> = ({
               const key = `message-${message.id}-part-${index}`;
 
               if (type === "reasoning") {
-                const anyPart = part as any;
-                const reasoningText =
-                  (typeof anyPart?.reasoningText === "string"
-                    ? anyPart.reasoningText
-                    : undefined) ??
-                  (typeof anyPart?.text === "string"
-                    ? anyPart.text
-                    : undefined) ??
-                  "";
                 return (
                   <MessageReasoning
                     key={key}
                     isLoading={isLoading}
-                    reasoningText={reasoningText}
+                    reasoningText={part.text}
                   />
                 );
               }
 
               if (type === "tool-invocation") {
-                const { toolInvocation } = part as any;
-
-                return (
-                  <MessageTool key={key} toolInvocation={toolInvocation} />
-                );
+                return <MessageTool key={key} toolInvocation={part} />;
               }
 
               if (type === "text") {

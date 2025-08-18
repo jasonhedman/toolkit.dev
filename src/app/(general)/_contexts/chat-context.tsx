@@ -31,18 +31,18 @@ import type { Workbench } from "@prisma/client";
 import type { PersistedToolkit } from "@/lib/cookies/types";
 import type { ImageModel } from "@/ai/image/types";
 import type { LanguageModel } from "@/ai/language/types";
-import type { UIMessage, FileUIPart } from "ai";
-import type { UseChatHelpers } from "@ai-sdk/react";
+import type { FileUIPart } from "ai";
+import type { ChatHelpers, ChatMessage } from "@/ai/types";
 
 const DEFAULT_CHAT_MODEL = languageModels[0]!;
 
 interface ChatContextType {
   // Chat state
-  messages: Array<UIMessage>;
-  setMessages: UseChatHelpers<UIMessage>["setMessages"];
+  messages: Array<ChatMessage>;
+  setMessages: ChatHelpers["setMessages"];
   input: string;
   setInput: (value: string | ((prev: string) => string)) => void;
-  status: UseChatHelpers<UIMessage>["status"];
+  status: ChatHelpers["status"];
   streamStopped: boolean;
   files: Array<FileUIPart>;
   setFiles: (
@@ -65,7 +65,7 @@ interface ChatContextType {
   handleSubmit: (event?: React.FormEvent<HTMLFormElement>) => void;
   stop: () => void;
   reload: () => Promise<void>;
-  sendMessage: UseChatHelpers<UIMessage>["sendMessage"];
+  sendMessage: ChatHelpers["sendMessage"];
 }
 
 const ChatContext = createContext<ChatContextType | undefined>(undefined);
@@ -73,7 +73,7 @@ const ChatContext = createContext<ChatContextType | undefined>(undefined);
 interface ChatProviderProps {
   children: ReactNode;
   id: string;
-  initialMessages: Array<UIMessage>;
+  initialMessages: Array<ChatMessage>;
   initialVisibilityType: "public" | "private";
   autoResume: boolean;
   workbench?: Workbench;
@@ -165,10 +165,10 @@ export function ChatProvider({
     setToolkits(toolkits.filter((t) => t.id !== id));
   };
 
-  const chat = useChat<UIMessage>({
+  const chat = useChat<ChatMessage>({
     id,
     experimental_throttle: 100,
-    transport: new DefaultChatTransport<UIMessage>({
+    transport: new DefaultChatTransport<ChatMessage>({
       api: "/api/chat",
       fetch: fetchWithErrorHandlers,
       prepareSendMessagesRequest: ({ messages, trigger }) => {
@@ -228,7 +228,7 @@ export function ChatProvider({
     // Mark stream as stopped to hide thinking message
     setStreamStopped(true);
     // Also call stop to change the status away from 'submitted'
-    stop();
+    void stop();
   }, [stop]);
 
   useAutoResume({
@@ -274,7 +274,7 @@ export function ChatProvider({
     useNativeSearch: useNativeSearchState,
     setUseNativeSearch,
     handleSubmit,
-    stop,
+    stop: () => void stop(),
     reload,
     sendMessage,
     imageGenerationModel: imageGenerationModelState,

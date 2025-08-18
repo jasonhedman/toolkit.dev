@@ -7,7 +7,7 @@ import { useCopyToClipboard } from "usehooks-ts";
 import { Copy, GitBranch } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-
+import { HStack } from "@/components/ui/stack";
 import {
   Tooltip,
   TooltipContent,
@@ -18,11 +18,10 @@ import {
 import { api } from "@/trpc/react";
 import { useRouter } from "next/navigation";
 
-import type { UIMessage } from "ai";
-import { HStack } from "@/components/ui/stack";
+import type { ChatMessage } from "@/ai/types";
 
 interface Props {
-  message: UIMessage;
+  message: ChatMessage;
   isLoading: boolean;
   chatId: string;
 }
@@ -47,8 +46,7 @@ export const PureMessageActions: React.FC<Props> = ({
   });
 
   // Extract model annotation text if present (guarded)
-  const annotations = (message as unknown as { annotations?: unknown })
-    .annotations;
+  const annotations = message.metadata?.model;
   const modelAnnotationText = Array.isArray(annotations)
     ? (
         annotations.find(
