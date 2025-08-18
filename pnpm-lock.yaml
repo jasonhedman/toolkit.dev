@@ -8,18 +8,12 @@ importers:
 
   .:
     dependencies:
-      '@ai-sdk/anthropic':
-        specifier: ^2.0.0
-        version: 2.0.4(zod@3.25.56)
       '@ai-sdk/fal':
         specifier: ^1.0.6
         version: 1.0.6(zod@3.25.56)
       '@ai-sdk/fireworks':
         specifier: ^1.0.7
         version: 1.0.7(zod@3.25.56)
-      '@ai-sdk/google':
-        specifier: ^2.0.0
-        version: 2.0.6(zod@3.25.56)
       '@ai-sdk/groq':
         specifier: ^2.0.0
         version: 2.0.9(zod@3.25.56)
@@ -29,9 +23,6 @@ importers:
       '@ai-sdk/openai':
         specifier: ^2.0.0
         version: 2.0.14(zod@3.25.56)
-      '@ai-sdk/perplexity':
-        specifier: ^2.0.0
-        version: 2.0.3(zod@3.25.56)
       '@ai-sdk/provider':
         specifier: ^2.0.0
         version: 2.0.0
@@ -351,12 +342,6 @@ importers:
 
 packages:
 
-  '@ai-sdk/anthropic@2.0.4':
-    resolution: {integrity: sha512-ii2bZEUPwBitUiK1dpX+HsOarcDGY71G9TVdSJqbfXSVqa+speJNZ8PA/bjuNMml0NyX8VxNsaMg3SwBUCZspA==}
-    engines: {node: '>=18'}
-    peerDependencies:
-      zod: ^3.25.76 || ^4
-
   '@ai-sdk/fal@1.0.6':
     resolution: {integrity: sha512-5hUqCm4kRnWLK6UUuSmitdpZyoVaniqQay/MBrhfoTTkF8Xsd04G1/GeNGCWdJkSGZHSa35do4zZN9zb5KEiSQ==}
     engines: {node: '>=18'}
@@ -371,12 +356,6 @@ packages:
 
   '@ai-sdk/gateway@1.0.6':
     resolution: {integrity: sha512-JuSj1MtTr4vw2VBBth4wlbciQnQIV0o1YV9qGLFA+r85nR5H+cJp3jaYE0nprqfzC9rYG8w9c6XGHB3SDKgcgA==}
-    engines: {node: '>=18'}
-    peerDependencies:
-      zod: ^3.25.76 || ^4
-
-  '@ai-sdk/google@2.0.6':
-    resolution: {integrity: sha512-8acuseWJI+RRH99JDWM/n7IJRuuGNa4YzLXB/leqE/ZByHyIiVWGADjJi/vfnJnmdM5fQnezJ6SRTF6feI5rSQ==}
     engines: {node: '>=18'}
     peerDependencies:
       zod: ^3.25.76 || ^4
@@ -401,12 +380,6 @@ packages:
 
   '@ai-sdk/openai@2.0.14':
     resolution: {integrity: sha512-u/wi1ixcvcg29wAJySjO803HlXpyCl6mkcOHn+Zn7DA+CtjuQNkKikJ4pZBc7I3Qhi90kA4XnOfKikhBXh4c4Q==}
-    engines: {node: '>=18'}
-    peerDependencies:
-      zod: ^3.25.76 || ^4
-
-  '@ai-sdk/perplexity@2.0.3':
-    resolution: {integrity: sha512-rHF/1FEmV57VJ24qfWHoTz1ktQU7ZsgehY1UTgz+shTzNjnLjX+P9h2HRweLkvxPhB3/sNX8zl6Y2dUbSnA5gw==}
     engines: {node: '>=18'}
     peerDependencies:
       zod: ^3.25.76 || ^4
@@ -5676,12 +5649,6 @@ packages:
 
 snapshots:
 
-  '@ai-sdk/anthropic@2.0.4(zod@3.25.56)':
-    dependencies:
-      '@ai-sdk/provider': 2.0.0
-      '@ai-sdk/provider-utils': 3.0.3(zod@3.25.56)
-      zod: 3.25.56
-
   '@ai-sdk/fal@1.0.6(zod@3.25.56)':
     dependencies:
       '@ai-sdk/provider': 2.0.0
@@ -5696,12 +5663,6 @@ snapshots:
       zod: 3.25.56
 
   '@ai-sdk/gateway@1.0.6(zod@3.25.56)':
-    dependencies:
-      '@ai-sdk/provider': 2.0.0
-      '@ai-sdk/provider-utils': 3.0.3(zod@3.25.56)
-      zod: 3.25.56
-
-  '@ai-sdk/google@2.0.6(zod@3.25.56)':
     dependencies:
       '@ai-sdk/provider': 2.0.0
       '@ai-sdk/provider-utils': 3.0.3(zod@3.25.56)
@@ -5726,12 +5687,6 @@ snapshots:
       zod: 3.25.56
 
   '@ai-sdk/openai@2.0.14(zod@3.25.56)':
-    dependencies:
-      '@ai-sdk/provider': 2.0.0
-      '@ai-sdk/provider-utils': 3.0.3(zod@3.25.56)
-      zod: 3.25.56
-
-  '@ai-sdk/perplexity@2.0.3(zod@3.25.56)':
     dependencies:
       '@ai-sdk/provider': 2.0.0
       '@ai-sdk/provider-utils': 3.0.3(zod@3.25.56)
