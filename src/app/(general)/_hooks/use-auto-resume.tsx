@@ -1,13 +1,14 @@
 import { useEffect } from "react";
-import type { UseChatHelpers } from "@ai-sdk/react";
-import type { ChatMessage } from "@/ai/types";
+
 import { useDataStream } from "../_contexts/data-stream-provider";
+
+import type { ChatHelpers, ChatMessage } from "@/ai/types";
 
 export interface UseAutoResumeParams {
   autoResume: boolean;
   initialMessages: ChatMessage[];
-  resumeStream: UseChatHelpers<ChatMessage>["resumeStream"];
-  setMessages: UseChatHelpers<ChatMessage>["setMessages"];
+  resumeStream: ChatHelpers["resumeStream"];
+  setMessages: ChatHelpers["setMessages"];
   onStreamError: () => void;
 }
 

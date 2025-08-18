@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 
-import type { UseChatHelpers } from "@ai-sdk/react";
-import type { ChatMessage } from "@/ai/types";
+import type { ChatHelpers } from "@/ai/types";
 
 export function useMessages({
   chatId,
@@ -9,7 +8,7 @@ export function useMessages({
   scrollToBottom,
 }: {
   chatId: string;
-  status: UseChatHelpers<ChatMessage>["status"];
+  status: ChatHelpers["status"];
   scrollToBottom: (behavior: ScrollBehavior) => void;
 }) {
   const [hasSentMessage, setHasSentMessage] = useState(false);
