@@ -17,6 +17,8 @@ interface Props {
   isReadonly: boolean;
   isNew: boolean;
   workbench?: Workbench;
+  prefillQuery?: string;
+  autoSubmitQuery?: boolean;
 }
 
 export const Chat = async ({
@@ -25,6 +27,8 @@ export const Chat = async ({
   isReadonly,
   isNew,
   workbench,
+  prefillQuery,
+  autoSubmitQuery,
 }: Props) => {
   const initialMessages = isNew
     ? []
@@ -44,7 +48,7 @@ export const Chat = async ({
   const initialPreferences = {
     selectedChatModel: serverPreferences.selectedChatModel,
     imageGenerationModel: serverPreferences.imageGenerationModel,
-    useNativeSearch: serverPreferences.useNativeSearch,
+    useNativeSearch: prefillQuery ? true : serverPreferences.useNativeSearch, // Enable web search when query is provided
     toolkits: serverPreferences.toolkits
       ?.map((persistedToolkit: PersistedToolkit) => {
         const clientToolkit =
@@ -112,6 +116,8 @@ export const Chat = async ({
         initialVisibilityType={initialVisibilityType}
         autoResume={!isNew}
         workbench={workbench}
+        initialInput={prefillQuery}
+        autoSubmitInitialInput={autoSubmitQuery}
         initialPreferences={initialPreferences}
       >
         <ChatContent

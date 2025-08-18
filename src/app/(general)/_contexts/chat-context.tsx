@@ -87,6 +87,8 @@ interface ChatProviderProps {
   initialVisibilityType: "public" | "private";
   autoResume: boolean;
   workbench?: Workbench;
+  initialInput?: string;
+  autoSubmitInitialInput?: boolean;
   initialPreferences?: {
     selectedChatModel?: LanguageModel;
     imageGenerationModel?: ImageModel;
@@ -102,6 +104,8 @@ export function ChatProvider({
   initialVisibilityType,
   autoResume,
   workbench,
+  initialInput,
+  autoSubmitInitialInput,
   initialPreferences,
 }: ChatProviderProps) {
   const utils = api.useUtils();
@@ -222,6 +226,7 @@ export function ChatProvider({
   } = useChat({
     id,
     initialMessages,
+    initialInput,
     experimental_throttle: 100,
     sendExtraMessageFields: true,
     generateId: generateUUID,
@@ -282,14 +287,14 @@ export function ChatProvider({
     onStreamError,
   });
 
-  const handleSubmit: UseChatHelpers["handleSubmit"] = (
-    event,
-    chatRequestOptions,
-  ) => {
-    // Reset stream stopped flag when submitting new message
-    setStreamStopped(false);
-    originalHandleSubmit(event, chatRequestOptions);
-  };
+  const handleSubmit: UseChatHelpers["handleSubmit"] = useCallback(
+    (event, chatRequestOptions) => {
+      // Reset stream stopped flag when submitting new message
+      setStreamStopped(false);
+      originalHandleSubmit(event, chatRequestOptions);
+    },
+    [originalHandleSubmit, setStreamStopped],
+  );
 
   useEffect(() => {
     if (
@@ -302,6 +307,26 @@ export function ChatProvider({
       setUseNativeSearch(false);
     }
   }, [selectedChatModel]);
+
+  useEffect(() => {
+    if (
+      autoSubmitInitialInput &&
+      initialInput &&
+      input === initialInput &&
+      messages.length === 0
+    ) {
+      const timer = setTimeout(() => {
+        handleSubmit();
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [
+    autoSubmitInitialInput,
+    initialInput,
+    input,
+    messages.length,
+    handleSubmit,
+  ]);
 
   const value = {
     messages,

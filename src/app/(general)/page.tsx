@@ -5,7 +5,16 @@ import { auth } from "@/server/auth";
 
 import { generateUUID } from "@/lib/utils";
 
-export default async function Page() {
+interface HomePageProps {
+  searchParams: Promise<{
+    q?: string;
+  }>;
+}
+
+export default async function Page(props: HomePageProps) {
+  const searchParams = await props.searchParams;
+  const { q } = searchParams;
+
   const session = await auth();
 
   if (!session) {
@@ -21,6 +30,7 @@ export default async function Page() {
       initialVisibilityType="private"
       isReadonly={false}
       isNew={true}
+      prefillQuery={q}
     />
   );
 }
