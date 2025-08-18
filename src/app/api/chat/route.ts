@@ -27,6 +27,7 @@ import type { ResumableStreamContext } from "resumable-stream";
 import type { Tool, UIMessage } from "ai";
 import type { Chat } from "@prisma/client";
 import type { ChatMessage } from "@/ai/types";
+import { languageModels } from "@/ai/language";
 
 export const maxDuration = 60;
 
@@ -270,6 +271,22 @@ export async function POST(request: Request) {
         dataStream.merge(
           result.toUIMessageStream({
             sendReasoning: true,
+            messageMetadata: () => {
+              const model = languageModels.find(
+                (model) => model.provider === selectedChatModel,
+              );
+              if (!model) {
+                return undefined;
+              }
+              const { name, provider, modelId } = model;
+              return {
+                model: {
+                  name,
+                  provider,
+                  modelId,
+                },
+              };
+            },
           }),
         );
       },
@@ -282,7 +299,7 @@ export async function POST(request: Request) {
               id: message.id,
               role: message.role,
               parts: message.parts,
-              modelId: message.metadata?.model,
+              modelId: selectedChatModel,
               attachments: [],
             });
           }

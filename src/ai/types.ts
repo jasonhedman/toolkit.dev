@@ -6,7 +6,11 @@ import type { Toolkits } from "@/toolkits/toolkits/shared";
 import type { UseChatHelpers } from "@ai-sdk/react";
 
 export const metadataSchema = z.object({
-  model: z.string(),
+  model: z.object({
+    name: z.string(),
+    provider: z.string(),
+    modelId: z.string(),
+  }),
 });
 
 type Metadata = z.infer<typeof metadataSchema>;
