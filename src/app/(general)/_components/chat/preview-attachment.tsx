@@ -1,16 +1,13 @@
 import { FileIcon, LoaderIcon, X } from "lucide-react";
 
-// Local attachment type compatible with our API payloads
-type Attachment = {
-  url: string;
-  name?: string;
-  contentType?: string;
-};
 import { Button } from "@/components/ui/button";
+
 import { cn } from "@/lib/utils";
 
+import type { FileUIPart } from "ai";
+
 interface Props {
-  attachment: Attachment;
+  attachment: FileUIPart;
   isUploading?: boolean;
   onRemove?: () => void;
   isError?: boolean;
@@ -22,7 +19,7 @@ export const PreviewAttachment: React.FC<Props> = ({
   onRemove,
   isError = false,
 }) => {
-  const { name, url, contentType } = attachment;
+  const { filename, url, mediaType } = attachment;
 
   return (
     <div
@@ -35,17 +32,17 @@ export const PreviewAttachment: React.FC<Props> = ({
           isError && "border border-yellow-600 bg-yellow-600/10",
         )}
       >
-        {contentType ? (
-          contentType.startsWith("image") ? (
+        {mediaType ? (
+          mediaType.startsWith("image") ? (
             // NOTE: it is recommended to use next/image for images
             // eslint-disable-next-line @next/next/no-img-element
             <img
               key={url}
               src={url}
-              alt={name ?? "An image attachment"}
+              alt={filename ?? "An image attachment"}
               className="size-full rounded-md object-cover"
             />
-          ) : contentType.startsWith("application") ? (
+          ) : mediaType.startsWith("application") ? (
             <div className="flex size-full items-center justify-center">
               <FileIcon className="size-4" />
             </div>
@@ -67,7 +64,7 @@ export const PreviewAttachment: React.FC<Props> = ({
       </div>
       <div className="relative flex w-full flex-row items-center justify-between gap-2">
         <div className="max-w-full flex-1 truncate text-xs text-zinc-500">
-          {name}
+          {filename}
         </div>
         {onRemove && !isUploading && (
           <Button

@@ -7,17 +7,14 @@ import {
   useState,
   useCallback,
 } from "react";
-import { useChat, type UseChatHelpers } from "@ai-sdk/react";
-import { DefaultChatTransport, type UIMessage } from "ai";
+import { useChat } from "@ai-sdk/react";
+import { DefaultChatTransport } from "ai";
 import { toast } from "sonner";
 
 import { OpenRouterChecks } from "./openrouter-checks";
 import { api } from "@/trpc/react";
 import { useAutoResume } from "@/app/(general)/_hooks/use-auto-resume";
-import {
-  LanguageModelCapability,
-  type LanguageModel,
-} from "@/ai/language/types";
+import { LanguageModelCapability } from "@/ai/language/types";
 import { clientToolkits } from "@/toolkits/toolkits/client";
 import { languageModels } from "@/ai/language";
 import { clientCookieUtils } from "@/lib/cookies/client";
@@ -33,10 +30,11 @@ import type { Toolkits } from "@/toolkits/toolkits/shared";
 import type { Workbench } from "@prisma/client";
 import type { PersistedToolkit } from "@/lib/cookies/types";
 import type { ImageModel } from "@/ai/image/types";
+import type { LanguageModel } from "@/ai/language/types";
+import type { UIMessage, FileUIPart } from "ai";
+import type { UseChatHelpers } from "@ai-sdk/react";
 
 const DEFAULT_CHAT_MODEL = languageModels[0]!;
-
-type Attachment = { url: string; name?: string; contentType?: string };
 
 interface ChatContextType {
   // Chat state
@@ -46,11 +44,9 @@ interface ChatContextType {
   setInput: (value: string | ((prev: string) => string)) => void;
   status: UseChatHelpers<UIMessage>["status"];
   streamStopped: boolean;
-  attachments: Array<Attachment>;
-  setAttachments: (
-    attachments:
-      | Array<Attachment>
-      | ((prev: Array<Attachment>) => Array<Attachment>),
+  files: Array<FileUIPart>;
+  setFiles: (
+    files: Array<FileUIPart> | ((prev: Array<FileUIPart>) => Array<FileUIPart>),
   ) => void;
   selectedChatModel: LanguageModel | undefined;
   setSelectedChatModel: (model: LanguageModel) => void;
@@ -66,10 +62,10 @@ interface ChatContextType {
   workbench?: Workbench;
 
   // Chat actions
-  handleSubmit: (event?: { preventDefault?: () => void }) => void;
+  handleSubmit: (event?: React.FormEvent<HTMLFormElement>) => void;
   stop: () => void;
   reload: () => Promise<void>;
-  append: UseChatHelpers<UIMessage>["sendMessage"];
+  sendMessage: UseChatHelpers<UIMessage>["sendMessage"];
 }
 
 const ChatContext = createContext<ChatContextType | undefined>(undefined);
@@ -100,7 +96,7 @@ export function ChatProvider({
 }: ChatProviderProps) {
   const utils = api.useUtils();
 
-  const [attachments, setAttachments] = useState<Array<Attachment>>([]);
+  const [files, setFiles] = useState<FileUIPart[]>([]);
   const [selectedChatModelState, setSelectedChatModelState] =
     useState<LanguageModel>(
       initialPreferences?.selectedChatModel ?? DEFAULT_CHAT_MODEL,
@@ -221,7 +217,7 @@ export function ChatProvider({
   const {
     messages,
     setMessages,
-    sendMessage: append,
+    sendMessage,
     status,
     stop,
     regenerate: reload,
@@ -243,18 +239,12 @@ export function ChatProvider({
     onStreamError,
   });
 
-  const handleSubmit = (event?: { preventDefault?: () => void }) => {
+  const handleSubmit = (event?: React.FormEvent<HTMLFormElement>) => {
     event?.preventDefault?.();
     // Reset stream stopped flag when submitting new message
     setStreamStopped(false);
-    const files = attachments.map((a) => ({
-      type: "file" as const,
-      mediaType: a.contentType ?? "application/octet-stream",
-      url: a.url,
-      filename: a.name,
-    }));
-    void append({ text: input, files });
-    setAttachments([]);
+    void sendMessage({ text: input, files });
+    setFiles([]);
     setInput("");
   };
 
@@ -277,8 +267,8 @@ export function ChatProvider({
     setInput,
     status,
     streamStopped,
-    attachments,
-    setAttachments,
+    files,
+    setFiles,
     selectedChatModel: selectedChatModelState,
     setSelectedChatModel,
     useNativeSearch: useNativeSearchState,
@@ -286,7 +276,7 @@ export function ChatProvider({
     handleSubmit,
     stop,
     reload,
-    append,
+    sendMessage,
     imageGenerationModel: imageGenerationModelState,
     setImageGenerationModel,
     toolkits,

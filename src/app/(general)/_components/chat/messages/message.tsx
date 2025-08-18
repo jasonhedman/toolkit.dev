@@ -181,8 +181,9 @@ const PurePreviewMessage: React.FC<Props> = ({
                     <PreviewAttachment
                       attachment={{
                         url,
-                        name: filename,
-                        contentType: mediaType,
+                        filename,
+                        mediaType,
+                        type: "file",
                       }}
                     />
                   </div>

@@ -28,9 +28,8 @@ import { cn } from "@/lib/utils";
 
 import { ModelSelect } from "./model-select";
 import { useChatContext } from "@/app/(general)/_contexts/chat-context";
-import type { Attachment } from "ai";
 import type { UseChatHelpers } from "@ai-sdk/react";
-import type { UIMessage } from "ai";
+import type { FileUIPart, UIMessage } from "ai";
 import { ToolsSelect } from "./tools";
 import type { File as DbFile } from "@prisma/client";
 import { LanguageModelCapability } from "@/ai/language/types";
@@ -58,8 +57,8 @@ const PureMultimodalInput: React.FC<Props> = ({
     setInput,
     status,
     stop,
-    attachments,
-    setAttachments,
+    files,
+    setFiles,
     setMessages,
     handleSubmit,
     selectedChatModel,
@@ -125,12 +124,8 @@ const PureMultimodalInput: React.FC<Props> = ({
   const supportsImages = selectedChatModel?.capabilities?.includes(
     LanguageModelCapability.Vision,
   );
-  const includesImages = attachments.some((attachment) =>
-    attachment.contentType?.includes("image"),
-  );
-  const includesPdf = attachments.some((attachment) =>
-    attachment.contentType?.includes("pdf"),
-  );
+  const includesImages = files.some((file) => file.mediaType.includes("image"));
+  const includesPdf = files.some((file) => file.mediaType.includes("pdf"));
   const supportsPdf = selectedChatModel?.capabilities?.includes(
     LanguageModelCapability.Pdf,
   );
@@ -178,7 +173,7 @@ const PureMultimodalInput: React.FC<Props> = ({
 
     handleSubmit();
 
-    setAttachments([]);
+    setFiles([]);
     setLocalStorageInput("");
     resetHeight();
 
@@ -189,7 +184,7 @@ const PureMultimodalInput: React.FC<Props> = ({
     selectedChatModel,
     submitDisabledString,
     handleSubmit,
-    setAttachments,
+    setFiles,
     setLocalStorageInput,
     width,
     chatId,
@@ -197,7 +192,7 @@ const PureMultimodalInput: React.FC<Props> = ({
   ]);
 
   const uploadFile = useCallback(
-    async (file: File): Promise<Attachment | undefined> => {
+    async (file: File): Promise<FileUIPart | undefined> => {
       const formData = new FormData();
       formData.append("file", file);
 
@@ -213,9 +208,10 @@ const PureMultimodalInput: React.FC<Props> = ({
           const { url, name, contentType } = data;
 
           return {
+            type: "file",
             url,
-            name,
-            contentType,
+            filename: name,
+            mediaType: contentType,
           };
         }
         const { error } = (await response.json()) as { error: string };
@@ -240,10 +236,10 @@ const PureMultimodalInput: React.FC<Props> = ({
         const uploadPromises = files.map((file) => uploadFile(file));
         const uploadedAttachments = await Promise.all(uploadPromises);
         const successfullyUploadedAttachments = uploadedAttachments.filter(
-          (attachment): attachment is Attachment => attachment !== undefined,
+          (attachment): attachment is FileUIPart => attachment !== undefined,
         );
 
-        setAttachments((currentAttachments: Attachment[]) => [
+        setFiles((currentAttachments: FileUIPart[]) => [
           ...currentAttachments,
           ...successfullyUploadedAttachments,
         ]);
@@ -253,7 +249,7 @@ const PureMultimodalInput: React.FC<Props> = ({
         setUploadQueue([]);
       }
     },
-    [setAttachments, uploadFile],
+    [setFiles, uploadFile],
   );
 
   useEffect(() => {
@@ -263,14 +259,14 @@ const PureMultimodalInput: React.FC<Props> = ({
   }, [status, scrollToBottom]);
 
   const removeAttachment = useCallback(
-    (attachmentToRemove: Attachment) => {
-      setAttachments((currentAttachments: Attachment[]) =>
+    (attachmentToRemove: FileUIPart) => {
+      setFiles((currentAttachments: FileUIPart[]) =>
         currentAttachments.filter(
           (attachment) => attachment.url !== attachmentToRemove.url,
         ),
       );
     },
-    [setAttachments],
+    [setFiles],
   );
 
   const handlePaste = useCallback(
@@ -306,11 +302,11 @@ const PureMultimodalInput: React.FC<Props> = ({
         Promise.all(imageFiles.map((file) => uploadFile(file)))
           .then((uploadedAttachments) => {
             const successfullyUploadedAttachments = uploadedAttachments.filter(
-              (attachment): attachment is Attachment =>
+              (attachment): attachment is FileUIPart =>
                 attachment !== undefined,
             );
 
-            setAttachments((currentAttachments: Attachment[]) => [
+            setFiles((currentAttachments: FileUIPart[]) => [
               ...currentAttachments,
               ...successfullyUploadedAttachments,
             ]);
@@ -330,7 +326,7 @@ const PureMultimodalInput: React.FC<Props> = ({
           });
       }
     },
-    [supportsImages, setAttachments, uploadFile],
+    [supportsImages, setFiles, uploadFile],
   );
 
   useEffect(() => {
@@ -385,21 +381,20 @@ const PureMultimodalInput: React.FC<Props> = ({
         disabled={!selectedChatModel || acceptedFileTypes.length === 0}
       />
 
-      {(attachments.length > 0 || uploadQueue.length > 0) && (
+      {(files.length > 0 || uploadQueue.length > 0) && (
         <div
           data-testid="attachments-preview"
           className="mb-2 flex flex-row items-end gap-2 overflow-x-scroll overflow-y-visible"
         >
-          {attachments.map((attachment) => (
+          {files.map((file) => (
             <PreviewAttachment
-              key={attachment.url}
-              attachment={attachment}
-              onRemove={() => removeAttachment(attachment)}
+              key={file.url}
+              attachment={file}
+              onRemove={() => removeAttachment(file)}
               isError={
-                ((attachment.contentType?.includes("image") ?? false) &&
+                ((file.mediaType?.includes("image") ?? false) &&
                   !supportsImages) ||
-                ((attachment.contentType?.includes("pdf") ?? false) &&
-                  !supportsPdf)
+                ((file.mediaType?.includes("pdf") ?? false) && !supportsPdf)
               }
             />
           ))}
@@ -408,9 +403,10 @@ const PureMultimodalInput: React.FC<Props> = ({
             <PreviewAttachment
               key={filename}
               attachment={{
+                type: "file",
+                filename,
+                mediaType: "",
                 url: "",
-                name: filename,
-                contentType: "",
               }}
               isUploading={true}
             />

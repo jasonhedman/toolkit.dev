@@ -1,5 +1,3 @@
-"use client";
-
 import { useEffect, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -22,7 +20,7 @@ export function MessageEditor({
   setMode,
   chatId,
 }: MessageEditorProps) {
-  const { setMessages, append } = useChatContext();
+  const { setMessages, sendMessage } = useChatContext();
   const { mutate } = useDeleteMessagesAfterTimestamp();
 
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
@@ -76,7 +74,7 @@ export function MessageEditor({
 
     setMode("view");
 
-    await append({ text: draftContent });
+    await sendMessage({ text: draftContent });
 
     setIsSubmitting(false);
   };

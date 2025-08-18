@@ -266,12 +266,12 @@ const MessageToolResultComponent: React.FC<{
     }) => void;
   }>;
 }> = ({ Component }) => {
-  const { append } = useChatContext();
+  const { sendMessage } = useChatContext();
   return (
     <Component
       append={(m) =>
         m.text
-          ? void append({
+          ? void sendMessage({
               text: m.text,
               files: m.files?.map((f) => ({
                 type: "file" as const,
