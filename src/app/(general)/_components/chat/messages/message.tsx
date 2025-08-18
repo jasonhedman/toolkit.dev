@@ -1,6 +1,5 @@
 "use client";
 
-import { useChatContext } from "@/app/(general)/_contexts/chat-context";
 import { ModelProviderIcon } from "@/components/ui/model-icon";
 import { memo, useState } from "react";
 
@@ -46,7 +45,6 @@ const PurePreviewMessage: React.FC<Props> = ({
   chatId,
 }) => {
   const [mode, setMode] = useState<"view" | "edit">("view");
-  const { selectedChatModel } = useChatContext();
   const model = message.metadata?.model;
 
   return (

@@ -16,6 +16,7 @@ import { useChatContext } from "@/app/(general)/_contexts/chat-context";
 import type z from "zod";
 import type { Toolkits, ServerToolkitNames } from "@/toolkits/toolkits/shared";
 import type { DeepPartial, ToolUIPart } from "ai";
+import type { ChatHelpers } from "@/ai/types";
 
 interface Props {
   toolInvocation: ToolUIPart;
@@ -264,28 +265,9 @@ export const MessageTool = React.memo(MessageToolComponent, areEqual);
 
 const MessageToolResultComponent: React.FC<{
   Component: React.ComponentType<{
-    append: (message: {
-      text?: string;
-      files?: Array<{ url: string; filename?: string; mediaType: string }>;
-    }) => void;
+    append: ChatHelpers["sendMessage"];
   }>;
 }> = ({ Component }) => {
   const { sendMessage } = useChatContext();
-  return (
-    <Component
-      append={(m) =>
-        m.text
-          ? void sendMessage({
-              text: m.text,
-              files: m.files?.map((f) => ({
-                type: "file" as const,
-                url: f.url,
-                filename: f.filename,
-                mediaType: f.mediaType,
-              })),
-            })
-          : undefined
-      }
-    />
-  );
+  return <Component append={sendMessage} />;
 };

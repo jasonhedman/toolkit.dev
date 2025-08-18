@@ -1,3 +1,4 @@
+import type { ChatHelpers } from "@/ai/types";
 import type { DeepPartial } from "ai";
 import type { z, ZodObject, ZodRawShape } from "zod";
 
@@ -107,10 +108,7 @@ export type ClientToolConfig<
   ResultComponent: React.ComponentType<{
     args: z.infer<ZodObject<Args>>;
     result: z.infer<ZodObject<Result>>;
-    append: (message: {
-      text?: string;
-      files?: Array<{ url: string; filename?: string; mediaType: string }>;
-    }) => void;
+    append: ChatHelpers["sendMessage"];
   }>;
 };
 
