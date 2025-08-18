@@ -47,16 +47,7 @@ const PurePreviewMessage: React.FC<Props> = ({
 }) => {
   const [mode, setMode] = useState<"view" | "edit">("view");
   const { selectedChatModel } = useChatContext();
-  const annotations = message.metadata?.model;
-  const hasModelAnnotation = Array.isArray(annotations)
-    ? annotations.some(
-        (a: unknown) =>
-          !!a &&
-          typeof a === "object" &&
-          (a as { type?: string }).type === "model" &&
-          typeof (a as { text?: string }).text === "string",
-      )
-    : false;
+  const model = message.metadata?.model;
 
   return (
     <AnimatePresence>
@@ -89,95 +80,99 @@ const PurePreviewMessage: React.FC<Props> = ({
             )}
           >
             {/* attachments are represented as file parts in v5 */}
+            {message.parts.filter((part) => part.type === "file").length >
+              0 && (
+              <div
+                data-testid={`message-attachments`}
+                className="flex flex-row justify-end gap-2"
+              >
+                {message.parts
+                  .filter((part) => part.type === "file")
+                  .map((attachment) => (
+                    <PreviewAttachment
+                      key={attachment.url}
+                      attachment={attachment}
+                    />
+                  ))}
+              </div>
+            )}
 
-            {message.parts?.map((part, index) => {
-              const { type } = part;
-              const key = `message-${message.id}-part-${index}`;
+            {message.parts
+              ?.filter((part) => part.type !== "file")
+              .map((part, index) => {
+                const { type } = part;
+                const key = `message-${message.id}-part-${index}`;
 
-              if (type === "reasoning") {
-                return (
-                  <MessageReasoning
-                    key={key}
-                    isLoading={isLoading}
-                    reasoningText={part.text}
-                  />
-                );
-              }
-
-              if (type === "tool-invocation") {
-                return <MessageTool key={key} toolInvocation={part} />;
-              }
-
-              if (type === "text") {
-                if (mode === "view") {
+                if (type === "reasoning") {
                   return (
-                    <div key={key} className="flex flex-row items-start gap-2">
-                      {message.role === "user" && !isReadonly && (
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button
-                              data-testid="message-edit-button"
-                              variant="ghost"
-                              className="text-muted-foreground h-fit rounded-full px-2 opacity-0 group-hover/message:opacity-100"
-                              onClick={() => {
-                                setMode("edit");
-                              }}
-                            >
-                              <Pencil />
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent>Edit message</TooltipContent>
-                        </Tooltip>
-                      )}
-
-                      <div
-                        data-testid="message-content"
-                        className={cn("flex w-full max-w-full flex-col gap-4", {
-                          "user-message rounded-xl px-3 py-2 text-white":
-                            message.role === "user",
-                        })}
-                      >
-                        <LLMMarkdown
-                          isStreamFinished={!isLoading}
-                          llmOutput={sanitizeText(part.text)}
-                        />
-                      </div>
-                    </div>
+                    <MessageReasoning
+                      key={key}
+                      isLoading={isLoading}
+                      reasoningText={part.text}
+                    />
                   );
                 }
 
-                return (
-                  <MessageEditor
-                    key={key}
-                    message={message}
-                    setMode={setMode}
-                    chatId={chatId}
-                  />
-                );
-              }
+                if (type === "tool-invocation") {
+                  return <MessageTool key={key} toolInvocation={part} />;
+                }
 
-              if (type === "file") {
-                const { url, filename, mediaType } = part;
-                return (
-                  <div
-                    key={key}
-                    data-testid={`message-file-${index}`}
-                    className="flex flex-row gap-2"
-                  >
-                    <PreviewAttachment
-                      attachment={{
-                        url,
-                        filename,
-                        mediaType,
-                        type: "file",
-                      }}
+                if (type === "text") {
+                  if (mode === "view") {
+                    return (
+                      <div
+                        key={key}
+                        className="flex flex-row items-start gap-2"
+                      >
+                        {message.role === "user" && !isReadonly && (
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                data-testid="message-edit-button"
+                                variant="ghost"
+                                className="text-muted-foreground h-fit rounded-full px-2 opacity-0 group-hover/message:opacity-100"
+                                onClick={() => {
+                                  setMode("edit");
+                                }}
+                              >
+                                <Pencil />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>Edit message</TooltipContent>
+                          </Tooltip>
+                        )}
+
+                        <div
+                          data-testid="message-content"
+                          className={cn(
+                            "flex w-full max-w-full flex-col gap-4",
+                            {
+                              "user-message rounded-xl px-3 py-2 text-white":
+                                message.role === "user",
+                            },
+                          )}
+                        >
+                          <LLMMarkdown
+                            isStreamFinished={!isLoading}
+                            llmOutput={sanitizeText(part.text)}
+                          />
+                        </div>
+                      </div>
+                    );
+                  }
+
+                  return (
+                    <MessageEditor
+                      key={key}
+                      message={message}
+                      setMode={setMode}
+                      chatId={chatId}
                     />
-                  </div>
-                );
-              }
+                  );
+                }
 
-              return null;
-            })}
+                return null;
+              })}
 
             {message.role === "assistant" && (
               <MessageActions
@@ -187,15 +182,12 @@ const PurePreviewMessage: React.FC<Props> = ({
               />
             )}
 
-            {message.role === "assistant" &&
-              isLoading &&
-              !hasModelAnnotation &&
-              selectedChatModel && (
-                <div className="text-muted-foreground mt-1 flex items-center gap-1 text-xs">
-                  <ModelProviderIcon provider={selectedChatModel.provider} />
-                  <span>{selectedChatModel.name}</span>
-                </div>
-              )}
+            {message.role === "assistant" && isLoading && model && (
+              <div className="text-muted-foreground mt-1 flex items-center gap-1 text-xs">
+                <ModelProviderIcon provider={model.provider} />
+                <span>{model.name}</span>
+              </div>
+            )}
           </div>
         </div>
       </motion.div>
