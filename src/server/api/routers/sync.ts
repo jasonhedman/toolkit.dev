@@ -1,6 +1,6 @@
 import { clientToolkits } from "@/toolkits/toolkits/client";
 import { adminProcedure, createTRPCRouter } from "../trpc";
-import type { UIMessage } from "ai";
+import type { ChatMessage } from "@/ai/types";
 
 // Define all available tools from each toolkit
 const ALL_TOOLS = Object.entries(clientToolkits).reduce(
@@ -81,8 +81,7 @@ export const syncRouter = createTRPCRouter({
 
     // Process each message
     for (const message of messages) {
-      const parts: UIMessage["parts"] =
-        message.parts as unknown as UIMessage["parts"];
+      const parts = message.parts as ChatMessage["parts"];
 
       if (!parts) {
         continue;

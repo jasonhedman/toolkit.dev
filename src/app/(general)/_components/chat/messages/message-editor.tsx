@@ -7,10 +7,10 @@ import { useDeleteMessagesAfterTimestamp } from "@/app/(general)/_hooks/use-dele
 import { useChatContext } from "@/app/(general)/_contexts/chat-context";
 
 import type { Dispatch, SetStateAction } from "react";
-import type { UIMessage } from "ai";
+import type { ChatMessage } from "@/ai/types";
 
 export type MessageEditorProps = {
-  message: UIMessage;
+  message: ChatMessage;
   setMode: Dispatch<SetStateAction<"view" | "edit">>;
   chatId: string;
 };
