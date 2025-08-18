@@ -47,7 +47,8 @@ const PurePreviewMessage: React.FC<Props> = ({
 }) => {
   const [mode, setMode] = useState<"view" | "edit">("view");
   const { selectedChatModel } = useChatContext();
-  const annotations = (message as unknown as { annotations?: unknown }).annotations;
+  const annotations = (message as unknown as { annotations?: unknown })
+    .annotations;
   const hasModelAnnotation = Array.isArray(annotations)
     ? annotations.some(
         (a: unknown) =>
@@ -100,7 +101,9 @@ const PurePreviewMessage: React.FC<Props> = ({
                   (typeof anyPart?.reasoningText === "string"
                     ? anyPart.reasoningText
                     : undefined) ??
-                  (typeof anyPart?.text === "string" ? anyPart.text : undefined) ??
+                  (typeof anyPart?.text === "string"
+                    ? anyPart.text
+                    : undefined) ??
                   "";
                 return (
                   <MessageReasoning
@@ -167,16 +170,24 @@ const PurePreviewMessage: React.FC<Props> = ({
                 );
               }
 
-                if (type === "file") {
-                  const { url, filename, mediaType } = part;
-                  return (
-                    <div key={key} data-testid={`message-file-${index}`} className="flex flex-row gap-2">
-                      <PreviewAttachment
-                        attachment={{ url, name: filename, contentType: mediaType }}
-                      />
-                    </div>
-                  );
-                }
+              if (type === "file") {
+                const { url, filename, mediaType } = part;
+                return (
+                  <div
+                    key={key}
+                    data-testid={`message-file-${index}`}
+                    className="flex flex-row gap-2"
+                  >
+                    <PreviewAttachment
+                      attachment={{
+                        url,
+                        name: filename,
+                        contentType: mediaType,
+                      }}
+                    />
+                  </div>
+                );
+              }
 
               return null;
             })}
@@ -189,7 +200,9 @@ const PurePreviewMessage: React.FC<Props> = ({
               />
             )}
 
-            {message.role === "assistant" && isLoading && !hasModelAnnotation &&
+            {message.role === "assistant" &&
+              isLoading &&
+              !hasModelAnnotation &&
               selectedChatModel && (
                 <div className="text-muted-foreground mt-1 flex items-center gap-1 text-xs">
                   <ModelProviderIcon provider={selectedChatModel.provider} />

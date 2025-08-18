@@ -1,6 +1,12 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState, useCallback } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  useCallback,
+} from "react";
 import { useChat, type UseChatHelpers } from "@ai-sdk/react";
 import { DefaultChatTransport, type UIMessage } from "ai";
 import { toast } from "sonner";
@@ -8,7 +14,10 @@ import { toast } from "sonner";
 import { OpenRouterChecks } from "./openrouter-checks";
 import { api } from "@/trpc/react";
 import { useAutoResume } from "@/app/(general)/_hooks/use-auto-resume";
-import { LanguageModelCapability, type LanguageModel } from "@/ai/language/types";
+import {
+  LanguageModelCapability,
+  type LanguageModel,
+} from "@/ai/language/types";
 import { clientToolkits } from "@/toolkits/toolkits/client";
 import { languageModels } from "@/ai/language";
 import { clientCookieUtils } from "@/lib/cookies/client";
@@ -39,7 +48,9 @@ interface ChatContextType {
   streamStopped: boolean;
   attachments: Array<Attachment>;
   setAttachments: (
-    attachments: Array<Attachment> | ((prev: Array<Attachment>) => Array<Attachment>),
+    attachments:
+      | Array<Attachment>
+      | ((prev: Array<Attachment>) => Array<Attachment>),
   ) => void;
   selectedChatModel: LanguageModel | undefined;
   setSelectedChatModel: (model: LanguageModel) => void;
@@ -90,27 +101,33 @@ export function ChatProvider({
   const utils = api.useUtils();
 
   const [attachments, setAttachments] = useState<Array<Attachment>>([]);
-  const [selectedChatModelState, setSelectedChatModelState] = useState<LanguageModel>(
-    initialPreferences?.selectedChatModel ?? DEFAULT_CHAT_MODEL,
-  );
+  const [selectedChatModelState, setSelectedChatModelState] =
+    useState<LanguageModel>(
+      initialPreferences?.selectedChatModel ?? DEFAULT_CHAT_MODEL,
+    );
   const [useNativeSearchState, setUseNativeSearchState] = useState<boolean>(
     initialPreferences?.useNativeSearch ??
-      !!selectedChatModelState?.capabilities?.includes(LanguageModelCapability.WebSearch),
+      !!selectedChatModelState?.capabilities?.includes(
+        LanguageModelCapability.WebSearch,
+      ),
   );
-  const [imageGenerationModelState, setImageGenerationModelState] = useState<ImageModel | undefined>(
-    initialPreferences?.imageGenerationModel,
-  );
+  const [imageGenerationModelState, setImageGenerationModelState] = useState<
+    ImageModel | undefined
+  >(initialPreferences?.imageGenerationModel);
   const [toolkits, setToolkitsState] = useState<Array<SelectedToolkit>>(() => {
     // Restore toolkits by matching persisted ones with available client toolkits
-  if (initialPreferences?.toolkits?.length) {
+    if (initialPreferences?.toolkits?.length) {
       return initialPreferences.toolkits
         .map((persistedToolkit) => {
-          const clientToolkit = clientToolkits[persistedToolkit.id as keyof typeof clientToolkits];
+          const clientToolkit =
+            clientToolkits[persistedToolkit.id as keyof typeof clientToolkits];
           if (clientToolkit) {
             return {
               id: persistedToolkit.id as Toolkits,
               toolkit: clientToolkit,
-              parameters: persistedToolkit.parameters as z.infer<ClientToolkit["parameters"]>,
+              parameters: persistedToolkit.parameters as z.infer<
+                ClientToolkit["parameters"]
+              >,
             };
           }
           return null;
@@ -155,7 +172,7 @@ export function ChatProvider({
   const chat = useChat<UIMessage>({
     id,
     experimental_throttle: 100,
-  transport: new DefaultChatTransport<UIMessage>({
+    transport: new DefaultChatTransport<UIMessage>({
       api: "/api/chat",
       fetch: fetchWithErrorHandlers,
       prepareSendMessagesRequest: ({ messages, trigger }) => {
@@ -163,7 +180,7 @@ export function ChatProvider({
         return {
           body: {
             id,
-      message: trigger === "submit-message" && last ? last : undefined,
+            message: trigger === "submit-message" && last ? last : undefined,
             selectedChatModel: `${selectedChatModelState?.provider}/${selectedChatModelState?.modelId}`,
             imageGenerationModel: imageGenerationModelState
               ? `${imageGenerationModelState.provider}:${imageGenerationModelState.modelId}`
@@ -201,7 +218,15 @@ export function ChatProvider({
     },
   });
 
-  const { messages, setMessages, sendMessage: append, status, stop, regenerate: reload, resumeStream } = chat;
+  const {
+    messages,
+    setMessages,
+    sendMessage: append,
+    status,
+    stop,
+    regenerate: reload,
+    resumeStream,
+  } = chat;
 
   const onStreamError = useCallback(() => {
     // Mark stream as stopped to hide thinking message
@@ -210,7 +235,13 @@ export function ChatProvider({
     stop();
   }, [stop]);
 
-  useAutoResume({ autoResume, initialMessages, resumeStream, setMessages, onStreamError });
+  useAutoResume({
+    autoResume,
+    initialMessages,
+    resumeStream,
+    setMessages,
+    onStreamError,
+  });
 
   const handleSubmit = (event?: { preventDefault?: () => void }) => {
     event?.preventDefault?.();
@@ -222,13 +253,17 @@ export function ChatProvider({
       url: a.url,
       filename: a.name,
     }));
-  void append({ text: input, files });
+    void append({ text: input, files });
     setAttachments([]);
     setInput("");
   };
 
   useEffect(() => {
-    if (selectedChatModelState?.capabilities?.includes(LanguageModelCapability.WebSearch)) {
+    if (
+      selectedChatModelState?.capabilities?.includes(
+        LanguageModelCapability.WebSearch,
+      )
+    ) {
       setUseNativeSearch(true);
     } else {
       setUseNativeSearch(false);

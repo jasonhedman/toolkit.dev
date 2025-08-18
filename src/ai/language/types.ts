@@ -1,5 +1,4 @@
-// ProviderMetadata removed in v5; use a generic record for providerOptions
-export type ProviderMetadata = Record<string, unknown>;
+import type { ProviderMetadata } from "ai";
 
 export enum LanguageModelCapability {
   Vision = "vision",

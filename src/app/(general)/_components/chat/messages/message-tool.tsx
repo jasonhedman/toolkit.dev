@@ -260,7 +260,10 @@ export const MessageTool = React.memo(MessageToolComponent, areEqual);
 
 const MessageToolResultComponent: React.FC<{
   Component: React.ComponentType<{
-    append: (message: { text?: string; files?: Array<{ url: string; filename?: string; mediaType: string }> }) => void;
+    append: (message: {
+      text?: string;
+      files?: Array<{ url: string; filename?: string; mediaType: string }>;
+    }) => void;
   }>;
 }> = ({ Component }) => {
   const { append } = useChatContext();

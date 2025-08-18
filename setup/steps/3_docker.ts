@@ -16,7 +16,11 @@ import {
 export function startDockerServices(): void {
   try {
     // Allow skipping docker setup via env or CI
-    if (process.env.SKIP_DOCKER === "1" || process.env.SKIP_DOCKER === "true" || process.env.CI === "true") {
+    if (
+      process.env.SKIP_DOCKER === "1" ||
+      process.env.SKIP_DOCKER === "true" ||
+      process.env.CI === "true"
+    ) {
       logInfo("Skipping Docker services setup (SKIP_DOCKER/CI detected)");
       return;
     }
@@ -57,7 +61,9 @@ export function startDockerServices(): void {
 
     logSuccess("Docker services started successfully");
   } catch (error) {
-    logWarning("Continuing without Docker services due to an error starting them.");
+    logWarning(
+      "Continuing without Docker services due to an error starting them.",
+    );
     if (error instanceof Error) {
       logWarning(error.message);
     }

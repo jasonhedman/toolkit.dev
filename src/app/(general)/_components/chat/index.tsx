@@ -76,7 +76,7 @@ export const Chat = async ({
       // Note: content will soon be deprecated in @ai-sdk/react
       content: "",
       createdAt: message.createdAt,
-  // attachments are represented via file parts in v5; no experimental_attachments
+      // attachments are represented via file parts in v5; no experimental_attachments
       annotations: message.modelId
         ? [
             {

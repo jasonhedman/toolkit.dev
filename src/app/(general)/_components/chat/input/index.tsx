@@ -28,7 +28,7 @@ import { cn } from "@/lib/utils";
 
 import { ModelSelect } from "./model-select";
 import { useChatContext } from "@/app/(general)/_contexts/chat-context";
-type Attachment = { url: string; name?: string; contentType?: string };
+import type { Attachment } from "ai";
 import type { UseChatHelpers } from "@ai-sdk/react";
 import type { UIMessage } from "ai";
 import { ToolsSelect } from "./tools";
@@ -176,7 +176,7 @@ const PureMultimodalInput: React.FC<Props> = ({
       window.history.replaceState({}, "", `/${chatId}`);
     }
 
-  handleSubmit();
+    handleSubmit();
 
     setAttachments([]);
     setLocalStorageInput("");
@@ -197,7 +197,7 @@ const PureMultimodalInput: React.FC<Props> = ({
   ]);
 
   const uploadFile = useCallback(
-  async (file: File): Promise<Attachment | undefined> => {
+    async (file: File): Promise<Attachment | undefined> => {
       const formData = new FormData();
       formData.append("file", file);
 

@@ -33,7 +33,9 @@ export function runMigrations(): void {
     // If no local env file, warn and skip to keep setup non-blocking
     const envPath = join(getProjectRoot(), ".env.local");
     if (!existsSync(envPath)) {
-      logWarning(".env.local not found. Skipping database migrations. Create it to enable local DB.");
+      logWarning(
+        ".env.local not found. Skipping database migrations. Create it to enable local DB.",
+      );
       return;
     }
 
@@ -59,7 +61,9 @@ export function runMigrations(): void {
     logSuccess("Database migrations completed successfully");
   } catch (error) {
     // Don't block local dev if DB isn't available
-    logWarning("Continuing without running database migrations (DB unavailable or command failed)");
+    logWarning(
+      "Continuing without running database migrations (DB unavailable or command failed)",
+    );
     if (error instanceof Error) {
       logError(error.message);
     }

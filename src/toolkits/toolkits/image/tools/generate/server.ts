@@ -14,7 +14,10 @@ export const generateToolConfigServer = (
 > => {
   return {
     callback: async ({ prompt }) => {
-  const image: GeneratedImage = await generateImage(parameters.model, prompt);
+      const image: GeneratedImage = await generateImage(
+        parameters.model,
+        prompt,
+      );
 
       if (!image) {
         console.error("No image generated");
@@ -23,8 +26,10 @@ export const generateToolConfigServer = (
 
       const imageId = crypto.randomUUID();
 
-  const fileName = `images/${imageId}.${image.mimeType.split("/")[1]}`;
-  const file = new File([image.uint8Array], fileName, { type: image.mimeType });
+      const fileName = `images/${imageId}.${image.mimeType.split("/")[1]}`;
+      const file = new File([image.uint8Array], fileName, {
+        type: image.mimeType,
+      });
 
       const { url: imageUrl } = await put(file.name, file, {
         access: "public",

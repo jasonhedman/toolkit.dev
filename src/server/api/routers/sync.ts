@@ -91,7 +91,9 @@ export const syncRouter = createTRPCRouter({
       // Look for tool-invocation parts
       for (const part of parts) {
         if (part.type === "tool-invocation") {
-          const maybeInvocation = (part as unknown as { toolInvocation?: { toolName?: string } }).toolInvocation;
+          const maybeInvocation = (
+            part as unknown as { toolInvocation?: { toolName?: string } }
+          ).toolInvocation;
           if (!maybeInvocation?.toolName) continue;
           const { toolName } = maybeInvocation as { toolName: string };
 

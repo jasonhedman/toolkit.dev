@@ -35,9 +35,11 @@ const messagePartSchema = z.discriminatedUnion("type", [
   }),
   z.object({
     type: z.literal("file"),
-  url: z.string().url(),
-  filename: z.string().optional(),
-  mediaType: z.enum(["image/png", "image/jpg", "image/jpeg", "application/pdf"]).optional(),
+    url: z.string().url(),
+    filename: z.string().optional(),
+    mediaType: z
+      .enum(["image/png", "image/jpg", "image/jpeg", "application/pdf"])
+      .optional(),
   }),
   z.object({
     type: z.literal("step-start"),

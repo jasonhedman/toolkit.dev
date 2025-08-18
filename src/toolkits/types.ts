@@ -107,7 +107,10 @@ export type ClientToolConfig<
   ResultComponent: React.ComponentType<{
     args: z.infer<ZodObject<Args>>;
     result: z.infer<ZodObject<Result>>;
-  append: (message: { text?: string; files?: Array<{ url: string; filename?: string; mediaType: string }> }) => void;
+    append: (message: {
+      text?: string;
+      files?: Array<{ url: string; filename?: string; mediaType: string }>;
+    }) => void;
   }>;
 };
 

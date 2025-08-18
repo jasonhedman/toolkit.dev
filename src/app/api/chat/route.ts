@@ -18,7 +18,12 @@ import { generateUUID } from "@/lib/utils";
 import { ChatSDKError } from "@/lib/errors";
 
 import type { ResumableStreamContext } from "resumable-stream";
-import type { CoreAssistantMessage, CoreToolMessage, Tool, UIMessage } from "ai";
+import type {
+  CoreAssistantMessage,
+  CoreToolMessage,
+  Tool,
+  UIMessage,
+} from "ai";
 import type { Chat } from "@prisma/client";
 import { openai } from "@ai-sdk/openai";
 import { getServerToolkit } from "@/toolkits/toolkits/server";
@@ -87,7 +92,9 @@ export async function POST(request: Request) {
     if (!chat) {
       // Start title generation in parallel (don't await)
       const titlePromise = generateTitleFromUserMessage(
-        extractTextFromParts(message.parts as Array<IncomingTextPart | IncomingFilePart>),
+        extractTextFromParts(
+          message.parts as Array<IncomingTextPart | IncomingFilePart>,
+        ),
       );
 
       // Create chat with temporary title immediately
@@ -117,7 +124,9 @@ export async function POST(request: Request) {
       }
     }
 
-  const previousMessages = await api.messages.getMessagesForChat({ chatId: id });
+    const previousMessages = await api.messages.getMessagesForChat({
+      chatId: id,
+    });
     // Normalize incoming message into a UIMessage with required fields
     const uiUserMessage: UIMessage = {
       id: message.id,
@@ -137,7 +146,7 @@ export async function POST(request: Request) {
 
     // v5: previousMessages are already stored as UIMessage parts; append the normalized incoming UI message
     const messages: UIMessage[] = [
-      ...((previousMessages as unknown) as UIMessage[]),
+      ...(previousMessages as unknown as UIMessage[]),
       uiUserMessage,
     ];
 
@@ -148,7 +157,14 @@ export async function POST(request: Request) {
       parts: message.parts,
       attachments:
         message.parts
-          ?.filter((p): p is Extract<PostRequestBody["message"]["parts"][number], { type: "file" }> => p.type === "file")
+          ?.filter(
+            (
+              p,
+            ): p is Extract<
+              PostRequestBody["message"]["parts"][number],
+              { type: "file" }
+            > => p.type === "file",
+          )
           .map((p) => ({
             url: p.url,
             name: p.filename ?? "",
@@ -265,11 +281,13 @@ export async function POST(request: Request) {
               errorStr.includes("402") ||
               errorStr.includes("requires more credits")
             ) {
-              console.error("OpenRouter credits exhausted - 402 error detected");
+              console.error(
+                "OpenRouter credits exhausted - 402 error detected",
+              );
             }
           }
         },
-  onFinish: async ({ response }) => {
+        onFinish: async ({ response }) => {
           if (session.user?.id) {
             try {
               const assistantMessages = response.messages.filter(
@@ -294,9 +312,10 @@ export async function POST(request: Request) {
                 id: assistantId,
                 role: "assistant",
                 // Persist the final assistant text as a single text part
-                parts: response && typeof (response as any).text === "string"
-                  ? [{ type: "text", text: (response as any).text }]
-                  : [],
+                parts:
+                  response && typeof (response as any).text === "string"
+                    ? [{ type: "text", text: (response as any).text }]
+                    : [],
                 attachments: [],
                 modelId: response.modelId,
               });
@@ -324,7 +343,10 @@ export async function POST(request: Request) {
 
     if (streamContext) {
       return new Response(
-  await streamContext.resumableStream(streamId, () => stream as unknown as ReadableStream<string>),
+        await streamContext.resumableStream(
+          streamId,
+          () => stream as unknown as ReadableStream<string>,
+        ),
       );
     } else {
       return new Response(stream);
@@ -353,7 +375,9 @@ function extractTextFromParts(
     return parts
       .filter(
         (p): p is IncomingTextPart =>
-          !!p && p.type === "text" && typeof (p as IncomingTextPart).text === "string",
+          !!p &&
+          p.type === "text" &&
+          typeof (p as IncomingTextPart).text === "string",
       )
       .map((p) => p.text)
       .join("\n")

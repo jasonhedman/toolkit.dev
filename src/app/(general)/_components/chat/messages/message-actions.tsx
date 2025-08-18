@@ -47,15 +47,18 @@ export const PureMessageActions: React.FC<Props> = ({
   });
 
   // Extract model annotation text if present (guarded)
-  const annotations = (message as unknown as { annotations?: unknown }).annotations;
+  const annotations = (message as unknown as { annotations?: unknown })
+    .annotations;
   const modelAnnotationText = Array.isArray(annotations)
-    ? (annotations.find(
-        (a: unknown) =>
-          !!a &&
-          typeof a === "object" &&
-          (a as { type?: string }).type === "model" &&
-          typeof (a as { text?: string }).text === "string",
-      ) as { text?: string } | undefined)?.text
+    ? (
+        annotations.find(
+          (a: unknown) =>
+            !!a &&
+            typeof a === "object" &&
+            (a as { type?: string }).type === "model" &&
+            typeof (a as { text?: string }).text === "string",
+        ) as { text?: string } | undefined
+      )?.text
     : undefined;
 
   if (isLoading) return null;
@@ -116,7 +119,9 @@ export const PureMessageActions: React.FC<Props> = ({
         {modelAnnotationText && (
           <HStack>
             {/* Provider is not encoded in annotation text; only show the label */}
-            <p className="text-muted-foreground text-xs">{modelAnnotationText}</p>
+            <p className="text-muted-foreground text-xs">
+              {modelAnnotationText}
+            </p>
           </HStack>
         )}
       </div>

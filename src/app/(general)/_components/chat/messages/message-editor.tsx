@@ -59,7 +59,7 @@ export function MessageEditor({
   const onSubmit = async () => {
     setIsSubmitting(true);
 
-  const messageTimestamp = Date.now();
+    const messageTimestamp = Date.now();
     const deleteFromTimestamp = new Date(messageTimestamp);
     mutate({
       chatId: chatId,
@@ -76,7 +76,7 @@ export function MessageEditor({
 
     setMode("view");
 
-  await append({ text: draftContent });
+    await append({ text: draftContent });
 
     setIsSubmitting(false);
   };
