@@ -47,8 +47,14 @@ export const googleCalendarFindAvailabilityToolConfigClient: ClientToolConfig<
     const hasMoreSlots = availableSlots.length > INITIAL_SLOTS_TO_SHOW;
 
     const handleSlotSelect = (slot: (typeof availableSlots)[0]) => {
-      append({
-        text: `I've selected the time slot on ${slot.dayOfWeek}, ${slot.date} from ${slot.timeRange}. Please create a calendar event for this time slot.`,
+      void append({
+        role: "user",
+        parts: [
+          {
+            type: "text",
+            text: `I've selected the time slot on ${slot.dayOfWeek}, ${slot.date} from ${slot.timeRange}. Please create a calendar event for this time slot.`,
+          },
+        ],
       });
     };
 

@@ -37,7 +37,13 @@ export const getPlaylistsToolConfigClient: ClientToolConfig<
               className="hover:bg-muted/50 cursor-pointer rounded-lg border p-4 transition-colors"
               onClick={() => {
                 void append({
-                  text: `Tell me more about the playlist "${playlist.name}"`,
+                  role: "user",
+                  parts: [
+                    {
+                      type: "text",
+                      text: `Tell me more about the playlist "${playlist.name}"`,
+                    },
+                  ],
                 });
               }}
             >

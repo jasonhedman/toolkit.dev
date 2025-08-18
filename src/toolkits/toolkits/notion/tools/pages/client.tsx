@@ -23,7 +23,12 @@ export const notionGetPageToolConfigClient: ClientToolConfig<
       <NotionPage
         page={page}
         onClick={() => {
-          void append({ text: `Get the content of page ${page.id}` });
+          void append({
+            role: "user",
+            parts: [
+              { type: "text", text: `Get the content of page ${page.id}` },
+            ],
+          });
         }}
       />
     );
@@ -60,7 +65,15 @@ export const notionSearchPagesToolConfigClient: ClientToolConfig<
                 key={page.id}
                 page={page}
                 onClick={() => {
-                  void append({ text: `Get the content of page ${page.id}` });
+                  void append({
+                    role: "user",
+                    parts: [
+                      {
+                        type: "text",
+                        text: `Get the content of page ${page.id}`,
+                      },
+                    ],
+                  });
                 }}
               />
             );
@@ -98,7 +111,12 @@ export const notionCreatePageToolConfigClient: ClientToolConfig<
         <NotionPage
           page={page}
           onClick={() => {
-            void append({ text: `Get the content of page ${page.id}` });
+            void append({
+              role: "user",
+              parts: [
+                { type: "text", text: `Get the content of page ${page.id}` },
+              ],
+            });
           }}
         />
       </div>

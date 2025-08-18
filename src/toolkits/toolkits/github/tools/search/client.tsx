@@ -60,7 +60,13 @@ export const githubSearchRepositoriesToolConfigClient: ClientToolConfig<
               className="group w-full cursor-pointer items-center border-b py-2 last:border-b-0 last:pb-0"
               onClick={() => {
                 void append({
-                  text: `Get more information about ${repo.full_name}`,
+                  role: "user",
+                  parts: [
+                    {
+                      type: "text",
+                      text: `Get more information about ${repo.full_name}`,
+                    },
+                  ],
                 });
               }}
             >
