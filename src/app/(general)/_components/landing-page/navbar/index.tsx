@@ -33,7 +33,9 @@ export const Navbar = () => {
               <SiDiscord className="size-4" />
             </Button>
           </Link>
-          <ColorModeToggle />
+          <div className="hidden sm:flex">
+            <ColorModeToggle />
+          </div>
         </HStack>
       </HStack>
     </HStack>

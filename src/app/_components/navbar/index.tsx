@@ -5,6 +5,7 @@ import { ColorModeToggle } from "./color-mode-toggle";
 import { HStack } from "@/components/ui/stack";
 import { auth } from "@/server/auth";
 import { SidebarTrigger } from "@/components/ui/sidebar";
+import { ThemeSwitcher } from "@/components/theme";
 import { Menu } from "lucide-react";
 
 export const Navbar = async () => {
@@ -26,6 +27,7 @@ export const Navbar = async () => {
       </HStack>
       <HStack>
         <AccountButton />
+        <ThemeSwitcher />
         <ColorModeToggle />
       </HStack>
     </HStack>
