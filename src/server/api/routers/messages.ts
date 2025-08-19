@@ -10,7 +10,7 @@ const messagePartSchema = z.discriminatedUnion("type", [
   }),
   z.object({
     type: z.literal("reasoning"),
-    reasoning: z.string(),
+    reasoningText: z.string(),
     details: z.array(
       z.discriminatedUnion("type", [
         z.object({
@@ -35,8 +35,9 @@ const messagePartSchema = z.discriminatedUnion("type", [
   }),
   z.object({
     type: z.literal("file"),
-    mimeType: z.string(),
-    data: z.string(),
+  url: z.string().url(),
+  filename: z.string().optional(),
+  mediaType: z.enum(["image/png", "image/jpg", "image/jpeg", "application/pdf"]).optional(),
   }),
   z.object({
     type: z.literal("step-start"),

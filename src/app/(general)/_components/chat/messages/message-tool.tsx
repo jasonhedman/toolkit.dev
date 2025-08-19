@@ -3,7 +3,7 @@ import { Card } from "@/components/ui/card";
 import { HStack } from "@/components/ui/stack";
 import { getClientToolkit } from "@/toolkits/toolkits/client";
 import type { Toolkits, ServerToolkitNames } from "@/toolkits/toolkits/shared";
-import type { CreateMessage, DeepPartial, ToolInvocation } from "ai";
+import type { DeepPartial } from "ai";
 import { Loader2 } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import React from "react";
@@ -11,7 +11,13 @@ import type z from "zod";
 import { useChatContext } from "@/app/(general)/_contexts/chat-context";
 
 interface Props {
-  toolInvocation: ToolInvocation;
+  toolInvocation: {
+    args?: unknown;
+    state?: string;
+    result?: unknown;
+    toolName?: string;
+    toolCallId?: string;
+  };
 }
 
 type ToolResult<T extends z.ZodType> =
@@ -31,6 +37,14 @@ const MessageToolComponent: React.FC<Props> = ({ toolInvocation }) => {
   const completeOnFirstMount = toolInvocation.state === "result";
 
   const { toolName } = toolInvocation;
+
+  if (!toolName) {
+    return (
+      <pre className="w-full max-w-full whitespace-pre-wrap">
+        {JSON.stringify(toolInvocation, null, 2)}
+      </pre>
+    );
+  }
 
   const [server, tool] = toolName.split("_");
 
@@ -128,7 +142,7 @@ const MessageToolComponent: React.FC<Props> = ({ toolInvocation }) => {
                 }}
                 style={{ overflow: "hidden" }}
               >
-                {toolInvocation.args && (
+                {toolInvocation.args !== undefined ? (
                   <toolConfig.CallComponent
                     args={
                       toolInvocation.args as DeepPartial<
@@ -137,7 +151,7 @@ const MessageToolComponent: React.FC<Props> = ({ toolInvocation }) => {
                     }
                     isPartial={toolInvocation.state === "partial-call"}
                   />
-                )}
+                ) : null}
               </motion.div>
             ) : toolConfig && toolInvocation.state === "result" ? (
               (() => {
@@ -246,10 +260,25 @@ export const MessageTool = React.memo(MessageToolComponent, areEqual);
 
 const MessageToolResultComponent: React.FC<{
   Component: React.ComponentType<{
-    append: (message: CreateMessage) => void;
+    append: (message: { text?: string; files?: Array<{ url: string; filename?: string; mediaType: string }> }) => void;
   }>;
 }> = ({ Component }) => {
   const { append } = useChatContext();
-
-  return <Component append={append} />;
+  return (
+    <Component
+      append={(m) =>
+        m.text
+          ? void append({
+              text: m.text,
+              files: m.files?.map((f) => ({
+                type: "file" as const,
+                url: f.url,
+                filename: f.filename,
+                mediaType: f.mediaType,
+              })),
+            })
+          : undefined
+      }
+    />
+  );
 };

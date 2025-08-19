@@ -1,5 +1,7 @@
 "use client";
 
+import { useChatContext } from "@/app/(general)/_contexts/chat-context";
+import { ModelProviderIcon } from "@/components/ui/model-icon";
 import { memo, useState } from "react";
 
 import { Pencil } from "lucide-react";
@@ -44,6 +46,17 @@ const PurePreviewMessage: React.FC<Props> = ({
   chatId,
 }) => {
   const [mode, setMode] = useState<"view" | "edit">("view");
+  const { selectedChatModel } = useChatContext();
+  const annotations = (message as unknown as { annotations?: unknown }).annotations;
+  const hasModelAnnotation = Array.isArray(annotations)
+    ? annotations.some(
+        (a: unknown) =>
+          !!a &&
+          typeof a === "object" &&
+          (a as { type?: string }).type === "model" &&
+          typeof (a as { text?: string }).text === "string",
+      )
+    : false;
 
   return (
     <AnimatePresence>
@@ -75,41 +88,38 @@ const PurePreviewMessage: React.FC<Props> = ({
               message.role === "assistant" && "w-0 flex-1",
             )}
           >
-            {message.experimental_attachments &&
-              message.experimental_attachments.length > 0 && (
-                <div
-                  data-testid={`message-attachments`}
-                  className="flex flex-row justify-end gap-2"
-                >
-                  {message.experimental_attachments.map((attachment) => (
-                    <PreviewAttachment
-                      key={attachment.url}
-                      attachment={attachment}
-                    />
-                  ))}
-                </div>
-              )}
+            {/* attachments are represented as file parts in v5 */}
 
             {message.parts?.map((part, index) => {
-              const { type } = part;
+              // Use proper type guards to avoid unsafe assignments
               const key = `message-${message.id}-part-${index}`;
+              
+              // First check if part has a type property
+              if (!part || typeof part !== 'object') return null;
+              
+              const typedPart = part as Record<string, unknown>;
+              const type = typeof typedPart.type === 'string' ? typedPart.type : undefined;
 
               if (type === "reasoning") {
+                // Safely access reasoning text
+                let reasoningText = "";
+                if (typedPart.reasoningText && typeof typedPart.reasoningText === "string") {
+                  reasoningText = typedPart.reasoningText;
+                } else if (typedPart.text && typeof typedPart.text === "string") {
+                  reasoningText = typedPart.text;
+                }
                 return (
                   <MessageReasoning
                     key={key}
                     isLoading={isLoading}
-                    reasoning={part.reasoning}
+                    reasoningText={reasoningText}
                   />
                 );
               }
 
               if (type === "tool-invocation") {
-                const { toolInvocation } = part;
-
-                return (
-                  <MessageTool key={key} toolInvocation={toolInvocation} />
-                );
+                const toolInvocation = typedPart.toolInvocation;
+                return toolInvocation ? <MessageTool key={key} toolInvocation={toolInvocation} /> : null;
               }
 
               if (type === "text") {
@@ -141,10 +151,12 @@ const PurePreviewMessage: React.FC<Props> = ({
                             message.role === "user",
                         })}
                       >
-                        <LLMMarkdown
-                          isStreamFinished={!isLoading}
-                          llmOutput={sanitizeText(part.text)}
-                        />
+                        {typeof typedPart.text === "string" && (
+                          <LLMMarkdown
+                            isStreamFinished={!isLoading}
+                            llmOutput={sanitizeText(typedPart.text)}
+                          />
+                        )}
                       </div>
                     </div>
                   );
@@ -160,6 +172,25 @@ const PurePreviewMessage: React.FC<Props> = ({
                 );
               }
 
+              if (type === "file") {
+                const url = typeof typedPart.url === "string" ? typedPart.url : undefined;
+                const filename = typeof typedPart.filename === "string" ? typedPart.filename : undefined;
+                const mediaType = typeof typedPart.mediaType === "string" ? typedPart.mediaType : undefined;
+                
+                if (!url) return null;
+                return (
+                  <div key={key} data-testid={`message-file-${index}`} className="flex flex-row gap-2">
+                    <PreviewAttachment
+                      attachment={{ 
+                        url, 
+                        name: filename ?? "file", 
+                        contentType: mediaType ?? "application/octet-stream" 
+                      }}
+                    />
+                  </div>
+                );
+              }
+
               return null;
             })}
 
@@ -170,6 +201,14 @@ const PurePreviewMessage: React.FC<Props> = ({
                 chatId={chatId}
               />
             )}
+
+            {message.role === "assistant" && isLoading && !hasModelAnnotation &&
+              selectedChatModel && (
+                <div className="text-muted-foreground mt-1 flex items-center gap-1 text-xs">
+                  <ModelProviderIcon provider={selectedChatModel.provider} />
+                  <span>{selectedChatModel.name}</span>
+                </div>
+              )}
           </div>
         </div>
       </motion.div>

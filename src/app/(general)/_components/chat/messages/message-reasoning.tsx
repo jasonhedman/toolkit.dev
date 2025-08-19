@@ -12,12 +12,12 @@ import { cn } from "@/lib/utils";
 
 interface MessageReasoningProps {
   isLoading: boolean;
-  reasoning: string;
+  reasoningText: string;
 }
 
 export function MessageReasoning({
   isLoading,
-  reasoning,
+  reasoningText,
 }: MessageReasoningProps) {
   const [isExpanded, setIsExpanded] = useState(true);
 
@@ -85,7 +85,7 @@ export function MessageReasoning({
             style={{ overflow: "hidden" }}
             className="flex flex-col gap-4 border-l pl-4 text-zinc-600 dark:text-zinc-400"
           >
-            <LLMMarkdown isStreamFinished={!isLoading} llmOutput={reasoning} />
+            <LLMMarkdown isStreamFinished={!isLoading} llmOutput={reasoningText} />
           </motion.div>
         )}
       </AnimatePresence>

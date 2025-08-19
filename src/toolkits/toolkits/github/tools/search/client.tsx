@@ -59,10 +59,7 @@ export const githubSearchRepositoriesToolConfigClient: ClientToolConfig<
               key={repo.full_name}
               className="group w-full cursor-pointer items-center border-b py-2 last:border-b-0 last:pb-0"
               onClick={() => {
-                void append({
-                  role: "user",
-                  content: `Get more information about ${repo.full_name}`,
-                });
+                void append({ text: `Get more information about ${repo.full_name}` });
               }}
             >
               <div className="mt-1 size-6 shrink-0 overflow-hidden rounded-sm">

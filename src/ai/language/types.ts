@@ -18,5 +18,5 @@ export type LanguageModel = {
   bestFor?: string[];
   contextLength?: number;
   isNew?: boolean;
-  providerOptions?: ProviderMetadata;
+  providerOptions?: ProviderMetadata; // use SDK type directly (no alias masking)
 };

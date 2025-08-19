@@ -8,7 +8,7 @@ export function useMessages({
   scrollToBottom,
 }: {
   chatId: string;
-  status: UseChatHelpers["status"];
+  status: UseChatHelpers<any>["status"]; // eslint-disable-line @typescript-eslint/no-explicit-any
   scrollToBottom: (behavior: ScrollBehavior) => void;
 }) {
   const [hasSentMessage, setHasSentMessage] = useState(false);

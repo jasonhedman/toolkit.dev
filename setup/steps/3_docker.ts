@@ -2,28 +2,18 @@ import { execSync } from "child_process";
 import { existsSync } from "fs";
 import { join } from "path";
 
-import {
-  logInfo,
-  logSuccess,
-  logError,
-  getProjectRoot,
-  checkDocker,
-  dockerDaemonRunning,
-} from "../utils";
+import { logInfo, logSuccess, getProjectRoot, checkDocker, dockerDaemonRunning } from "../utils";
+import { STEP_FAILURE } from "../types";
 
 // Start Docker Compose services
 export function startDockerServices(): void {
   try {
+  // Strict: do not allow skipping; environment must support required services.
+
     // Check if Docker is available
     const dockerCommand = checkDocker();
     if (!dockerCommand) {
-      logError(
-        "Docker or Podman is not installed. Please install Docker or Podman first.",
-      );
-      logInfo(
-        "You can install Docker Desktop for free from https://www.docker.com/products/docker-desktop/",
-      );
-      throw new Error("Docker not found");
+      throw new STEP_FAILURE("Docker/Podman not found. Install Docker to continue.");
     }
 
     logInfo(`Using ${dockerCommand} as container runtime`);
@@ -33,14 +23,12 @@ export function startDockerServices(): void {
     const dockerComposePath = join(projectRoot, "docker-compose.yml");
 
     if (!existsSync(dockerComposePath)) {
-      logError("docker-compose.yml not found in project root");
-      throw new Error("Docker Compose file not found");
+      throw new STEP_FAILURE("docker-compose.yml not found. Ensure it exists and is valid.");
     }
 
-    if (!dockerDaemonRunning(dockerCommand)) {
-      throw new Error(
-        `${dockerCommand} daemon is not running. Please start ${dockerCommand} Desktop.`,
-      );
+    const daemonRunning = dockerDaemonRunning(dockerCommand);
+    if (!daemonRunning) {
+      throw new STEP_FAILURE(`${dockerCommand} daemon is not running. Start it and rerun setup.`);
     }
 
     // Start Docker Compose services in detached mode
@@ -52,10 +40,10 @@ export function startDockerServices(): void {
 
     logSuccess("Docker services started successfully");
   } catch (error) {
-    logError("Failed to start Docker services");
-    if (error instanceof Error) {
-      logError(error.message);
+    if (error instanceof STEP_FAILURE) {
+      throw error; // propagate strict failure
     }
-    throw error;
+    const message = error instanceof Error ? error.message : String(error);
+    throw new STEP_FAILURE(`Error starting Docker services: ${message}`);
   }
 }

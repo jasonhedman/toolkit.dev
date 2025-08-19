@@ -42,6 +42,17 @@ The setup script will:
 - Run database migrations
 - Run the app
 
+#### Remote Database Override
+
+By default, local migrations are only executed for a localhost / 127.0.0.1 `DATABASE_URL`.
+If you intentionally point `DATABASE_URL` to a remote managed database during development and want to skip local migrations, set:
+
+```
+REMOTE_DB=1
+```
+
+This makes the skip explicit; otherwise the setup will fail fast to prevent accidentally targeting production.
+
 ### Manual Setup
 
 If you prefer to set up manually:
@@ -135,6 +146,10 @@ LUMA_API_KEY=
 ```
 
 ## Development
+
+### AI SDK v5 Upgrade
+
+This project uses ai v5 and @ai-sdk/react v2. Messages are parts-based (text, file, reasoning, tool-invocation) and server streaming uses result.toUIMessageStream. Client submits files as file parts; experimental_attachments is no longer used.
 
 ### Project Structure
 

@@ -36,11 +36,7 @@ export default tseslint.config(
     },
   },
   {
-    files: ["src/components/ui/**/*.ts", "src/components/ui/**/*.tsx"],
-    rules: {
-      "@typescript-eslint/no-unused-vars": "off",
-      "react/no-unescaped-entities": "off",
-    },
+  // Strict configuration: no per-folder relaxations (UI components included).
   },
   {
     linterOptions: {

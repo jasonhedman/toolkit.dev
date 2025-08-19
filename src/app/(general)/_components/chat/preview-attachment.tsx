@@ -1,6 +1,11 @@
 import { FileIcon, LoaderIcon, X } from "lucide-react";
 
-import type { Attachment } from "ai";
+// Local attachment type compatible with our API payloads
+type Attachment = {
+  url: string;
+  name?: string;
+  contentType?: string;
+};
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 

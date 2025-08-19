@@ -1,0 +1,17 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "plugins": [
+      {
+        "name": "@typescript-eslint/eslint-plugin",
+        "rules": {
+          "@typescript-eslint/no-misused-promises": ["error", {
+            "checksVoidReturn": {
+              "attributes": false
+            }
+          }]
+        }
+      }
+    ]
+  }
+}

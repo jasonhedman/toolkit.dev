@@ -18,12 +18,11 @@ import {
 import { api } from "@/trpc/react";
 import { useRouter } from "next/navigation";
 
-import type { Message } from "ai";
+import type { UIMessage } from "ai";
 import { HStack } from "@/components/ui/stack";
-import { ModelProviderIcon } from "@/components/ui/model-icon";
 
 interface Props {
-  message: Message;
+  message: UIMessage;
   isLoading: boolean;
   chatId: string;
 }
@@ -47,12 +46,17 @@ export const PureMessageActions: React.FC<Props> = ({
     },
   });
 
-  // Extract modelId from message annotations
-  const model = message.annotations?.find(
-    (annotation) => (annotation as { type: string }).type === "model",
-  ) as
-    | { model: { name: string; provider: string; modelId: string } | null }
-    | undefined;
+  // Extract model annotation text if present (guarded)
+  const annotations = (message as unknown as { annotations?: unknown }).annotations;
+  const modelAnnotationText = Array.isArray(annotations)
+    ? (annotations.find(
+        (a: unknown) =>
+          !!a &&
+          typeof a === "object" &&
+          (a as { type?: string }).type === "model" &&
+          typeof (a as { text?: string }).text === "string",
+      ) as { text?: string } | undefined)?.text
+    : undefined;
 
   if (isLoading) return null;
   if (message.role === "user") return null;
@@ -109,10 +113,10 @@ export const PureMessageActions: React.FC<Props> = ({
           </TooltipTrigger>
           <TooltipContent>Branch chat from here</TooltipContent>
         </Tooltip>
-        {model?.model && (
+        {modelAnnotationText && (
           <HStack>
-            <ModelProviderIcon provider={model.model.provider} />
-            <p className="text-muted-foreground text-xs">{model.model.name}</p>
+            {/* Provider is not encoded in annotation text; only show the label */}
+            <p className="text-muted-foreground text-xs">{modelAnnotationText}</p>
           </HStack>
         )}
       </div>

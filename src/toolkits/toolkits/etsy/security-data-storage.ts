@@ -1,8 +1,11 @@
-import type { ISecurityDataStorage, SecurityDataFilter, Tokens } from "etsy-ts";
 import { api } from "@/trpc/server";
 import { etsyScopes } from "@/server/auth/custom-providers/etsy";
 
-export class EtsySecurityDataStorage implements ISecurityDataStorage {
+// Temporary minimal shapes; replace with actual exports once validated upstream.
+type Tokens = { accessToken: string; refreshToken: string; tokenType: string; expiresIn: number };
+type SecurityDataFilter = { etsyUserId: number | string };
+
+export class EtsySecurityDataStorage {
   async storeAccessToken(filter: SecurityDataFilter, accessToken: Tokens) {
     await api.accounts.updateAccount({
       provider: "etsy",

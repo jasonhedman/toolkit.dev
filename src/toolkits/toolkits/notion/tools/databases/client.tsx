@@ -40,8 +40,7 @@ export const notionListDatabasesToolConfigClient: ClientToolConfig<
               database={db}
               onClick={() => {
                 void append({
-                  role: "user",
-                  content: `Query the database "${db.title?.[0]?.plain_text ?? "Untitled Database"}" for its content`,
+                  text: `Query the database "${db.title?.[0]?.plain_text ?? "Untitled Database"}" for its content`,
                 });
               }}
             />
@@ -87,10 +86,7 @@ export const notionQueryDatabaseToolConfigClient: ClientToolConfig<
                 key={result.id}
                 page={result}
                 onClick={() => {
-                  void append({
-                    role: "user",
-                    content: `Get the content of page ${result.id}`,
-                  });
+                  void append({ text: `Get the content of page ${result.id}` });
                 }}
               />
             ) : (
@@ -99,8 +95,7 @@ export const notionQueryDatabaseToolConfigClient: ClientToolConfig<
                 database={result}
                 onClick={() => {
                   void append({
-                    role: "user",
-                    content: `Query the database "${result.title?.[0]?.plain_text ?? "Untitled Database"}" for its content`,
+                    text: `Query the database "${result.title?.[0]?.plain_text ?? "Untitled Database"}" for its content`,
                   });
                 }}
               />
@@ -140,8 +135,7 @@ export const notionCreateDatabaseToolConfigClient: ClientToolConfig<
           database={database}
           onClick={() => {
             void append({
-              role: "user",
-              content: `Query the database "${database.title?.[0]?.plain_text ?? "Untitled Database"}" for its content`,
+              text: `Query the database "${database.title?.[0]?.plain_text ?? "Untitled Database"}" for its content`,
             });
           }}
         />

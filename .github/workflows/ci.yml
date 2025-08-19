@@ -30,7 +30,7 @@ jobs:
         run: pnpm run format:check
 
       - name: Run linting and type check
-        run: SKIP_ENV_VALIDATION=1 pnpm run check
+        run: pnpm run check
 
       - name: Build project
-        run: SKIP_ENV_VALIDATION=1 pnpm run build-pure
+        run: pnpm run build-pure

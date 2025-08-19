@@ -43,7 +43,7 @@ export function createEnvFile() {
         stdio: ["pipe", "ignore", "ignore"],
       });
       logSuccess("Generated AUTH_SECRET");
-    } catch (e) {
+  } catch {
       logWarning(
         `Failed to generate AUTH_SECRET with '${getPackageRunner()} auth secret'. Please run it manually and add the value to .env.local.`,
       );

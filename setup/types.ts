@@ -30,3 +30,12 @@ export interface SetupStep {
   description: string;
   execute: () => Promise<boolean>;
 }
+
+// Custom error type to indicate a hard failure for a setup step.
+// Using a class (not just Error alias) so instanceof checks work reliably.
+export class STEP_FAILURE extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "STEP_FAILURE";
+  }
+}

@@ -1,10 +1,14 @@
-import type { Etsy } from "etsy-ts";
-
 import type { ServerToolConfig } from "@/toolkits/types";
 import type { getListings } from "./base";
 
+interface EtsyClientSubset {
+  User: { getMe: () => Promise<{ data: { user_id?: number } }> };
+  Shop: { getShopByOwnerUserId: (userId: number) => Promise<{ data: { shop_id?: number } }> };
+  ShopListing: { getFeaturedListingsByShop: (args: { shopId: number }) => Promise<{ data: { results?: unknown[] } }> };
+}
+
 export const getListingsServerConfig = (
-  etsy: Etsy,
+  etsy: unknown,
 ): ServerToolConfig<
   typeof getListings.inputSchema.shape,
   typeof getListings.outputSchema.shape
@@ -12,27 +16,26 @@ export const getListingsServerConfig = (
   return {
     callback: async () => {
       try {
-        const user = await etsy.User.getMe();
+        const client = etsy as EtsyClientSubset;
+        const user = await client.User.getMe();
 
         const userId = user.data.user_id;
 
         if (!userId) throw new Error("Missing Etsy user ID");
 
-        const shop = await etsy.Shop.getShopByOwnerUserId(userId);
+  const shop = await client.Shop.getShopByOwnerUserId(userId);
 
         const shopId = shop.data.shop_id;
 
         if (!shopId) throw new Error("Missing Etsy shop ID");
 
-        const listings = await etsy.ShopListing.getFeaturedListingsByShop({
+  const listings = await client.ShopListing.getFeaturedListingsByShop({
           shopId,
         });
 
-        if (!listings.data.results) throw new Error("Missing Etsy listings");
-
-        return {
-          results: listings.data.results,
-        };
+  if (!listings.data.results) throw new Error("Missing Etsy listings");
+  const results = listings.data.results as { listing_id: number | string }[];
+  return { results };
       } catch (error) {
         console.error("Etsy API error:", error);
         throw new Error("Failed to fetch listings from Etsy");
