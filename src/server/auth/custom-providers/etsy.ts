@@ -10,7 +10,8 @@ export interface EtsyProfile {
   image_url_75x75?: string | null;
 }
 
-export const etsyScopes = "email_r shops_r listings_r";
+export const etsyScopes =
+  "address_r address_w billing_r cart_r cart_w email_r favorites_r favorites_w feedback_r listings_d listings_r listings_w profile_r profile_w recommend_r recommend_w shops_r shops_w transactions_r transactions_w";
 
 export default function EtsyProvider<P extends EtsyProfile>(
   options: OAuthUserConfig<P>,

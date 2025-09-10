@@ -179,12 +179,12 @@ importers:
       date-fns:
         specifier: ^4.1.0
         version: 4.1.0
-      etsy-ts:
-        specifier: ^4.2.0
-        version: 4.2.0
       discord-api-types:
         specifier: ^0.38.17
         version: 0.38.18
+      etsy-ts:
+        specifier: ^5.0.0
+        version: 5.0.0
       exa-js:
         specifier: ^1.8.8
         version: 1.8.8(encoding@0.1.13)(ws@8.18.3)(zod@3.25.56)
@@ -3194,8 +3194,8 @@ packages:
     resolution: {integrity: sha512-aIL5Fx7mawVa300al2BnEE4iNvo1qETxLrPI/o05L7z6go7fCw1J6EQmbK4FmJ2AS7kgVF/KEZWufBfdClMcPg==}
     engines: {node: '>= 0.6'}
 
-  etsy-ts@4.2.0:
-    resolution: {integrity: sha512-YrVSiIP1s1FE7/isCnnkUR86te4+UABHfW7gWUsAHUDtPZj2NOw4VswabcfWxbtis+8pmZm7XQO0cQs8LZL+Fw==}
+  etsy-ts@5.0.0:
+    resolution: {integrity: sha512-Bh5Y3QJby9a22VOThJrIPBHEQDT7ixPK67m3EGiQUxRRywK1GWqbGAQi8E63yWGJKF41yO81E83JSBfJ/1ZypA==}
 
   event-target-shim@5.0.1:
     resolution: {integrity: sha512-i/2XbnSz/uxRCU6+NdVJgKWDTM427+MqYbkQzD321DuCQJUqOuJKIA0IM2+W2xtYHdKOmZ4dR6fExsd4SXL+WQ==}
@@ -8670,11 +8670,11 @@ snapshots:
 
   etag@1.8.1: {}
 
-  etsy-ts@4.2.0:
+  etsy-ts@5.0.0:
     dependencies:
       axios: 1.7.7
       axios-auth-refresh: 3.3.6(axios@1.7.7)
-      form-data: 4.0.3
+      form-data: 4.0.4
       tslib: 2.8.1
     transitivePeerDependencies:
       - debug

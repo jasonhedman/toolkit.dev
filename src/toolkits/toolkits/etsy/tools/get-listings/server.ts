@@ -1,32 +1,34 @@
-import type { Etsy } from "etsy-ts";
+import type { Etsy, IGetListingsByShopParams } from "etsy-ts";
 
 import type { ServerToolConfig } from "@/toolkits/types";
 import type { getListings } from "./base";
 
 export const getListingsServerConfig = (
   etsy: Etsy,
+  userId: string,
 ): ServerToolConfig<
   typeof getListings.inputSchema.shape,
   typeof getListings.outputSchema.shape
 > => {
   return {
-    callback: async () => {
+    callback: async ({ limit, offset, sort_on, sort_order, includes }) => {
       try {
-        const user = await etsy.User.getMe();
-
-        const userId = user.data.user_id;
-
-        if (!userId) throw new Error("Missing Etsy user ID");
-
-        const shop = await etsy.Shop.getShopByOwnerUserId(userId);
+        const shop = await etsy.Shop.getShopByOwnerUserId(Number(userId));
 
         const shopId = shop.data.shop_id;
 
         if (!shopId) throw new Error("Missing Etsy shop ID");
 
-        const listings = await etsy.ShopListing.getFeaturedListingsByShop({
+        const params: IGetListingsByShopParams = {
           shopId,
-        });
+          ...(limit !== undefined ? { limit } : {}),
+          ...(offset !== undefined ? { offset } : {}),
+          ...(sort_on !== undefined ? { sort_on } : {}),
+          ...(sort_order !== undefined ? { sort_order } : {}),
+          ...(includes !== undefined ? { includes } : {}),
+        };
+
+        const listings = await etsy.ShopListing.getListingsByShop(params);
 
         if (!listings.data.results) throw new Error("Missing Etsy listings");
 
