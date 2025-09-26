@@ -7,6 +7,7 @@ import {
   useState,
   useCallback,
   useMemo,
+  useRef,
 } from "react";
 
 import { useChat } from "@ai-sdk/react";
@@ -30,6 +31,10 @@ import { generateUUID } from "@/lib/utils";
 import { fetchWithErrorHandlers } from "@/lib/fetch";
 import { ChatSDKError } from "@/lib/errors";
 import { IS_DEVELOPMENT } from "@/lib/constants";
+import {
+  clearChatActivity,
+  setChatActivityStatus,
+} from "@/app/(general)/_stores/chat-activity-store";
 
 import type { ReactNode } from "react";
 import type { Attachment, UIMessage } from "ai";
@@ -179,6 +184,7 @@ export function ChatProvider({
   const [hasSyncedInitialChat, setHasSyncedInitialChat] = useState(false);
   const [hasInsertedPlaceholder, setHasInsertedPlaceholder] = useState(false);
   const [streamStopped, setStreamStopped] = useState(false);
+  const isStreamingRef = useRef(false);
 
   const chatListInput = useMemo(
     () =>
@@ -218,6 +224,19 @@ export function ChatProvider({
               ...cache,
               pages: cache.pages.map((page, index) => {
                 if (index === 0) {
+                  const existingIndex = page.items.findIndex(
+                    (item) => item.id === normalizedChat.id,
+                  );
+
+                  if (existingIndex !== -1) {
+                    const nextItems = [...page.items];
+                    nextItems[existingIndex] = normalizedChat;
+                    return {
+                      ...page,
+                      items: nextItems,
+                    };
+                  }
+
                   const filteredItems = page.items.filter(
                     (item) => item.id !== normalizedChat.id,
                   );
@@ -318,6 +337,8 @@ export function ChatProvider({
       workbenchId: workbench?.id,
     }),
     onFinish: () => {
+      isStreamingRef.current = false;
+      setChatActivityStatus(id, false);
       setStreamStopped(false);
       void utils.messages.getMessagesForChat.invalidate({ chatId: id });
       if (initialMessages.length === 0 && !hasSyncedInitialChat) {
@@ -325,6 +346,8 @@ export function ChatProvider({
       }
     },
     onError: (error) => {
+      isStreamingRef.current = false;
+      setChatActivityStatus(id, false);
       if (
         initialMessages.length === 0 &&
         hasInsertedPlaceholder &&
@@ -430,6 +453,8 @@ export function ChatProvider({
   ) => {
     // Reset stream stopped flag when submitting new message
     setStreamStopped(false);
+    isStreamingRef.current = true;
+    setChatActivityStatus(id, true);
 
     promoteChatInCache();
 
@@ -497,6 +522,20 @@ export function ChatProvider({
     },
     [originalAppend, promoteChatInCache],
   );
+
+  useEffect(() => {
+    const isStreaming =
+      !streamStopped && (status === "submitted" || status === "streaming");
+
+    isStreamingRef.current = isStreaming;
+    setChatActivityStatus(id, isStreaming);
+
+    return () => {
+      if (!isStreamingRef.current) {
+        clearChatActivity(id);
+      }
+    };
+  }, [id, status, streamStopped]);
 
   useEffect(() => {
     if (
