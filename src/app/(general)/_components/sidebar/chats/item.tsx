@@ -9,7 +9,6 @@ import {
   Trash,
   GitBranch,
   Star,
-  LoaderCircle,
 } from "lucide-react";
 
 import Link from "next/link";
@@ -32,7 +31,6 @@ import {
 
 import { useUpdateChatVisibility } from "@/app/(general)/_hooks/use-chat-visibility";
 import { useStarChat } from "@/app/(general)/_hooks/use-star-chat";
-import { useChatActivity } from "@/app/(general)/_stores/chat-activity-store";
 
 import type { Chat } from "@prisma/client";
 
@@ -52,7 +50,6 @@ const PureChatItem: React.FC<Props> = ({
   const updateChatVisibility = useUpdateChatVisibility();
 
   const starChat = useStarChat();
-  const isChatStreaming = useChatActivity(chat.id);
 
   return (
     <SidebarMenuItem>
@@ -67,13 +64,7 @@ const PureChatItem: React.FC<Props> = ({
             {chat.parentChatId && (
               <GitBranch className="text-muted-foreground size-3 shrink-0" />
             )}
-            <span className="truncate flex-1">{chat.title}</span>
-            {isChatStreaming && (
-              <LoaderCircle
-                aria-label="Assistant is responding"
-                className="text-muted-foreground size-3 shrink-0 animate-spin"
-              />
-            )}
+            <span className="truncate">{chat.title}</span>
           </div>
         </Link>
       </SidebarMenuButton>
