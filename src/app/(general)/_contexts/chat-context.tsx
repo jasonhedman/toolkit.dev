@@ -284,7 +284,7 @@ export function ChatProvider({
     handleSubmit: originalHandleSubmit,
     input,
     setInput,
-    append,
+    append: originalAppend,
     status,
     stop,
     reload,
@@ -370,12 +370,68 @@ export function ChatProvider({
     onStreamError,
   });
 
+  const promoteChatInCache = useCallback(() => {
+    utils.chats.getChats.setInfiniteData(chatListInput, (cache) => {
+      if (!cache) {
+        return cache;
+      }
+
+      const pages = cache.pages.map((page) => ({
+        ...page,
+        items: [...page.items],
+      }));
+
+      let promotedChat: Chat | undefined;
+
+      for (const page of pages) {
+        const existingIndex = page.items.findIndex((chat) => chat.id === id);
+        if (existingIndex !== -1) {
+          const [chat] = page.items.splice(existingIndex, 1);
+          if (!promotedChat) {
+            promotedChat = chat;
+          }
+        }
+      }
+
+      if (!promotedChat) {
+        return cache;
+      }
+
+      let carry: Chat | undefined = promotedChat;
+
+      for (let pageIndex = 0; pageIndex < pages.length && carry; pageIndex += 1) {
+        const page = pages[pageIndex];
+        page.items.unshift(carry);
+
+        if (page.items.length > chatListInput.limit) {
+          carry = page.items.pop();
+        } else {
+          carry = undefined;
+        }
+      }
+
+      if (carry) {
+        const lastPage = pages[pages.length - 1];
+        if (lastPage) {
+          lastPage.items.push(carry);
+        }
+      }
+
+      return {
+        ...cache,
+        pages,
+      };
+    });
+  }, [chatListInput, id, utils]);
+
   const handleSubmit: UseChatHelpers["handleSubmit"] = (
     event,
     chatRequestOptions,
   ) => {
     // Reset stream stopped flag when submitting new message
     setStreamStopped(false);
+
+    promoteChatInCache();
 
     if (initialMessages.length === 0 && !hasInsertedPlaceholder) {
       setHasInsertedPlaceholder(true);
@@ -434,6 +490,14 @@ export function ChatProvider({
     originalHandleSubmit(event, chatRequestOptions);
   };
 
+  const appendWithPromotion = useCallback<UseChatHelpers["append"]>(
+    async (message, options) => {
+      promoteChatInCache();
+      await originalAppend(message, options);
+    },
+    [originalAppend, promoteChatInCache],
+  );
+
   useEffect(() => {
     if (
       selectedChatModel?.capabilities?.includes(
@@ -462,7 +526,7 @@ export function ChatProvider({
     handleSubmit,
     stop,
     reload,
-    append,
+    append: appendWithPromotion,
     imageGenerationModel,
     setImageGenerationModel,
     toolkits,
