@@ -235,6 +235,9 @@ export function ChatProvider({
             };
           });
 
+          setHasInsertedPlaceholder(false);
+          setHasSyncedInitialChat(true);
+
           if (normalizedChat.title === "New Chat" && attempt < 5) {
             setTimeout(() => syncChatList(attempt + 1), 1000);
           }
@@ -318,12 +321,15 @@ export function ChatProvider({
       setStreamStopped(false);
       void utils.messages.getMessagesForChat.invalidate({ chatId: id });
       if (initialMessages.length === 0 && !hasSyncedInitialChat) {
-        setHasSyncedInitialChat(true);
         syncChatList();
       }
     },
     onError: (error) => {
-      if (initialMessages.length === 0 && hasInsertedPlaceholder) {
+      if (
+        initialMessages.length === 0 &&
+        hasInsertedPlaceholder &&
+        !hasSyncedInitialChat
+      ) {
         utils.chats.getChats.setInfiniteData(chatListInput, (cache) => {
           if (!cache) return cache;
 
