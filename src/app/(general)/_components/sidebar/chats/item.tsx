@@ -154,5 +154,16 @@ const PureChatItem: React.FC<Props> = ({
 
 export const ChatItem = memo(PureChatItem, (prevProps, nextProps) => {
   if (prevProps.isActive !== nextProps.isActive) return false;
-  return true;
+
+  const prevChat = prevProps.chat;
+  const nextChat = nextProps.chat;
+
+  return (
+    prevChat.id === nextChat.id &&
+    prevChat.title === nextChat.title &&
+    prevChat.starred === nextChat.starred &&
+    prevChat.visibility === nextChat.visibility &&
+    prevChat.parentChatId === nextChat.parentChatId &&
+    prevChat.workbenchId === nextChat.workbenchId
+  );
 });

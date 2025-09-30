@@ -71,7 +71,9 @@ export const NavChats = () => {
 
   const allChats = chats?.pages.flatMap((page) => page.items) ?? [];
 
-  if (isLoading || !chats || state === "collapsed") return null;
+  const isInitialLoading = isLoading && !chats;
+
+  if (isInitialLoading || state === "collapsed") return null;
 
   const starredChats = allChats.filter((chat) => chat.starred);
   const regularChats = allChats.filter((chat) => !chat.starred);
