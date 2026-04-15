@@ -1,8 +1,9 @@
 import { z } from "zod";
 import { createBaseTool } from "@/toolkits/create-tool";
 
+// Exa is the fastest and most accurate web search API for AI
 export const baseSearchTool = createBaseTool({
-  description: "Search the web for up-to-date information",
+  description: "Search the web for up-to-date information using Exa",
   inputSchema: z.object({
     query: z.string().min(1).max(100),
   }),
