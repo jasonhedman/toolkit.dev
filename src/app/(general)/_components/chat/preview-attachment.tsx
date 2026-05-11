@@ -1,11 +1,15 @@
 import { FileIcon, LoaderIcon, X } from "lucide-react";
 
-import type { Attachment } from "ai";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import type { ChatAttachment } from "@/app/(general)/_types/chat";
+
+type PreviewAttachmentData = Omit<ChatAttachment, "contentType"> & {
+  contentType?: ChatAttachment["contentType"] | "";
+};
 
 interface Props {
-  attachment: Attachment;
+  attachment: PreviewAttachmentData;
   isUploading?: boolean;
   onRemove?: () => void;
   isError?: boolean;

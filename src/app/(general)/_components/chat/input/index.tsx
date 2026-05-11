@@ -28,17 +28,18 @@ import { cn } from "@/lib/utils";
 
 import { ModelSelect } from "./model-select";
 import { useChatContext } from "@/app/(general)/_contexts/chat-context";
-import type { Attachment } from "ai";
 import type { UseChatHelpers } from "@ai-sdk/react";
 import { ToolsSelect } from "./tools";
 import type { File as DbFile } from "@prisma/client";
 import { LanguageModelCapability } from "@/ai/language/types";
+import { attachmentToFilePart } from "@/app/(general)/_types/chat";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import type { AppUIMessage, ChatAttachment } from "@/app/(general)/_types/chat";
 
 interface Props {
   chatId: string;
@@ -60,7 +61,7 @@ const PureMultimodalInput: React.FC<Props> = ({
     attachments,
     setAttachments,
     setMessages,
-    handleSubmit,
+    sendMessage,
     selectedChatModel,
     workbench,
   } = useChatContext();
@@ -175,11 +176,13 @@ const PureMultimodalInput: React.FC<Props> = ({
       window.history.replaceState({}, "", `/${chatId}`);
     }
 
-    handleSubmit(undefined, {
-      experimental_attachments: attachments,
+    void sendMessage({
+      text: input,
+      files: attachments.map(attachmentToFilePart),
     });
 
     setAttachments([]);
+    setInput("");
     setLocalStorageInput("");
     resetHeight();
 
@@ -190,7 +193,9 @@ const PureMultimodalInput: React.FC<Props> = ({
     selectedChatModel,
     submitDisabledString,
     attachments,
-    handleSubmit,
+    sendMessage,
+    input,
+    setInput,
     setAttachments,
     setLocalStorageInput,
     width,
@@ -199,7 +204,7 @@ const PureMultimodalInput: React.FC<Props> = ({
   ]);
 
   const uploadFile = useCallback(
-    async (file: File): Promise<Attachment | undefined> => {
+    async (file: File): Promise<ChatAttachment | undefined> => {
       const formData = new FormData();
       formData.append("file", file);
 
@@ -217,7 +222,7 @@ const PureMultimodalInput: React.FC<Props> = ({
           return {
             url,
             name,
-            contentType,
+            contentType: contentType as ChatAttachment["contentType"],
           };
         }
         const { error } = (await response.json()) as { error: string };
@@ -242,10 +247,11 @@ const PureMultimodalInput: React.FC<Props> = ({
         const uploadPromises = files.map((file) => uploadFile(file));
         const uploadedAttachments = await Promise.all(uploadPromises);
         const successfullyUploadedAttachments = uploadedAttachments.filter(
-          (attachment): attachment is Attachment => attachment !== undefined,
+          (attachment): attachment is ChatAttachment =>
+            attachment !== undefined,
         );
 
-        setAttachments((currentAttachments: Attachment[]) => [
+        setAttachments((currentAttachments: ChatAttachment[]) => [
           ...currentAttachments,
           ...successfullyUploadedAttachments,
         ]);
@@ -265,8 +271,8 @@ const PureMultimodalInput: React.FC<Props> = ({
   }, [status, scrollToBottom]);
 
   const removeAttachment = useCallback(
-    (attachmentToRemove: Attachment) => {
-      setAttachments((currentAttachments: Attachment[]) =>
+    (attachmentToRemove: ChatAttachment) => {
+      setAttachments((currentAttachments: ChatAttachment[]) =>
         currentAttachments.filter(
           (attachment) => attachment.url !== attachmentToRemove.url,
         ),
@@ -308,11 +314,11 @@ const PureMultimodalInput: React.FC<Props> = ({
         Promise.all(imageFiles.map((file) => uploadFile(file)))
           .then((uploadedAttachments) => {
             const successfullyUploadedAttachments = uploadedAttachments.filter(
-              (attachment): attachment is Attachment =>
+              (attachment): attachment is ChatAttachment =>
                 attachment !== undefined,
             );
 
-            setAttachments((currentAttachments: Attachment[]) => [
+            setAttachments((currentAttachments: ChatAttachment[]) => [
               ...currentAttachments,
               ...successfullyUploadedAttachments,
             ]);
@@ -508,7 +514,7 @@ function PureAttachmentsButton({
   disabledString,
 }: {
   fileInputRef: React.MutableRefObject<HTMLInputElement | null>;
-  status: UseChatHelpers["status"];
+  status: UseChatHelpers<AppUIMessage>["status"];
   disabledString: string;
 }) {
   const button = (
@@ -553,8 +559,8 @@ function PureStopButton({
   stop,
   setMessages,
 }: {
-  stop: () => void;
-  setMessages: UseChatHelpers["setMessages"];
+  stop: UseChatHelpers<AppUIMessage>["stop"];
+  setMessages: UseChatHelpers<AppUIMessage>["setMessages"];
 }) {
   return (
     <Button
@@ -562,7 +568,7 @@ function PureStopButton({
       className="user-message h-fit rounded-full border-0 p-1.5 text-white"
       onClick={(event) => {
         event.preventDefault();
-        stop();
+        void stop();
         setMessages((messages) => messages);
       }}
     >

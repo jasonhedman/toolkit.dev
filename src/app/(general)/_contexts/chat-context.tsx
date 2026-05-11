@@ -5,18 +5,18 @@ import {
   useContext,
   useEffect,
   useState,
-  useCallback,
+  useMemo,
+  useRef,
 } from "react";
 
 import { useChat } from "@ai-sdk/react";
+import { DefaultChatTransport } from "ai";
 
 import { toast } from "sonner";
 
 import { OpenRouterChecks } from "./openrouter-checks";
 
 import { api } from "@/trpc/react";
-
-import { useAutoResume } from "@/app/(general)/_hooks/use-auto-resume";
 
 import { LanguageModelCapability } from "@/ai/language/types";
 
@@ -31,7 +31,6 @@ import { ChatSDKError } from "@/lib/errors";
 import { IS_DEVELOPMENT } from "@/lib/constants";
 
 import type { ReactNode } from "react";
-import type { Attachment, UIMessage } from "ai";
 import type { UseChatHelpers } from "@ai-sdk/react";
 import type { ClientToolkit } from "@/toolkits/types";
 import type { z } from "zod";
@@ -41,22 +40,23 @@ import type { Workbench } from "@prisma/client";
 import type { PersistedToolkit } from "@/lib/cookies/types";
 import type { ImageModel } from "@/ai/image/types";
 import type { LanguageModel } from "@/ai/language/types";
+import type { AppUIMessage, ChatAttachment } from "../_types/chat";
 
 const DEFAULT_CHAT_MODEL = languageModels[0]!;
 
 interface ChatContextType {
   // Chat state
-  messages: Array<UIMessage>;
-  setMessages: UseChatHelpers["setMessages"];
+  messages: Array<AppUIMessage>;
+  setMessages: UseChatHelpers<AppUIMessage>["setMessages"];
   input: string;
-  setInput: UseChatHelpers["setInput"];
-  status: UseChatHelpers["status"];
+  setInput: React.Dispatch<React.SetStateAction<string>>;
+  status: UseChatHelpers<AppUIMessage>["status"];
   streamStopped: boolean;
-  attachments: Array<Attachment>;
+  attachments: Array<ChatAttachment>;
   setAttachments: (
     attachments:
-      | Array<Attachment>
-      | ((prev: Array<Attachment>) => Array<Attachment>),
+      | Array<ChatAttachment>
+      | ((prev: Array<ChatAttachment>) => Array<ChatAttachment>),
   ) => void;
   selectedChatModel: LanguageModel | undefined;
   setSelectedChatModel: (model: LanguageModel) => void;
@@ -72,10 +72,9 @@ interface ChatContextType {
   workbench?: Workbench;
 
   // Chat actions
-  handleSubmit: UseChatHelpers["handleSubmit"];
-  stop: () => void;
-  reload: UseChatHelpers["reload"];
-  append: UseChatHelpers["append"];
+  sendMessage: UseChatHelpers<AppUIMessage>["sendMessage"];
+  stop: UseChatHelpers<AppUIMessage>["stop"];
+  regenerate: UseChatHelpers<AppUIMessage>["regenerate"];
 }
 
 const ChatContext = createContext<ChatContextType | undefined>(undefined);
@@ -83,7 +82,7 @@ const ChatContext = createContext<ChatContextType | undefined>(undefined);
 interface ChatProviderProps {
   children: ReactNode;
   id: string;
-  initialMessages: Array<UIMessage>;
+  initialMessages: Array<AppUIMessage>;
   initialVisibilityType: "public" | "private";
   autoResume: boolean;
   workbench?: Workbench;
@@ -116,7 +115,8 @@ export function ChatProvider({
   const [imageGenerationModel, setImageGenerationModelState] = useState<
     ImageModel | undefined
   >(initialPreferences?.imageGenerationModel);
-  const [attachments, setAttachments] = useState<Array<Attachment>>([]);
+  const [input, setInput] = useState("");
+  const [attachments, setAttachments] = useState<Array<ChatAttachment>>([]);
   const [toolkits, setToolkitsState] = useState<Array<SelectedToolkit>>(() => {
     // If this is a workbench chat, initialize with workbench toolkits
     if (workbench) {
@@ -177,6 +177,23 @@ export function ChatProvider({
   });
   const [hasInvalidated, setHasInvalidated] = useState(false);
   const [streamStopped, setStreamStopped] = useState(false);
+  const requestConfigRef = useRef({
+    selectedChatModel,
+    imageGenerationModel,
+    useNativeSearch,
+    initialVisibilityType,
+    workbench,
+    toolkits,
+  });
+
+  requestConfigRef.current = {
+    selectedChatModel,
+    imageGenerationModel,
+    useNativeSearch,
+    initialVisibilityType,
+    workbench,
+    toolkits,
+  };
 
   // Wrapper functions that also save to cookies
   const setSelectedChatModel = (model: LanguageModel) => {
@@ -207,89 +224,87 @@ export function ChatProvider({
     setToolkits(toolkits.filter((t) => t.id !== id));
   };
 
-  const {
-    messages,
-    setMessages,
-    handleSubmit: originalHandleSubmit,
-    input,
-    setInput,
-    append,
-    status,
-    stop,
-    reload,
-    experimental_resume,
-    data,
-  } = useChat({
-    id,
-    initialMessages,
-    experimental_throttle: 100,
-    sendExtraMessageFields: true,
-    generateId: generateUUID,
-    fetch: fetchWithErrorHandlers,
-    experimental_prepareRequestBody: (body) => ({
+  const transport = useMemo(
+    () =>
+      new DefaultChatTransport<AppUIMessage>({
+        fetch: fetchWithErrorHandlers,
+        prepareSendMessagesRequest: ({ messages }) => {
+          const config = requestConfigRef.current;
+          const message = messages.at(-1);
+
+          return {
+            body: {
+              id,
+              message,
+              selectedChatModel: `${config.selectedChatModel?.provider}/${config.selectedChatModel?.modelId}`,
+              imageGenerationModel: config.imageGenerationModel
+                ? `${config.imageGenerationModel.provider}:${config.imageGenerationModel.modelId}`
+                : undefined,
+              selectedVisibilityType: config.initialVisibilityType,
+              useNativeSearch: config.useNativeSearch,
+              systemPrompt: config.workbench?.systemPrompt,
+              toolkits: config.selectedChatModel?.capabilities?.includes(
+                LanguageModelCapability.ToolCalling,
+              )
+                ? config.toolkits.map((t) => ({
+                    id: t.id,
+                    parameters: t.parameters,
+                  }))
+                : [],
+              workbenchId: config.workbench?.id,
+            },
+          };
+        },
+        prepareReconnectToStreamRequest: () => ({
+          api: `/api/chat?chatId=${id}`,
+        }),
+      }),
+    [id],
+  );
+
+  const { messages, setMessages, status, stop, regenerate, sendMessage } =
+    useChat<AppUIMessage>({
       id,
-      message: body.messages.at(-1),
-      selectedChatModel: `${selectedChatModel?.provider}/${selectedChatModel?.modelId}`,
-      imageGenerationModel: imageGenerationModel
-        ? `${imageGenerationModel.provider}:${imageGenerationModel.modelId}`
-        : undefined,
-      selectedVisibilityType: initialVisibilityType,
-      useNativeSearch,
-      systemPrompt: workbench?.systemPrompt,
-      toolkits: selectedChatModel?.capabilities?.includes(
-        LanguageModelCapability.ToolCalling,
-      )
-        ? toolkits.map((t) => ({
-            id: t.id,
-            parameters: t.parameters,
-          }))
-        : [],
-      workbenchId: workbench?.id,
-    }),
-    onFinish: () => {
-      setStreamStopped(false);
-      void utils.messages.getMessagesForChat.invalidate({ chatId: id });
-      if (initialMessages.length === 0 && !hasInvalidated) {
-        setHasInvalidated(true);
-        void utils.chats.getChats.invalidate({
-          workbenchId: workbench?.id,
-        });
-      }
-    },
-    onError: (error) => {
-      if (error instanceof ChatSDKError) {
-        toast.error(error.message);
-      } else {
-        console.error(error);
-        toast.error("An error occurred while processing your request");
-      }
-    },
-  });
+      messages: initialMessages,
+      experimental_throttle: 100,
+      generateId: generateUUID,
+      transport,
+      resume: autoResume,
+      onFinish: () => {
+        setStreamStopped(false);
+        void utils.messages.getMessagesForChat.invalidate({ chatId: id });
+        if (initialMessages.length === 0 && !hasInvalidated) {
+          setHasInvalidated(true);
+          void utils.chats.getChats.invalidate({
+            workbenchId: workbench?.id,
+          });
+        }
+      },
+      onError: (error) => {
+        if (error instanceof ChatSDKError) {
+          toast.error(error.message);
+        } else {
+          console.error(error);
+          toast.error("An error occurred while processing your request");
+        }
+      },
+      onData: (part) => {
+        if (part.type === "data-error") {
+          const data = part.data;
+          const message =
+            typeof data === "object" &&
+            data !== null &&
+            "message" in data &&
+            typeof data.message === "string"
+              ? data.message
+              : "An error occurred while processing your request";
 
-  const onStreamError = useCallback(() => {
-    // Mark stream as stopped to hide thinking message
-    setStreamStopped(true);
-    // Also call stop to change the status away from 'submitted'
-    stop();
-  }, [stop]);
-
-  useAutoResume({
-    autoResume,
-    initialMessages,
-    experimental_resume,
-    data,
-    setMessages,
-    onStreamError,
-  });
-
-  const handleSubmit: UseChatHelpers["handleSubmit"] = (
-    event,
-    chatRequestOptions,
-  ) => {
-    // Reset stream stopped flag when submitting new message
-    setStreamStopped(false);
-    originalHandleSubmit(event, chatRequestOptions);
-  };
+          toast.error(message);
+          void stop();
+          setStreamStopped(true);
+        }
+      },
+    });
 
   useEffect(() => {
     if (
@@ -316,10 +331,9 @@ export function ChatProvider({
     setSelectedChatModel,
     useNativeSearch,
     setUseNativeSearch,
-    handleSubmit,
     stop,
-    reload,
-    append,
+    regenerate,
+    sendMessage,
     imageGenerationModel,
     setImageGenerationModel,
     toolkits,

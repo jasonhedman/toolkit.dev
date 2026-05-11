@@ -2,7 +2,6 @@ import { db } from "@/server/db";
 import { ChatProvider } from "@/app/(general)/_contexts/chat-context";
 import type { Message, Workbench } from "@prisma/client";
 import { ChatLayout } from "./layout";
-import type { Attachment, UIMessage } from "ai";
 import { languageModels } from "@/ai/language";
 import { ChatContent } from "./chat";
 import { serverCookieUtils } from "@/lib/cookies/server";
@@ -10,6 +9,11 @@ import { clientToolkits } from "@/toolkits/toolkits/client";
 import type { ClientToolkit } from "@/toolkits/types";
 import type { z } from "zod";
 import type { PersistedToolkit } from "@/lib/cookies/types";
+import {
+  attachmentToFilePart,
+  type AppUIMessage,
+  type ChatAttachment,
+} from "@/app/(general)/_types/chat";
 
 interface Props {
   id: string;
@@ -68,20 +72,25 @@ export const Chat = async ({
       ),
   };
 
-  const convertToUIMessages = (messages: Array<Message>): Array<UIMessage> => {
-    return messages.map((message) => ({
-      id: message.id,
-      parts: message.parts as UIMessage["parts"],
-      role: message.role as UIMessage["role"],
-      // Note: content will soon be deprecated in @ai-sdk/react
-      content: "",
-      createdAt: message.createdAt,
-      experimental_attachments:
-        (message.attachments as unknown as Array<Attachment>) ?? [],
-      annotations: message.modelId
-        ? [
-            {
-              type: "model",
+  const convertToUIMessages = (
+    messages: Array<Message>,
+  ): Array<AppUIMessage> => {
+    return messages.map((message) => {
+      const parts = (message.parts as AppUIMessage["parts"]) ?? [];
+      const hasFileParts = parts.some((part) => part.type === "file");
+      const attachments = (
+        (message.attachments as unknown as Array<ChatAttachment>) ?? []
+      )
+        .filter((attachment) => attachment.url)
+        .map(attachmentToFilePart);
+
+      return {
+        id: message.id,
+        parts: [...parts, ...(hasFileParts ? [] : attachments)],
+        role: message.role as AppUIMessage["role"],
+        createdAt: message.createdAt,
+        metadata: message.modelId
+          ? {
               model: (() => {
                 const [provider, modelId] = message.modelId.split("/");
                 const model = languageModels.find(
@@ -98,10 +107,10 @@ export const Chat = async ({
                   }
                 );
               })(),
-            },
-          ]
-        : undefined,
-    }));
+            }
+          : undefined,
+      };
+    });
   };
 
   return (

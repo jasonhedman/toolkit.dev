@@ -18,12 +18,12 @@ import {
 import { api } from "@/trpc/react";
 import { useRouter } from "next/navigation";
 
-import type { Message } from "ai";
 import { HStack } from "@/components/ui/stack";
 import { ModelProviderIcon } from "@/components/ui/model-icon";
+import type { AppUIMessage } from "@/app/(general)/_types/chat";
 
 interface Props {
-  message: Message;
+  message: AppUIMessage;
   isLoading: boolean;
   chatId: string;
 }
@@ -47,12 +47,7 @@ export const PureMessageActions: React.FC<Props> = ({
     },
   });
 
-  // Extract modelId from message annotations
-  const model = message.annotations?.find(
-    (annotation) => (annotation as { type: string }).type === "model",
-  ) as
-    | { model: { name: string; provider: string; modelId: string } | null }
-    | undefined;
+  const model = message.metadata?.model;
 
   if (isLoading) return null;
   if (message.role === "user") return null;
@@ -109,10 +104,10 @@ export const PureMessageActions: React.FC<Props> = ({
           </TooltipTrigger>
           <TooltipContent>Branch chat from here</TooltipContent>
         </Tooltip>
-        {model?.model && (
+        {model && (
           <HStack>
-            <ModelProviderIcon provider={model.model.provider} />
-            <p className="text-muted-foreground text-xs">{model.model.name}</p>
+            <ModelProviderIcon provider={model.provider} />
+            <p className="text-muted-foreground text-xs">{model.name}</p>
           </HStack>
         )}
       </div>

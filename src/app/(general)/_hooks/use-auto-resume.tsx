@@ -3,8 +3,8 @@
 import { useEffect } from "react";
 import { toast } from "sonner";
 
-import type { UIMessage } from "ai";
 import type { UseChatHelpers } from "@ai-sdk/react";
+import type { AppUIMessage } from "@/app/(general)/_types/chat";
 
 type DataPart =
   | { type: "append-message"; message: string }
@@ -12,17 +12,17 @@ type DataPart =
 
 export interface UseAutoResumeParams {
   autoResume: boolean;
-  initialMessages: UIMessage[];
-  experimental_resume: UseChatHelpers["experimental_resume"];
-  data: UseChatHelpers["data"];
-  setMessages: UseChatHelpers["setMessages"];
+  initialMessages: AppUIMessage[];
+  resumeStream: UseChatHelpers<AppUIMessage>["resumeStream"];
+  data?: DataPart[];
+  setMessages: UseChatHelpers<AppUIMessage>["setMessages"];
   onStreamError?: () => void;
 }
 
 export function useAutoResume({
   autoResume,
   initialMessages,
-  experimental_resume,
+  resumeStream,
   data,
   setMessages,
   onStreamError,
@@ -33,7 +33,7 @@ export function useAutoResume({
     const mostRecentMessage = initialMessages.at(-1);
 
     if (mostRecentMessage?.role === "user") {
-      experimental_resume();
+      void resumeStream();
     }
 
     // we intentionally run this once
@@ -44,10 +44,10 @@ export function useAutoResume({
     if (!data) return;
     if (data.length === 0) return;
 
-    const dataPart = data[0] as DataPart;
+    const dataPart = data[0]!;
 
     if (dataPart.type === "append-message") {
-      const message = JSON.parse(dataPart.message) as UIMessage;
+      const message = JSON.parse(dataPart.message) as AppUIMessage;
       setMessages([...initialMessages, message]);
     } else if (dataPart.type === "error") {
       toast.error(dataPart.message);
