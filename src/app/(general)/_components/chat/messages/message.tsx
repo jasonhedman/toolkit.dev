@@ -5,6 +5,7 @@ import { memo, useState } from "react";
 import { Pencil } from "lucide-react";
 
 import { AnimatePresence, motion } from "motion/react";
+import { isToolOrDynamicToolUIPart } from "ai";
 
 import equal from "fast-deep-equal";
 
@@ -23,13 +24,15 @@ import { MessageReasoning } from "./message-reasoning";
 
 import { cn, sanitizeText } from "@/lib/utils";
 
-import type { UIMessage } from "ai";
-
 import { MessageTool } from "./message-tool";
 import { AnimatedShinyText } from "@/components/magicui/animated-shiny-text";
+import {
+  getMessageAttachments,
+  type AppUIMessage,
+} from "@/app/(general)/_types/chat";
 
 interface Props {
-  message: UIMessage;
+  message: AppUIMessage;
   isLoading: boolean;
   isReadonly: boolean;
   requiresScrollPadding: boolean;
@@ -44,6 +47,7 @@ const PurePreviewMessage: React.FC<Props> = ({
   chatId,
 }) => {
   const [mode, setMode] = useState<"view" | "edit">("view");
+  const attachments = getMessageAttachments(message);
 
   return (
     <AnimatePresence>
@@ -75,20 +79,19 @@ const PurePreviewMessage: React.FC<Props> = ({
               message.role === "assistant" && "w-0 flex-1",
             )}
           >
-            {message.experimental_attachments &&
-              message.experimental_attachments.length > 0 && (
-                <div
-                  data-testid={`message-attachments`}
-                  className="flex flex-row justify-end gap-2"
-                >
-                  {message.experimental_attachments.map((attachment) => (
-                    <PreviewAttachment
-                      key={attachment.url}
-                      attachment={attachment}
-                    />
-                  ))}
-                </div>
-              )}
+            {attachments.length > 0 && (
+              <div
+                data-testid={`message-attachments`}
+                className="flex flex-row justify-end gap-2"
+              >
+                {attachments.map((attachment) => (
+                  <PreviewAttachment
+                    key={attachment.url}
+                    attachment={attachment}
+                  />
+                ))}
+              </div>
+            )}
 
             {message.parts?.map((part, index) => {
               const { type } = part;
@@ -99,17 +102,13 @@ const PurePreviewMessage: React.FC<Props> = ({
                   <MessageReasoning
                     key={key}
                     isLoading={isLoading}
-                    reasoning={part.reasoning}
+                    reasoning={part.text}
                   />
                 );
               }
 
-              if (type === "tool-invocation") {
-                const { toolInvocation } = part;
-
-                return (
-                  <MessageTool key={key} toolInvocation={toolInvocation} />
-                );
+              if (isToolOrDynamicToolUIPart(part)) {
+                return <MessageTool key={key} toolInvocation={part} />;
               }
 
               if (type === "text") {

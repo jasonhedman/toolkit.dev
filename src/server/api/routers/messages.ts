@@ -1,47 +1,10 @@
 import { z } from "zod";
+import type { Prisma } from "@prisma/client";
 
 import { createTRPCRouter, protectedProcedure } from "@/server/api/trpc";
 import { FILE_NAME_MAX_LENGTH } from "@/lib/constants";
 
-const messagePartSchema = z.discriminatedUnion("type", [
-  z.object({
-    type: z.literal("text"),
-    text: z.string(),
-  }),
-  z.object({
-    type: z.literal("reasoning"),
-    reasoning: z.string(),
-    details: z.array(
-      z.discriminatedUnion("type", [
-        z.object({
-          type: z.literal("text"),
-          text: z.string(),
-          signature: z.string().optional(),
-        }),
-        z.object({
-          type: z.literal("redacted"),
-          data: z.string(),
-        }),
-      ]),
-    ),
-  }),
-  z.object({
-    type: z.literal("tool-invocation"),
-    toolInvocation: z.any(), // TODO: Add proper tool invocation schema
-  }),
-  z.object({
-    type: z.literal("source"),
-    source: z.any(), // TODO: Add proper source schema
-  }),
-  z.object({
-    type: z.literal("file"),
-    mimeType: z.string(),
-    data: z.string(),
-  }),
-  z.object({
-    type: z.literal("step-start"),
-  }),
-]);
+const messagePartSchema = z.object({ type: z.string() }).passthrough();
 export const messagesRouter = createTRPCRouter({
   getMessagesForChat: protectedProcedure
     .input(
@@ -110,8 +73,8 @@ export const messagesRouter = createTRPCRouter({
           id: input.id,
           chatId: input.chatId,
           role: input.role,
-          parts: input.parts,
-          attachments: input.attachments,
+          parts: input.parts as Prisma.InputJsonValue,
+          attachments: input.attachments as Prisma.InputJsonValue[],
           modelId: input.modelId,
         },
       });

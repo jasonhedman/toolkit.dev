@@ -9,7 +9,7 @@ export const generateText = (
   return generateTextAi({
     model: openrouter(model),
     ...params,
-  });
+  } as Parameters<typeof generateTextAi>[0]);
 };
 
 export const streamText = (
@@ -19,5 +19,5 @@ export const streamText = (
   return streamTextAi({
     model: openrouter(model),
     ...params,
-  });
+  } as Parameters<typeof streamTextAi>[0]);
 };

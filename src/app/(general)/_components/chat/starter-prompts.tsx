@@ -332,7 +332,7 @@ const DYNAMIC_STARTER_PROMPTS: StarterPrompt[] = [
 ];
 
 export const StarterPrompts = () => {
-  const { append, toolkits } = useChatContext();
+  const { sendMessage, toolkits } = useChatContext();
 
   // Get currently selected toolkit IDs
   const selectedToolkitIds = useMemo(() => {
@@ -391,10 +391,7 @@ export const StarterPrompts = () => {
   }, [selectedToolkitIds]);
 
   const handlePromptClick = (prompt: string) => {
-    void append({
-      role: "user",
-      content: prompt,
-    });
+    void sendMessage({ text: prompt });
   };
 
   if (relevantPrompts.length === 0) {

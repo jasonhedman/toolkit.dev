@@ -7,12 +7,13 @@ import { Textarea } from "@/components/ui/textarea";
 
 import { useDeleteMessagesAfterTimestamp } from "@/app/(general)/_hooks/use-delete-messages";
 import { useChatContext } from "@/app/(general)/_contexts/chat-context";
+import { getMessageText } from "@/app/(general)/_types/chat";
 
 import type { Dispatch, SetStateAction } from "react";
-import type { Message } from "ai";
+import type { AppUIMessage } from "@/app/(general)/_types/chat";
 
 export type MessageEditorProps = {
-  message: Message;
+  message: AppUIMessage;
   setMode: Dispatch<SetStateAction<"view" | "edit">>;
   chatId: string;
 };
@@ -22,21 +23,13 @@ export function MessageEditor({
   setMode,
   chatId,
 }: MessageEditorProps) {
-  const { setMessages, append } = useChatContext();
+  const { setMessages, sendMessage } = useChatContext();
   const { mutate } = useDeleteMessagesAfterTimestamp();
 
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
   const [draftContent, setDraftContent] = useState<string>(() => {
-    if (message.parts && message.parts.length > 0) {
-      return message.parts
-        .filter((part) => part.type === "text")
-        .map((part) => part.text)
-        .join("\n")
-        .trim();
-    }
-
-    return message.content || "";
+    return getMessageText(message);
   });
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -81,10 +74,7 @@ export function MessageEditor({
 
     setMode("view");
 
-    await append({
-      role: "user",
-      content: draftContent,
-    });
+    await sendMessage({ text: draftContent });
 
     setIsSubmitting(false);
   };
