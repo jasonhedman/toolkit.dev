@@ -2,7 +2,7 @@ import { AnimatedShinyText } from "@/components/magicui/animated-shiny-text";
 import { Card } from "@/components/ui/card";
 import { HStack } from "@/components/ui/stack";
 import { getClientToolkit } from "@/toolkits/toolkits/client";
-import type { Toolkits, ServerToolkitNames } from "@/toolkits/toolkits/shared";
+import type { Toolkits } from "@/toolkits/toolkits/shared";
 import type { CreateMessage, DeepPartial, ToolInvocation } from "ai";
 import { Loader2 } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
@@ -54,8 +54,17 @@ const MessageToolComponent: React.FC<Props> = ({ toolInvocation }) => {
     );
   }
 
-  const typedTool = tool as ServerToolkitNames[typeof typedServer];
-  const toolConfig = clientToolkit.tools[typedTool];
+  const toolConfig = clientToolkit.tools[tool];
+
+  if (!toolConfig) {
+    return (
+      <FallbackToolInvocation
+        toolInvocation={toolInvocation}
+        icon={clientToolkit.icon}
+        toolkitName={clientToolkit.name}
+      />
+    );
+  }
 
   return (
     <motion.div
@@ -214,6 +223,39 @@ const MessageToolComponent: React.FC<Props> = ({ toolInvocation }) => {
         </motion.div>
       </Card>
     </motion.div>
+  );
+};
+
+const FallbackToolInvocation: React.FC<
+  Props & {
+    icon: React.FC<{ className?: string }>;
+    toolkitName: string;
+  }
+> = ({ toolInvocation, icon: Icon, toolkitName }) => {
+  const argsDefined = toolInvocation.args !== undefined;
+  const isRunning =
+    toolInvocation.state === "call" || toolInvocation.state === "partial-call";
+
+  return (
+    <Card className="gap-0 overflow-hidden p-0">
+      <HStack className="border-b p-2">
+        <Icon className="size-4" />
+        <span className="text-lg font-medium">{toolkitName} Toolkit</span>
+        {isRunning && <Loader2 className="size-4 animate-spin opacity-60" />}
+      </HStack>
+      <div className="space-y-2 p-2">
+        {argsDefined && (
+          <pre className="bg-muted w-full max-w-full rounded-md p-2 text-xs whitespace-pre-wrap">
+            {JSON.stringify(toolInvocation.args, null, 2)}
+          </pre>
+        )}
+        {toolInvocation.state === "result" && (
+          <pre className="bg-muted w-full max-w-full rounded-md p-2 text-xs whitespace-pre-wrap">
+            {JSON.stringify(toolInvocation.result, null, 2)}
+          </pre>
+        )}
+      </div>
+    </Card>
   );
 };
 

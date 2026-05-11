@@ -13,6 +13,7 @@ import { spotifyToolkitServer } from "./spotify/server";
 import { etsyToolkitServer } from "./etsy/server";
 import { videoToolkitServer } from "./video/server";
 import { twitterToolkitServer } from "./twitter/server";
+import { mcpToolkitServer } from "./mcp/server";
 import {
   Toolkits,
   type ServerToolkitNames,
@@ -41,6 +42,7 @@ export const serverToolkits: ServerToolkits = {
   [Toolkits.Etsy]: etsyToolkitServer,
   [Toolkits.Video]: videoToolkitServer,
   [Toolkits.Twitter]: twitterToolkitServer,
+  [Toolkits.Mcp]: mcpToolkitServer,
 };
 
 export function getServerToolkit<T extends Toolkits>(

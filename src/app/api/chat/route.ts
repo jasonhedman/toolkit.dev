@@ -158,9 +158,8 @@ export async function POST(request: Request) {
       toolkits.map(async ({ id, parameters }) => {
         const toolkit = getServerToolkit(id);
         const tools = await toolkit.tools(parameters);
-        return Object.keys(tools).reduce(
-          (acc, toolName) => {
-            const serverTool = tools[toolName as keyof typeof tools];
+        return Object.entries(tools).reduce(
+          (acc, [toolName, serverTool]) => {
             acc[`${id}_${toolName}`] = tool({
               description: serverTool.description,
               parameters: serverTool.inputSchema,
