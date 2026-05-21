@@ -26,6 +26,8 @@ import type { VideoTools } from "./video/tools";
 import type { videoParameters } from "./video/base";
 import type { TwitterTools } from "./twitter/tools";
 import type { twitterParameters } from "./twitter/base";
+import type { mcpParameters } from "./mcp/base";
+import type { McpTools } from "./mcp/tools";
 
 export enum Toolkits {
   Exa = "exa",
@@ -42,6 +44,7 @@ export enum Toolkits {
   Etsy = "etsy",
   Video = "video",
   Twitter = "twitter",
+  MCP = "mcp",
 }
 
 export type ServerToolkitNames = {
@@ -59,6 +62,7 @@ export type ServerToolkitNames = {
   [Toolkits.Etsy]: EtsyTools;
   [Toolkits.Video]: VideoTools;
   [Toolkits.Twitter]: TwitterTools;
+  [Toolkits.MCP]: McpTools;
 };
 
 export type ServerToolkitParameters = {
@@ -76,4 +80,5 @@ export type ServerToolkitParameters = {
   [Toolkits.Etsy]: typeof etsyParameters.shape;
   [Toolkits.Video]: typeof videoParameters.shape;
   [Toolkits.Twitter]: typeof twitterParameters.shape;
+  [Toolkits.MCP]: typeof mcpParameters.shape;
 };

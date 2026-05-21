@@ -1,5 +1,6 @@
 import { serverToolkits } from "@/toolkits/toolkits/server";
 import type { Toolkits } from "@/toolkits/toolkits/shared";
+import type { ServerTool } from "@/toolkits/types";
 import { createMcpHandler } from "@vercel/mcp-adapter";
 
 // Create a wrapper function that can access Next.js route parameters
@@ -18,30 +19,32 @@ async function createHandlerWithParams(
         model: "openai:gpt-image-1",
       });
 
-      Object.entries(tools).forEach(([toolName, tool]) => {
-        const { description, inputSchema, callback, message } = tool;
-        mcpServer.tool(
-          toolName,
-          description,
-          inputSchema.shape,
-          async (args) => {
-            const result = await callback(args);
-            return {
-              content: [
-                {
-                  type: "text",
-                  text: message
-                    ? typeof message === "function"
-                      ? message(result)
-                      : message
-                    : JSON.stringify(result, null, 2),
-                },
-              ],
-              structuredContent: result,
-            };
-          },
-        );
-      });
+      Object.entries(tools as Record<string, ServerTool>).forEach(
+        ([toolName, tool]) => {
+          const { description, inputSchema, callback, message } = tool;
+          mcpServer.tool(
+            toolName,
+            description,
+            inputSchema.shape,
+            async (args: Record<string, unknown>) => {
+              const result = await callback(args);
+              return {
+                content: [
+                  {
+                    type: "text",
+                    text: message
+                      ? typeof message === "function"
+                        ? message(result)
+                        : message
+                      : JSON.stringify(result, null, 2),
+                  },
+                ],
+                structuredContent: result,
+              };
+            },
+          );
+        },
+      );
     },
     {
       // Optional server options

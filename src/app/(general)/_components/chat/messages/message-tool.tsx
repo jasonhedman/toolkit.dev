@@ -32,7 +32,11 @@ const MessageToolComponent: React.FC<Props> = ({ toolInvocation }) => {
 
   const { toolName } = toolInvocation;
 
-  const [server, tool] = toolName.split("_");
+  const separatorIndex = toolName.indexOf("_");
+  const server =
+    separatorIndex === -1 ? undefined : toolName.slice(0, separatorIndex);
+  const tool =
+    separatorIndex === -1 ? undefined : toolName.slice(separatorIndex + 1);
 
   if (!server || !tool) {
     return (
@@ -56,6 +60,16 @@ const MessageToolComponent: React.FC<Props> = ({ toolInvocation }) => {
 
   const typedTool = tool as ServerToolkitNames[typeof typedServer];
   const toolConfig = clientToolkit.tools[typedTool];
+
+  if (!toolConfig) {
+    return (
+      <GenericToolInvocation
+        clientToolkit={clientToolkit}
+        toolInvocation={toolInvocation}
+        toolName={tool}
+      />
+    );
+  }
 
   return (
     <motion.div
@@ -212,6 +226,67 @@ const MessageToolComponent: React.FC<Props> = ({ toolInvocation }) => {
             )}
           </AnimatePresence>
         </motion.div>
+      </Card>
+    </motion.div>
+  );
+};
+
+const GenericToolInvocation: React.FC<{
+  clientToolkit: ReturnType<typeof getClientToolkit>;
+  toolInvocation: ToolInvocation;
+  toolName: string;
+}> = ({ clientToolkit, toolInvocation, toolName }) => {
+  const argsDefined = toolInvocation.args !== undefined;
+
+  return (
+    <motion.div
+      initial={{
+        opacity: argsDefined ? 1 : 0,
+        y: argsDefined ? 0 : 20,
+        scale: argsDefined ? 1 : 0.95,
+      }}
+      animate={
+        !argsDefined
+          ? {
+              opacity: 1,
+              y: 0,
+              scale: 1,
+            }
+          : undefined
+      }
+      transition={{ duration: 0.4, ease: "easeInOut" }}
+    >
+      <Card className="gap-0 overflow-hidden p-0">
+        <HStack className="border-b p-2">
+          <clientToolkit.icon className="size-4" />
+          {toolInvocation.state === "result" ? (
+            <span className="text-lg font-medium">
+              {clientToolkit.name} Toolkit
+            </span>
+          ) : (
+            <AnimatedShinyText className="text-lg font-medium">
+              {clientToolkit.name} Toolkit
+            </AnimatedShinyText>
+          )}
+          {(toolInvocation.state === "call" ||
+            toolInvocation.state === "partial-call") && (
+            <Loader2 className="size-4 animate-spin opacity-60" />
+          )}
+        </HStack>
+        <div className="space-y-2 p-2">
+          <p className="text-muted-foreground text-sm font-medium">
+            {toolName}
+          </p>
+          <pre className="bg-muted max-h-80 w-full max-w-full overflow-auto rounded-md p-2 text-xs whitespace-pre-wrap">
+            {JSON.stringify(
+              toolInvocation.state === "result"
+                ? toolInvocation.result
+                : (toolInvocation.args ?? {}),
+              null,
+              2,
+            )}
+          </pre>
+        </div>
       </Card>
     </motion.div>
   );
