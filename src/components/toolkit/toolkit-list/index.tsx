@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
@@ -13,6 +13,7 @@ import {
 import { ToolkitItem } from "./item";
 
 import { clientToolkits } from "@/toolkits/toolkits/client";
+import { api } from "@/trpc/react";
 
 import type { ClientToolkit } from "@/toolkits/types";
 import type { Toolkits } from "@/toolkits/toolkits/shared";
@@ -39,6 +40,16 @@ export const ToolkitList: React.FC<ToolkitListProps> = ({
   const router = useRouter();
 
   const [searchQuery, setSearchQuery] = useState("");
+  const { data: toolkitUsage = [] } = api.tools.getTopToolkits.useQuery({
+    limit: 100,
+  });
+  const toolkitUsageById = useMemo(() => {
+    return new Map(
+      toolkitUsage
+        .filter((toolkit) => toolkit.id)
+        .map((toolkit) => [toolkit.id as Toolkits, toolkit.totalUsage]),
+    );
+  }, [toolkitUsage]);
 
   useEffect(() => {
     const updatedToolkits = Object.entries(clientToolkits).filter(([id]) => {
@@ -84,6 +95,7 @@ export const ToolkitList: React.FC<ToolkitListProps> = ({
                 isSelected={true}
                 addToolkit={onAddToolkit}
                 removeToolkit={onRemoveToolkit}
+                usageCount={toolkitUsageById.get(toolkit.id) ?? 0}
               />
             ))}
           </CommandGroup>
@@ -105,6 +117,7 @@ export const ToolkitList: React.FC<ToolkitListProps> = ({
                     isSelected={selectedToolkits.some((t) => t.id === typedId)}
                     addToolkit={onAddToolkit}
                     removeToolkit={onRemoveToolkit}
+                    usageCount={toolkitUsageById.get(typedId) ?? 0}
                   />
                 );
               })}

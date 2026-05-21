@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-import { Loader2, Plus } from "lucide-react";
+import { Activity, Loader2, Plus } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { CommandItem as BaseCommandItem } from "@/components/ui/command";
@@ -34,6 +34,7 @@ interface Props {
   isSelected: boolean;
   addToolkit: (toolkit: SelectedToolkit) => void;
   removeToolkit: (id: Toolkits) => void;
+  usageCount?: number;
 }
 
 export const ToolkitItem: React.FC<Props> = ({
@@ -42,6 +43,7 @@ export const ToolkitItem: React.FC<Props> = ({
   isSelected,
   addToolkit,
   removeToolkit,
+  usageCount,
 }) => {
   const CommandItem = ({
     onSelect,
@@ -76,6 +78,12 @@ export const ToolkitItem: React.FC<Props> = ({
           <h3 className="text-sm font-medium">{toolkit.name}</h3>
           <p className="text-muted-foreground text-xs">{toolkit.description}</p>
         </VStack>
+        {usageCount !== undefined && (
+          <div className="text-muted-foreground ml-auto flex shrink-0 items-center gap-1 text-xs">
+            <Activity className="size-3" />
+            <span>{usageCount}</span>
+          </div>
+        )}
       </BaseCommandItem>
     );
   };
