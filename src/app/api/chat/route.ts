@@ -258,22 +258,20 @@ export async function POST(request: Request) {
               console.error("Stream error occurred:", error);
 
               // Check if it's a 402 error and log it specifically
-              if (error && typeof error === "object") {
-                const errorStr = JSON.stringify(error);
-                if (
-                  errorStr.includes("402") ||
-                  errorStr.includes("requires more credits")
-                ) {
-                  console.error(
-                    "OpenRouter credits exhausted - 402 error detected",
-                  );
-                }
+              const errorText = getErrorText(error);
+              if (
+                errorText.includes("402") ||
+                errorText.includes("requires more credits")
+              ) {
+                console.error(
+                  "OpenRouter credits exhausted - 402 error detected",
+                );
               }
 
               // Send error to frontend - this will trigger onStreamError which calls stop()
               dataStream.writeData({
                 type: "error",
-                message: "An error occurred while processing your request",
+                message: getStreamErrorMessage(errorText),
               });
 
               // Don't throw - just let the stream end naturally after sending error data
@@ -382,6 +380,49 @@ export async function POST(request: Request) {
     }
     console.error("Unexpected error in chat route:", error);
     return new ChatSDKError("bad_request:api").toResponse();
+  }
+}
+
+function getStreamErrorMessage(errorText: string) {
+  if (isContextLengthError(errorText)) {
+    return "This chat is too long for the selected model's context window. Try starting a new chat, removing older messages, or switching to a model with a larger context window.";
+  }
+
+  return "An error occurred while processing your request";
+}
+
+function isContextLengthError(errorText: string) {
+  return [
+    "context length",
+    "context_length",
+    "context window",
+    "maximum context",
+    "max context",
+    "too many tokens",
+    "token limit",
+    "prompt is too long",
+    "input is too long",
+    "reduce the length",
+  ].some((message) => errorText.includes(message));
+}
+
+function getErrorText(error: unknown): string {
+  if (error instanceof Error) {
+    return `${error.name} ${error.message} ${getErrorText(error.cause)}`.toLowerCase();
+  }
+
+  if (typeof error === "string") {
+    return error.toLowerCase();
+  }
+
+  if (!error) {
+    return "";
+  }
+
+  try {
+    return JSON.stringify(error).toLowerCase();
+  } catch {
+    return "";
   }
 }
 
