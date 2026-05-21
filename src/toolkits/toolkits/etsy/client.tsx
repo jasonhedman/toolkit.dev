@@ -9,6 +9,7 @@ import { baseEtsyToolkitConfig } from "./base";
 import { createClientToolkit } from "@/toolkits/create-toolkit";
 
 import { getListingsClientConfig } from "@/toolkits/toolkits/etsy/tools/get-listings/client";
+import { getShopInfoClientConfig } from "@/toolkits/toolkits/etsy/tools/get-shop-info/client";
 
 import { ToolkitGroups } from "@/toolkits/types";
 import { EtsyTools } from "./tools/tools";
@@ -37,5 +38,6 @@ export const etsyClientToolkit = createClientToolkit(
   },
   {
     [EtsyTools.getListings]: getListingsClientConfig,
+    [EtsyTools.getShopInfo]: getShopInfoClientConfig,
   },
 );
