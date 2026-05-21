@@ -1,7 +1,12 @@
 import { z } from "zod";
 
-import { createTRPCRouter, protectedProcedure } from "@/server/api/trpc";
+import {
+  createTRPCRouter,
+  protectedProcedure,
+  publicProcedure,
+} from "@/server/api/trpc";
 import { FILE_NAME_MAX_LENGTH } from "@/lib/constants";
+import { languageModels } from "@/ai/language";
 
 const messagePartSchema = z.discriminatedUnion("type", [
   z.object({
@@ -43,6 +48,58 @@ const messagePartSchema = z.discriminatedUnion("type", [
   }),
 ]);
 export const messagesRouter = createTRPCRouter({
+  getTopModelUsage: publicProcedure
+    .input(
+      z
+        .object({
+          limit: z.number().min(1).max(100).default(25),
+        })
+        .optional(),
+    )
+    .query(async ({ ctx, input }) => {
+      const limit = input?.limit ?? 25;
+
+      const [modelRows, totalMessages] = await Promise.all([
+        ctx.db.message.groupBy({
+          by: ["modelId"],
+          where: {
+            role: "assistant",
+          },
+          _count: {
+            _all: true,
+          },
+          orderBy: {
+            _count: {
+              modelId: "desc",
+            },
+          },
+          take: limit,
+        }),
+        ctx.db.message.count({
+          where: {
+            role: "assistant",
+          },
+        }),
+      ]);
+
+      return {
+        totalMessages,
+        models: modelRows.map((row) => {
+          const resolvedModel = resolveModel(row.modelId);
+          const count = row._count._all;
+
+          return {
+            ...resolvedModel,
+            count,
+            percentage:
+              totalMessages === 0
+                ? 0
+                : Math.round((count / totalMessages) * 1000) / 10,
+          };
+        }),
+      };
+    }),
+
   getMessagesForChat: protectedProcedure
     .input(
       z.object({
@@ -138,3 +195,53 @@ export const messagesRouter = createTRPCRouter({
       });
     }),
 });
+
+function resolveModel(storedModelId: string) {
+  const separatorIndex = getModelSeparatorIndex(storedModelId);
+  const provider =
+    separatorIndex > 0 ? storedModelId.slice(0, separatorIndex) : "unknown";
+  const providerModelId =
+    separatorIndex > 0
+      ? storedModelId.slice(separatorIndex + 1)
+      : storedModelId;
+  const model = languageModels.find(
+    (model) =>
+      model.provider === provider &&
+      (model.modelId === providerModelId ||
+        `${model.provider}/${model.modelId}` === storedModelId ||
+        `${model.provider}:${model.modelId}` === storedModelId),
+  );
+
+  return {
+    modelId: storedModelId,
+    provider,
+    providerModelId,
+    name: model?.name ?? formatModelName(providerModelId),
+    description: model?.description,
+    contextLength: model?.contextLength,
+    capabilities: model?.capabilities ?? [],
+  };
+}
+
+function getModelSeparatorIndex(modelId: string) {
+  const slashIndex = modelId.indexOf("/");
+  const colonIndex = modelId.indexOf(":");
+
+  if (slashIndex === -1) {
+    return colonIndex;
+  }
+
+  if (colonIndex === -1) {
+    return slashIndex;
+  }
+
+  return Math.min(slashIndex, colonIndex);
+}
+
+function formatModelName(modelId: string) {
+  return modelId
+    .split(/[-_:/.]+/)
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
+}
