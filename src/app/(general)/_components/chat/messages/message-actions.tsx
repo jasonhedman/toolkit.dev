@@ -1,5 +1,3 @@
-import { memo } from "react";
-
 import { toast } from "sonner";
 
 import { useCopyToClipboard } from "usehooks-ts";
@@ -27,6 +25,18 @@ interface Props {
   isLoading: boolean;
   chatId: string;
 }
+
+const getMessageText = (message: Message) => {
+  const textFromParts = message.parts
+    ?.filter((part) => part.type === "text")
+    .map((part) => part.text)
+    .join("\n")
+    .trim();
+
+  if (textFromParts) return textFromParts;
+
+  return message.content?.trim() ?? "";
+};
 
 export const PureMessageActions: React.FC<Props> = ({
   message,
@@ -74,18 +84,19 @@ export const PureMessageActions: React.FC<Props> = ({
               variant="ghost"
               size="icon"
               onClick={async () => {
-                const textFromParts = message.parts
-                  ?.filter((part) => part.type === "text")
-                  .map((part) => part.text)
-                  .join("\n")
-                  .trim();
+                const textToCopy = getMessageText(message);
 
-                if (!textFromParts) {
+                if (!textToCopy) {
                   toast.error("There's no text to copy!");
                   return;
                 }
 
-                await copyToClipboard(textFromParts);
+                const didCopy = await copyToClipboard(textToCopy);
+                if (!didCopy) {
+                  toast.error("Failed to copy message to clipboard.");
+                  return;
+                }
+
                 toast.success("Copied to clipboard!");
               }}
             >
@@ -120,11 +131,4 @@ export const PureMessageActions: React.FC<Props> = ({
   );
 };
 
-export const MessageActions = memo(
-  PureMessageActions,
-  (prevProps, nextProps) => {
-    if (prevProps.isLoading !== nextProps.isLoading) return false;
-
-    return true;
-  },
-);
+export const MessageActions = PureMessageActions;
