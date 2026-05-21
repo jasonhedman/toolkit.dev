@@ -1,6 +1,11 @@
 import { z } from "zod";
 
-import { DiscordTools, listServersTool, getUserInfoTool } from "./tools";
+import {
+  DiscordTools,
+  listServersTool,
+  getUserInfoTool,
+  getGuildMemberTool,
+} from "./tools";
 
 import type { ToolkitConfig } from "@/toolkits/types";
 
@@ -15,6 +20,7 @@ export const baseDiscordToolkitConfig: ToolkitConfig<
   tools: {
     [DiscordTools.ListServers]: listServersTool,
     [DiscordTools.GetUserInfo]: getUserInfoTool,
+    [DiscordTools.GetGuildMember]: getGuildMemberTool,
   },
   parameters: discordParameters,
 };

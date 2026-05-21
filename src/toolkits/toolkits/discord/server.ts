@@ -7,6 +7,7 @@ import { DiscordTools } from "./tools";
 import {
   listServersToolConfigServer,
   getUserInfoToolConfigServer,
+  getGuildMemberToolConfigServer,
 } from "./tools/server";
 
 import { api } from "@/trpc/server";
@@ -17,10 +18,12 @@ export const discordToolkitServer = createServerToolkit(
 
 - **List Servers**: Get a list of all Discord servers you are a member of
 - **Get User Info**: Retrieve information about your Discord account
+- **Get Guild Member**: Retrieve your member profile, roles, and join date for a specific Discord server
 
 **Tool Sequencing Strategies:**
 1. **Server Discovery**: Start with List Servers to see all your servers
-2. **Profile Analysis**: Use Get User Info to understand your account status and permissions
+2. **Server Membership Details**: Use Get Guild Member with a server ID from List Servers to inspect your server-specific member profile
+3. **Profile Analysis**: Use Get User Info to understand your account status and permissions
 
 **Best Practices:**
 - Use List Servers to understand your server landscape
@@ -46,6 +49,7 @@ export const discordToolkitServer = createServerToolkit(
     return {
       [DiscordTools.ListServers]: listServersToolConfigServer(rest),
       [DiscordTools.GetUserInfo]: getUserInfoToolConfigServer(rest),
+      [DiscordTools.GetGuildMember]: getGuildMemberToolConfigServer(rest),
     };
   },
 );
