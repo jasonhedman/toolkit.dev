@@ -197,37 +197,47 @@ export const toolsRouter = createTRPCRouter({
     });
   }),
 
-  getTopToolkits: publicProcedure.query(async ({ ctx }) => {
-    // Aggregate total usageCount per toolkit by grouping tools
-    const toolkitsWithUsage = await ctx.db.tool.groupBy({
-      by: ["toolkitId"],
-      _sum: {
-        usageCount: true,
-      },
-      orderBy: {
+  getTopToolkits: publicProcedure
+    .input(
+      z
+        .object({
+          limit: z.number().min(1).max(100).default(10),
+        })
+        .optional(),
+    )
+    .query(async ({ ctx, input }) => {
+      const limit = input?.limit ?? 10;
+
+      // Aggregate total usageCount per toolkit by grouping tools
+      const toolkitsWithUsage = await ctx.db.tool.groupBy({
+        by: ["toolkitId"],
         _sum: {
-          usageCount: "desc",
+          usageCount: true,
         },
-      },
-      take: 10,
-    });
+        orderBy: {
+          _sum: {
+            usageCount: "desc",
+          },
+        },
+        take: limit,
+      });
 
-    // Fetch toolkit details for the top toolkits
-    const toolkitIds = toolkitsWithUsage.map((t) => t.toolkitId);
-    const toolkitDetails = await ctx.db.toolkit.findMany({
-      where: { id: { in: toolkitIds } },
-      select: { id: true },
-    });
+      // Fetch toolkit details for the top toolkits
+      const toolkitIds = toolkitsWithUsage.map((t) => t.toolkitId);
+      const toolkitDetails = await ctx.db.toolkit.findMany({
+        where: { id: { in: toolkitIds } },
+        select: { id: true },
+      });
 
-    // Merge usage info with toolkit details
-    const result = toolkitsWithUsage.map((tu) => {
-      const toolkit = toolkitDetails.find((td) => td.id === tu.toolkitId);
-      return {
-        id: toolkit?.id,
-        totalUsage: tu._sum.usageCount ?? 0,
-      };
-    });
+      // Merge usage info with toolkit details
+      const result = toolkitsWithUsage.map((tu) => {
+        const toolkit = toolkitDetails.find((td) => td.id === tu.toolkitId);
+        return {
+          id: toolkit?.id,
+          totalUsage: tu._sum.usageCount ?? 0,
+        };
+      });
 
-    return result;
-  }),
+      return result;
+    }),
 });
