@@ -1,4 +1,5 @@
 import { createTRPCRouter, protectedProcedure } from "@/server/api/trpc";
+import { refreshAccountAccessTokenIfNeeded } from "@/server/auth/refresh-token";
 import { z } from "zod";
 
 export const accountsRouter = createTRPCRouter({
@@ -34,23 +35,27 @@ export const accountsRouter = createTRPCRouter({
   getAccount: protectedProcedure
     .input(z.string())
     .query(async ({ ctx, input }) => {
-      return ctx.db.account.findFirst({
+      const account = await ctx.db.account.findFirst({
         where: {
           id: input,
           userId: ctx.session.user.id,
         },
       });
+
+      return refreshAccountAccessTokenIfNeeded(account);
     }),
 
   getAccountByProvider: protectedProcedure
     .input(z.string())
     .query(async ({ ctx, input }) => {
-      return ctx.db.account.findFirst({
+      const account = await ctx.db.account.findFirst({
         where: {
           userId: ctx.session.user.id,
           provider: input,
         },
       });
+
+      return refreshAccountAccessTokenIfNeeded(account);
     }),
 
   hasProviderAccount: protectedProcedure
