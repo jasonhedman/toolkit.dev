@@ -36,6 +36,7 @@ export function DataTableDemo() {
   const [visibleColumns, setVisibleColumns] = React.useState({
     name: true,
     contentType: true,
+    embeddingStatus: true,
     actions: true,
   });
 
@@ -184,6 +185,9 @@ export function DataTableDemo() {
               {visibleColumns.contentType && (
                 <TableHead>Content Type</TableHead>
               )}
+              {visibleColumns.embeddingStatus && (
+                <TableHead>Indexing</TableHead>
+              )}
               {visibleColumns.actions && (
                 <TableHead className="w-12"></TableHead>
               )}
@@ -235,6 +239,13 @@ export function DataTableDemo() {
                   {visibleColumns.contentType && (
                     <TableCell>
                       <div className="capitalize">{attachment.contentType}</div>
+                    </TableCell>
+                  )}
+                  {visibleColumns.embeddingStatus && (
+                    <TableCell>
+                      <div className="capitalize">
+                        {attachment.embeddingStatus}
+                      </div>
                     </TableCell>
                   )}
                   {visibleColumns.actions && (

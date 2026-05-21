@@ -96,6 +96,9 @@ const PureMultimodalInput: React.FC<Props> = ({
     "input",
     "",
   );
+  const [fileIndexingEnabled, setFileIndexingEnabled] = useLocalStorage<
+    boolean | null
+  >("file-indexing-enabled", null);
 
   useEffect(() => {
     if (textareaRef.current) {
@@ -120,6 +123,18 @@ const PureMultimodalInput: React.FC<Props> = ({
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploadQueue, setUploadQueue] = useState<Array<string>>([]);
+
+  const requestFileIndexingPreference = useCallback(() => {
+    if (fileIndexingEnabled !== null) {
+      return fileIndexingEnabled;
+    }
+
+    const shouldIndex = window.confirm(
+      "Index uploaded files for retrieval? This stores searchable chunks in your database and enables the File Search toolkit.",
+    );
+    setFileIndexingEnabled(shouldIndex);
+    return shouldIndex;
+  }, [fileIndexingEnabled, setFileIndexingEnabled]);
 
   const supportsImages = selectedChatModel?.capabilities?.includes(
     LanguageModelCapability.Vision,
@@ -199,9 +214,10 @@ const PureMultimodalInput: React.FC<Props> = ({
   ]);
 
   const uploadFile = useCallback(
-    async (file: File): Promise<Attachment | undefined> => {
+    async (file: File, indexFile: boolean): Promise<Attachment | undefined> => {
       const formData = new FormData();
       formData.append("file", file);
+      formData.append("indexFile", String(indexFile));
 
       try {
         const response = await fetch("/api/files/upload", {
@@ -235,11 +251,15 @@ const PureMultimodalInput: React.FC<Props> = ({
   const handleFileChange = useCallback(
     async (event: React.ChangeEvent<HTMLInputElement>) => {
       const files = Array.from(event.target.files ?? []);
+      const indexFiles =
+        files.length > 0 ? requestFileIndexingPreference() : false;
 
       setUploadQueue(files.map((file) => file.name));
 
       try {
-        const uploadPromises = files.map((file) => uploadFile(file));
+        const uploadPromises = files.map((file) =>
+          uploadFile(file, indexFiles),
+        );
         const uploadedAttachments = await Promise.all(uploadPromises);
         const successfullyUploadedAttachments = uploadedAttachments.filter(
           (attachment): attachment is Attachment => attachment !== undefined,
@@ -255,7 +275,7 @@ const PureMultimodalInput: React.FC<Props> = ({
         setUploadQueue([]);
       }
     },
-    [setAttachments, uploadFile],
+    [requestFileIndexingPreference, setAttachments, uploadFile],
   );
 
   useEffect(() => {
@@ -302,10 +322,11 @@ const PureMultimodalInput: React.FC<Props> = ({
           return;
         }
 
+        const indexFiles = requestFileIndexingPreference();
         setUploadQueue(imageFiles.map((file) => file.name));
 
         // Handle async upload in non-blocking way
-        Promise.all(imageFiles.map((file) => uploadFile(file)))
+        Promise.all(imageFiles.map((file) => uploadFile(file, indexFiles)))
           .then((uploadedAttachments) => {
             const successfullyUploadedAttachments = uploadedAttachments.filter(
               (attachment): attachment is Attachment =>
@@ -332,7 +353,7 @@ const PureMultimodalInput: React.FC<Props> = ({
           });
       }
     },
-    [supportsImages, setAttachments, uploadFile],
+    [requestFileIndexingPreference, supportsImages, setAttachments, uploadFile],
   );
 
   useEffect(() => {

@@ -67,6 +67,9 @@ export const filesRouter = createTRPCRouter({
         name: z.string().min(1).max(FILE_NAME_MAX_LENGTH),
         contentType: z.string(),
         url: z.string().url(),
+        embeddingStatus: z
+          .enum(["skipped", "indexing", "indexed", "failed"])
+          .optional(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
@@ -77,6 +80,7 @@ export const filesRouter = createTRPCRouter({
           name: input.name,
           contentType: input.contentType,
           url: input.url,
+          embeddingStatus: input.embeddingStatus ?? "skipped",
           userId,
         },
       });
