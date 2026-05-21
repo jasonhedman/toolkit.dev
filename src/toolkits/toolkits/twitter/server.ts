@@ -3,6 +3,7 @@ import { baseTwitterToolkitConfig } from "./base";
 import {
   getUserProfileToolConfigServer,
   getLatestTweetsToolConfigServer,
+  getTweetToolConfigServer,
 } from "./tools/server";
 import { TwitterTools } from "./tools";
 import { api } from "@/trpc/server";
@@ -14,14 +15,17 @@ export const twitterToolkitServer = createServerToolkit(
 
 - **Get User Profile**: Retrieve detailed information about a Twitter user by their username
 - **Get Latest Tweets**: Fetch the most recent tweets from a user (up to 100 tweets)
+- **Get Tweet**: Fetch one tweet by ID with author context and engagement metrics
 
 **Tool Sequencing Strategies:**
 1. **User Research**: Start with Get User Profile to understand a user's background, then use Get Latest Tweets to see their recent activity
 2. **Content Analysis**: Use Get Latest Tweets to analyze a user's recent posts and engagement patterns
-3. **Profile Verification**: Combine Get User Profile with Get Latest Tweets to verify user authenticity and activity
+3. **Tweet Lookup**: Use Get Tweet when the user provides a tweet URL or ID and needs details about that specific post
+4. **Profile Verification**: Combine Get User Profile with Get Latest Tweets to verify user authenticity and activity
 
 **Best Practices:**
 - Use usernames without the @ symbol (e.g., 'elonmusk' not '@elonmusk')
+- Extract the numeric ID from tweet URLs before calling Get Tweet
 - For tweet analysis, start with fewer results (10-20) to get a quick overview
 - Use the exclude_retweets and exclude_replies options to focus on original content
 - Consider the user's follower count and verification status when analyzing their influence`,
@@ -46,6 +50,7 @@ export const twitterToolkitServer = createServerToolkit(
     return {
       [TwitterTools.GetUserProfile]: getUserProfileToolConfigServer(client),
       [TwitterTools.GetLatestTweets]: getLatestTweetsToolConfigServer(client),
+      [TwitterTools.GetTweet]: getTweetToolConfigServer(client),
     };
   },
 );

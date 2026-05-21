@@ -7,6 +7,7 @@ import { TwitterTools } from "./tools";
 import {
   getUserProfileToolConfigClient,
   getLatestTweetsToolConfigClient,
+  getTweetToolConfigClient,
 } from "./tools/client";
 
 import { ToolkitGroups } from "@/toolkits/types";
@@ -47,5 +48,6 @@ export const twitterClientToolkit = createClientToolkit(
   {
     [TwitterTools.GetUserProfile]: getUserProfileToolConfigClient,
     [TwitterTools.GetLatestTweets]: getLatestTweetsToolConfigClient,
+    [TwitterTools.GetTweet]: getTweetToolConfigClient,
   },
 );
