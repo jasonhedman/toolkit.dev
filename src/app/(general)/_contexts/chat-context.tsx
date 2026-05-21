@@ -4,6 +4,7 @@ import {
   createContext,
   useContext,
   useEffect,
+  useRef,
   useState,
   useCallback,
 } from "react";
@@ -93,6 +94,8 @@ interface ChatProviderProps {
     useNativeSearch?: boolean;
     toolkits?: Array<PersistedToolkit>;
   };
+  initialInput?: string;
+  autoSubmit?: boolean;
 }
 
 export function ChatProvider({
@@ -103,15 +106,21 @@ export function ChatProvider({
   autoResume,
   workbench,
   initialPreferences,
+  initialInput,
+  autoSubmit = false,
 }: ChatProviderProps) {
   const utils = api.useUtils();
+  const initialChatModel =
+    initialPreferences?.selectedChatModel ?? DEFAULT_CHAT_MODEL;
+  const initialUseNativeSearch =
+    initialChatModel.capabilities?.includes(
+      LanguageModelCapability.WebSearch,
+    ) === true || initialPreferences?.useNativeSearch === true;
 
   const [selectedChatModel, setSelectedChatModelState] =
-    useState<LanguageModel>(
-      initialPreferences?.selectedChatModel ?? DEFAULT_CHAT_MODEL,
-    );
+    useState<LanguageModel>(initialChatModel);
   const [useNativeSearch, setUseNativeSearchState] = useState(
-    initialPreferences?.useNativeSearch ?? false,
+    initialUseNativeSearch,
   );
   const [imageGenerationModel, setImageGenerationModelState] = useState<
     ImageModel | undefined
@@ -177,6 +186,8 @@ export function ChatProvider({
   });
   const [hasInvalidated, setHasInvalidated] = useState(false);
   const [streamStopped, setStreamStopped] = useState(false);
+  const hasAutoSubmitted = useRef(false);
+  const initialPrompt = initialInput?.trim() ?? "";
 
   // Wrapper functions that also save to cookies
   const setSelectedChatModel = (model: LanguageModel) => {
@@ -222,6 +233,7 @@ export function ChatProvider({
   } = useChat({
     id,
     initialMessages,
+    initialInput: initialPrompt,
     experimental_throttle: 100,
     sendExtraMessageFields: true,
     generateId: generateUUID,
@@ -281,6 +293,33 @@ export function ChatProvider({
     setMessages,
     onStreamError,
   });
+
+  useEffect(() => {
+    if (
+      !autoSubmit ||
+      !initialPrompt ||
+      hasAutoSubmitted.current ||
+      status !== "ready"
+    ) {
+      return;
+    }
+
+    hasAutoSubmitted.current = true;
+    setStreamStopped(false);
+
+    if (workbench) {
+      window.history.replaceState({}, "", `/workbench/${workbench.id}/${id}`);
+    } else {
+      window.history.replaceState({}, "", `/${id}`);
+    }
+
+    void append({
+      role: "user",
+      content: initialPrompt,
+    });
+    window.localStorage.removeItem("input");
+    queueMicrotask(() => setInput(""));
+  }, [append, autoSubmit, id, initialPrompt, setInput, status, workbench]);
 
   const handleSubmit: UseChatHelpers["handleSubmit"] = (
     event,

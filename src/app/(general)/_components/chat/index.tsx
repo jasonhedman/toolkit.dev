@@ -17,6 +17,8 @@ interface Props {
   isReadonly: boolean;
   isNew: boolean;
   workbench?: Workbench;
+  initialInput?: string;
+  autoSubmit?: boolean;
 }
 
 export const Chat = async ({
@@ -25,6 +27,8 @@ export const Chat = async ({
   isReadonly,
   isNew,
   workbench,
+  initialInput,
+  autoSubmit = false,
 }: Props) => {
   const initialMessages = isNew
     ? []
@@ -113,6 +117,8 @@ export const Chat = async ({
         autoResume={!isNew}
         workbench={workbench}
         initialPreferences={initialPreferences}
+        initialInput={initialInput}
+        autoSubmit={autoSubmit}
       >
         <ChatContent
           id={id}
