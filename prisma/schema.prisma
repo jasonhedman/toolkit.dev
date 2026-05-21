@@ -115,13 +115,37 @@ model Video {
 }
 
 model File {
-    id          String   @id @default(uuid())
-    userId      String
-    name        String
-    contentType String
-    url         String
-    createdAt   DateTime @default(now())
-    user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+    id              String               @id @default(uuid())
+    userId          String
+    name            String
+    contentType     String
+    url             String
+    embeddingStatus FileEmbeddingStatus  @default(skipped)
+    createdAt       DateTime             @default(now())
+    user            User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+    embeddingChunks FileEmbeddingChunk[]
+}
+
+enum FileEmbeddingStatus {
+    skipped
+    indexing
+    indexed
+    failed
+}
+
+model FileEmbeddingChunk {
+    id         String                     @id @default(uuid())
+    fileId     String
+    userId     String
+    chunkIndex Int
+    content    String                     @db.Text
+    embedding  Unsupported("vector(384)")
+    createdAt  DateTime                   @default(now())
+    file       File                       @relation(fields: [fileId], references: [id], onDelete: Cascade)
+
+    @@unique([fileId, chunkIndex])
+    @@index([fileId])
+    @@index([userId])
 }
 
 model Image {

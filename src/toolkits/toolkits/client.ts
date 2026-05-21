@@ -13,6 +13,7 @@ import { googleDriveClientToolkit } from "./google-drive/client";
 import { mem0ClientToolkit } from "./mem0/client";
 import { notionClientToolkit } from "./notion/client";
 import { e2bClientToolkit } from "./e2b/client";
+import { fileRagClientToolkit } from "./file-rag/client";
 import { discordClientToolkit } from "./discord/client";
 import { stravaClientToolkit } from "./strava/client";
 import { spotifyClientToolkit } from "./spotify/client";
@@ -36,6 +37,7 @@ export const clientToolkits: ClientToolkits = {
   [Toolkits.GoogleCalendar]: googleCalendarClientToolkit,
   [Toolkits.Notion]: notionClientToolkit,
   [Toolkits.GoogleDrive]: googleDriveClientToolkit,
+  [Toolkits.FileRag]: fileRagClientToolkit,
   [Toolkits.Discord]: discordClientToolkit,
   [Toolkits.Strava]: stravaClientToolkit,
   [Toolkits.Spotify]: spotifyClientToolkit,
