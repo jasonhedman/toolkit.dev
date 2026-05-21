@@ -7,6 +7,7 @@ import { DiscordTools } from "./tools";
 import {
   listServersToolConfigClient,
   getUserInfoToolConfigClient,
+  getGuildMemberToolConfigClient,
 } from "./tools/client";
 
 import { Link } from "../components/link";
@@ -40,5 +41,6 @@ export const discordClientToolkit = createClientToolkit(
   {
     [DiscordTools.ListServers]: listServersToolConfigClient,
     [DiscordTools.GetUserInfo]: getUserInfoToolConfigClient,
+    [DiscordTools.GetGuildMember]: getGuildMemberToolConfigClient,
   },
 );
