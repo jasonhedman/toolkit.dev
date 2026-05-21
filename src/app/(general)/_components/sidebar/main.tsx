@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 
-import { Edit } from "lucide-react";
+import { BarChart3, Edit } from "lucide-react";
 
 import {
   SidebarGroup,
@@ -23,6 +23,11 @@ export const NavMain = () => {
       title: "New Chat",
       url: workbenchId ? `/workbench/${workbenchId}` : "/",
       icon: Edit,
+    },
+    {
+      title: "Models",
+      url: "/models",
+      icon: BarChart3,
     },
   ];
 

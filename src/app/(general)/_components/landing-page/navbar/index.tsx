@@ -17,6 +17,9 @@ export const Navbar = () => {
           </h1>
         </HStack>
         <HStack>
+          <Link href="/models">
+            <Button variant="ghost">Models</Button>
+          </Link>
           <AuthModal>
             <Button className="user-message">Playground</Button>
           </AuthModal>
