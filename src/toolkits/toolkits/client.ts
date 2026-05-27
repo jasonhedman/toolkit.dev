@@ -19,6 +19,7 @@ import { spotifyClientToolkit } from "./spotify/client";
 import { etsyClientToolkit } from "./etsy/client";
 import { videoClientToolkit } from "./video/client";
 import { twitterClientToolkit } from "./twitter/client";
+import { mcpClientToolkit } from "./mcp/client";
 
 export type ClientToolkits = {
   [K in Toolkits]: ClientToolkit<
@@ -42,6 +43,7 @@ export const clientToolkits: ClientToolkits = {
   [Toolkits.Etsy]: etsyClientToolkit,
   [Toolkits.Video]: videoClientToolkit,
   [Toolkits.Twitter]: twitterClientToolkit,
+  [Toolkits.Mcp]: mcpClientToolkit,
 };
 
 export function getClientToolkit<T extends Toolkits>(
