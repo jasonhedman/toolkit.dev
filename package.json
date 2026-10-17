@@ -23,7 +23,7 @@
     "typecheck": "tsc --noEmit",
     "ci": "pnpm run format:check && pnpm run check && pnpm run build-pure",
     "shiki:generate": "pnpm dlx tsx src/components/ui/code/codegen.ts && pnpm format:write",
-    "test:parallel": "SKIP_ENV_VALIDATION=1 TSX_TSCONFIG_PATH=tests/tsconfig.json node --import ./tests/register.mjs --import tsx --test tests/parallel.test.ts"
+    "test:parallel": "SKIP_ENV_VALIDATION=1 TSX_TSCONFIG_PATH=tsconfig.test.json node --import ./tests/register.mjs --import tsx --test tests/parallel.test.ts"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^1.2.12",
