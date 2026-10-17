@@ -93,7 +93,7 @@ Many of our Toolkits require extra keys. You can run Toolkit without these keys,
 
 New installations without search credentials start with **Parallel Web Search** enabled. It provides free web search (Fast mode) and page fetching through [Parallel Search MCP](https://docs.parallel.ai/integrations/mcp/search-mcp), with no search account or API key. Remove it from the toolkit selector to disable it; the selection is saved. You can add it again from **Add Toolkits**.
 
-Saved toolkit selections (including an empty selection), workbench settings, native-search preferences, and configured Exa or OpenAI credentials take precedence over this initial default. Requests fail visibly on errors or service limits, with a 20-second deadline; they never switch providers automatically. Model tool-calling support is still required.
+Saved toolkit selections (including an empty selection), workbench settings, native-search preferences, and configured Exa or OpenAI credentials take precedence over this initial default. Parallel requests fail visibly on errors or service limits, with a 20-second deadline; they never switch providers automatically. Model tool-calling support is still required.
 
 Exa remains available as **Web Search**, including its specialized research tools. To enable it, get an API key [here](https://dashboard.exa.ai/api-keys) and add it to your `.env`
 

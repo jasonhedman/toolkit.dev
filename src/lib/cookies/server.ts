@@ -38,7 +38,8 @@ export const serverCookieUtils = {
             cookieStore.get(COOKIE_KEYS.TOOLKITS)?.value,
             cookieStore.has(COOKIE_KEYS.TOOLKITS) ? [] : undefined,
           ),
-          Boolean(process.env.EXA_API_KEY || process.env.OPENAI_API_KEY),
+          Boolean(process.env.EXA_API_KEY) ||
+            Boolean(process.env.OPENAI_API_KEY),
           cookieStore.has(COOKIE_KEYS.USE_NATIVE_SEARCH),
         ),
       };

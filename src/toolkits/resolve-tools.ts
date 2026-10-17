@@ -58,9 +58,9 @@ export async function resolveToolkitTools(
     }),
   );
   return {
-    tools: Object.assign(
-      {} as Record<string, Tool>,
-      ...loaded.map((toolkit) => toolkit.tools),
+    tools: loaded.reduce<Record<string, Tool>>(
+      (all, toolkit) => ({ ...all, ...toolkit.tools }),
+      {},
     ),
     systemPrompts: loaded.map((toolkit) => toolkit.systemPrompt),
   };

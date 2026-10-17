@@ -36,11 +36,18 @@ type RequestRecord = {
   signal?: AbortSignal | null;
 };
 
+function requestUrl(url: Parameters<typeof fetch>[0]): string {
+  return typeof url === "string"
+    ? url
+    : url instanceof URL
+      ? url.href
+      : url.url;
+}
+
 function fixture(
-  reply: (
-    rpc: Rpc,
-    signal?: AbortSignal | null,
-  ) => unknown | Promise<unknown> = () => ({ results: [page] }),
+  reply: (rpc: Rpc, signal?: AbortSignal | null) => unknown = () => ({
+    results: [page],
+  }),
 ) {
   const requests: RequestRecord[] = [];
   globalThis.fetch = (async (url, init) => {
@@ -49,7 +56,7 @@ function fixture(
         ? (JSON.parse(init.body) as Rpc)
         : undefined;
     requests.push({
-      url: String(url),
+      url: requestUrl(url),
       method: init?.method ?? "GET",
       headers: new Headers(init?.headers),
       rpc,
@@ -113,7 +120,7 @@ afterEach(() => {
   globalThis.fetch = originalFetch;
 });
 
-test("fresh default, saved choices, explicit disable and credentials", async () => {
+void test("fresh default, saved choices, explicit disable and credentials", async () => {
   fixture();
   assert.deepEqual(resolveInitialToolkits(undefined, false, false), selected);
   for (const saved of [
@@ -131,7 +138,7 @@ test("fresh default, saved choices, explicit disable and credentials", async () 
   assert.deepEqual((await resolveToolkitTools([], {})).tools, {});
 });
 
-test("real registry dispatch constructs anonymous search/fetch and preserves sources", async () => {
+void test("real registry dispatch constructs anonymous search/fetch and preserves sources", async () => {
   const requests = fixture();
   const loaded = await tools();
   assert.deepEqual(Object.keys(loaded), ["parallel_search", "parallel_fetch"]);
@@ -174,7 +181,7 @@ test("real registry dispatch constructs anonymous search/fetch and preserves sou
     assert.ok(requests.some((r) => r.rpc?.method === method));
 });
 
-test("scripted AI SDK model consumes dispatcher search results in its next step", async () => {
+void test("scripted AI SDK model consumes dispatcher search results in its next step", async () => {
   fixture();
   let steps = 0;
   const model = new MockLanguageModelV1({
@@ -220,7 +227,7 @@ test("scripted AI SDK model consumes dispatcher search results in its next step"
   assert.equal(result.steps[0]?.toolResults[0]?.toolName, "parallel_search");
 });
 
-test("URL validation rejects non-web URLs and credentials before network access", async () => {
+void test("URL validation rejects non-web URLs and credentials before network access", async () => {
   const requests = fixture();
   const loaded = await tools();
   for (const url of [
@@ -242,7 +249,7 @@ test("URL validation rejects non-web URLs and credentials before network access"
   assert.equal(requests.length, 0);
 });
 
-test("empty results and partial extraction failures remain visible", async () => {
+void test("empty results and partial extraction failures remain visible", async () => {
   fixture(() => ({ results: [] }));
   const loaded = await tools();
   assert.deepEqual(
@@ -281,7 +288,7 @@ test("empty results and partial extraction failures remain visible", async () =>
   assert.match(markup, /https:\/\/example.com\/missing: not_found/);
 });
 
-test("HTTP, MCP, malformed-result and fetch failures are reported without fallback", async () => {
+void test("HTTP, MCP, malformed-result and fetch failures are reported without fallback", async () => {
   const loaded = await tools();
   for (const response of [
     { content: [{ type: "text", text: "quota exceeded" }], isError: true },
@@ -331,7 +338,7 @@ test("HTTP, MCP, malformed-result and fetch failures are reported without fallba
   }
   const requests: string[] = [];
   globalThis.fetch = (async (url) => {
-    requests.push(String(url));
+    requests.push(requestUrl(url));
     return new Response("service unavailable", { status: 503 });
   }) as typeof fetch;
   const result = await execute(loaded.parallel_search, searchArgs);
@@ -340,7 +347,7 @@ test("HTTP, MCP, malformed-result and fetch failures are reported without fallba
   assert.ok(requests.every((url) => url === "https://search.parallel.ai/mcp"));
 });
 
-test("cancellation aborts active HTTP work and an already cancelled call sends nothing", async () => {
+void test("cancellation aborts active HTTP work and an already cancelled call sends nothing", async () => {
   let started!: () => void;
   const waiting = new Promise<void>((resolve) => {
     started = resolve;
@@ -352,7 +359,12 @@ test("cancellation aborts active HTTP work and an already cancelled call sends n
     return new Promise((_resolve, reject) =>
       requestSignal?.addEventListener(
         "abort",
-        () => reject(requestSignal.reason),
+        () =>
+          reject(
+            requestSignal.reason instanceof Error
+              ? requestSignal.reason
+              : new Error("Request aborted"),
+          ),
         { once: true },
       ),
     );
@@ -377,7 +389,7 @@ test("cancellation aborts active HTTP work and an already cancelled call sends n
   assert.equal(requests.length, 0);
 });
 
-test(
+void test(
   "the 20-second deadline aborts a stalled HTTP request",
   { timeout: 25_000 },
   async () => {
@@ -387,7 +399,12 @@ test(
       return new Promise((_resolve, reject) =>
         requestSignal?.addEventListener(
           "abort",
-          () => reject(requestSignal.reason),
+          () =>
+            reject(
+              requestSignal.reason instanceof Error
+                ? requestSignal.reason
+                : new Error("Request aborted"),
+            ),
           { once: true },
         ),
       );
