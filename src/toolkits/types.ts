@@ -87,8 +87,15 @@ export type ServerToolConfig<
 > = {
   callback: (
     args: z.infer<ZodObject<Args>>,
+    context?: ToolExecutionContext,
   ) => Promise<z.infer<ZodObject<Result>>>;
   message?: string | ((result: z.infer<ZodObject<Result>>) => string);
+};
+
+export type ToolExecutionContext = {
+  abortSignal?: AbortSignal;
+  sessionId?: string;
+  modelName?: string;
 };
 
 export type ServerTool<

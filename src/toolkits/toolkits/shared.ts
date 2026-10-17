@@ -26,8 +26,10 @@ import type { VideoTools } from "./video/tools";
 import type { videoParameters } from "./video/base";
 import type { TwitterTools } from "./twitter/tools";
 import type { twitterParameters } from "./twitter/base";
+import type { parallelParameters, ParallelTools } from "./parallel/base";
 
 export enum Toolkits {
+  Parallel = "parallel",
   Exa = "exa",
   Image = "image",
   Github = "github",
@@ -45,6 +47,7 @@ export enum Toolkits {
 }
 
 export type ServerToolkitNames = {
+  [Toolkits.Parallel]: ParallelTools;
   [Toolkits.Exa]: ExaTools;
   [Toolkits.Image]: ImageTools;
   [Toolkits.Github]: GithubTools;
@@ -62,6 +65,7 @@ export type ServerToolkitNames = {
 };
 
 export type ServerToolkitParameters = {
+  [Toolkits.Parallel]: typeof parallelParameters.shape;
   [Toolkits.Exa]: typeof exaParameters.shape;
   [Toolkits.Image]: typeof imageParameters.shape;
   [Toolkits.Github]: typeof githubParameters.shape;

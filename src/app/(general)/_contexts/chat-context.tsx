@@ -178,6 +178,12 @@ export function ChatProvider({
   const [hasInvalidated, setHasInvalidated] = useState(false);
   const [streamStopped, setStreamStopped] = useState(false);
 
+  // Persist the initial toolkit default as well as subsequent selections. A
+  // workbench's initial toolkits must not overwrite the ordinary chat preference.
+  useEffect(() => {
+    if (!workbench) clientCookieUtils.setToolkits(toolkits);
+  }, [toolkits, workbench]);
+
   // Wrapper functions that also save to cookies
   const setSelectedChatModel = (model: LanguageModel) => {
     setSelectedChatModelState(model);

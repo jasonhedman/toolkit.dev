@@ -6,6 +6,7 @@ import {
 } from "./shared";
 
 import { exaClientToolkit } from "./exa/client";
+import { parallelClientToolkit } from "./parallel/client";
 import { imageClientToolkit } from "./image/client";
 import { githubClientToolkit } from "./github/client";
 import { googleCalendarClientToolkit } from "./google-calendar/client";
@@ -28,6 +29,7 @@ export type ClientToolkits = {
 };
 
 export const clientToolkits: ClientToolkits = {
+  [Toolkits.Parallel]: parallelClientToolkit,
   [Toolkits.E2B]: e2bClientToolkit,
   [Toolkits.Memory]: mem0ClientToolkit,
   [Toolkits.Image]: imageClientToolkit,

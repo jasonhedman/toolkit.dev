@@ -1,5 +1,6 @@
 import type { ServerToolkit } from "../types";
 import { exaToolkitServer } from "./exa/server";
+import { parallelToolkitServer } from "./parallel/server";
 import { githubToolkitServer } from "./github/server";
 import { googleCalendarToolkitServer } from "./google-calendar/server";
 import { googleDriveToolkitServer } from "./google-drive/server";
@@ -27,6 +28,7 @@ type ServerToolkits = {
 };
 
 export const serverToolkits: ServerToolkits = {
+  [Toolkits.Parallel]: parallelToolkitServer,
   [Toolkits.Exa]: exaToolkitServer,
   [Toolkits.Image]: imageToolkitServer,
   [Toolkits.Github]: githubToolkitServer,
