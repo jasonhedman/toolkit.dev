@@ -1,6 +1,7 @@
 import { cookies } from "next/headers";
 import type { ChatPreferences } from "./types";
 import { COOKIE_KEYS } from "./keys";
+import { resolveInitialToolkits } from "./default-toolkits";
 
 // Helper to safely parse JSON from cookie value
 const safeParseJson = <T>(value: string | null | undefined, fallback: T): T => {
@@ -32,9 +33,14 @@ export const serverCookieUtils = {
           cookieStore.get(COOKIE_KEYS.USE_NATIVE_SEARCH)?.value,
           false,
         ),
-        toolkits: safeParseJson(
-          cookieStore.get(COOKIE_KEYS.TOOLKITS)?.value,
-          [],
+        toolkits: resolveInitialToolkits(
+          safeParseJson(
+            cookieStore.get(COOKIE_KEYS.TOOLKITS)?.value,
+            cookieStore.has(COOKIE_KEYS.TOOLKITS) ? [] : undefined,
+          ),
+          Boolean(process.env.EXA_API_KEY) ||
+            Boolean(process.env.OPENAI_API_KEY),
+          cookieStore.has(COOKIE_KEYS.USE_NATIVE_SEARCH),
         ),
       };
     } catch (error) {

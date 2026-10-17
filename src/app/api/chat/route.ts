@@ -6,7 +6,6 @@ import {
   convertToCoreMessages,
   createDataStream,
   smoothStream,
-  tool,
 } from "ai";
 
 import { createResumableStreamContext } from "resumable-stream";
@@ -25,15 +24,10 @@ import { generateUUID } from "@/lib/utils";
 import { ChatSDKError } from "@/lib/errors";
 
 import type { ResumableStreamContext } from "resumable-stream";
-import type {
-  CoreAssistantMessage,
-  CoreToolMessage,
-  Tool,
-  UIMessage,
-} from "ai";
+import type { CoreAssistantMessage, CoreToolMessage, UIMessage } from "ai";
 import type { Chat } from "@prisma/client";
 import { openai } from "@ai-sdk/openai";
-import { getServerToolkit } from "@/toolkits/toolkits/server";
+import { resolveToolkitTools } from "@/toolkits/resolve-tools";
 import { languageModels } from "@/ai/language";
 
 export const maxDuration = 60;
@@ -154,82 +148,18 @@ export async function POST(request: Request) {
     const streamId = generateUUID();
     await api.streams.createStreamId({ streamId, chatId: id });
 
-    const toolkitTools = await Promise.all(
-      toolkits.map(async ({ id, parameters }) => {
-        const toolkit = getServerToolkit(id);
-        const tools = await toolkit.tools(parameters);
-        return Object.keys(tools).reduce(
-          (acc, toolName) => {
-            const serverTool = tools[toolName as keyof typeof tools];
-            acc[`${id}_${toolName}`] = tool({
-              description: serverTool.description,
-              parameters: serverTool.inputSchema,
-              execute: async (args) => {
-                try {
-                  const result = await serverTool.callback(args);
-
-                  // Increment tool usage on successful execution
-                  try {
-                    const serverCaller = await createServerOnlyCaller();
-                    await serverCaller.tools.incrementToolUsageServer({
-                      toolkit: id,
-                      tool: toolName,
-                    });
-                  } catch (error) {
-                    console.error("Failed to increment tool usage:", error);
-                  }
-
-                  if (serverTool.message) {
-                    return {
-                      result,
-                      message:
-                        typeof serverTool.message === "function"
-                          ? serverTool.message(result)
-                          : serverTool.message,
-                    };
-                  } else {
-                    return {
-                      result,
-                    };
-                  }
-                } catch (error) {
-                  console.error(error);
-                  return {
-                    isError: true,
-                    result: {
-                      error:
-                        error instanceof Error
-                          ? error.message
-                          : "An error occurred while executing the tool",
-                    },
-                  };
-                }
-              },
-            });
-            return acc;
-          },
-          {} as Record<string, Tool>,
-        );
-      }),
-    );
-
-    // Collect toolkit system prompts
-    const toolkitSystemPrompts = await Promise.all(
-      toolkits.map(async ({ id }) => {
-        const toolkit = getServerToolkit(id);
-        return toolkit.systemPrompt;
-      }),
-    );
-
-    const tools = toolkitTools.reduce(
-      (acc, toolkitTools) => {
-        return {
-          ...acc,
-          ...toolkitTools,
-        };
-      },
-      {} as Record<string, Tool>,
-    );
+    const { tools, systemPrompts: toolkitSystemPrompts } =
+      await resolveToolkitTools(
+        toolkits,
+        { sessionId: id, modelName: selectedChatModel },
+        async (toolkit, name) => {
+          const serverCaller = await createServerOnlyCaller();
+          await serverCaller.tools.incrementToolUsageServer({
+            toolkit,
+            tool: name,
+          });
+        },
+      );
 
     const isOpenAi = selectedChatModel.startsWith("openai");
 
@@ -249,6 +179,7 @@ export async function POST(request: Request) {
           `${selectedChatModel}${useNativeSearch ? ":search" : ""}`,
           {
             system: fullSystemPrompt,
+            abortSignal: request.signal,
             messages: convertToCoreMessages(messages),
             maxSteps: 15,
             toolCallStreaming: true,
