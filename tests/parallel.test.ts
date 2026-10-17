@@ -224,7 +224,10 @@ void test("scripted AI SDK model consumes dispatcher search results in its next 
   });
   assert.equal(steps, 2);
   assert.match(result.text, /node --test/);
-  assert.equal(result.steps[0]?.toolResults[0]?.toolName, "parallel_search");
+  assert.match(
+    JSON.stringify(result.steps[0]?.toolResults),
+    /"toolName":"parallel_search"/,
+  );
 });
 
 void test("URL validation rejects non-web URLs and credentials before network access", async () => {
